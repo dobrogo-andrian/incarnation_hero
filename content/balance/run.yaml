@@ -1,0 +1,5 @@
+# Run-wide balance parameters.
+
+id: config.run
+start_age_years: 12   # §3
+weeks_per_year: 52    # D16

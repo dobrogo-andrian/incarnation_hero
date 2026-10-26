@@ -11,7 +11,7 @@
 ## Зараз
 
 **Етап:** 0 «Фундамент» ([tech 9](tech/09-roadmap.md)).
-**Наступний крок:** Sim.Cli `run --seed N --weeks W` (друк PlayerView через `Localizer` і хеш стану) + перший golden-тест. Далі: Godot-оболонка.
+**Наступний крок:** Godot-оболонка (узгоджено 2026-10-26): одна сцена, мітки з `PlayerViewText` через `Localizer`, кнопка «Чекати тиждень» → `WaitWeeks(1)`, автосейв у `user://` після кожної команди, при запуску — продовження з сейву або новий забіг. Після підтвердження в редакторі етап 0 закрито.
 
 ## Етап 0: чекліст
 
@@ -25,9 +25,9 @@
 | Валідатор (биті посилання) | ✅ | `ContentValidator` у Core + `Sim.Cli validate <dir>` |
 | Ключі локалізації (Core повертає ключ і параметри) | ✅ | `src/Core/Loc/`, `content/strings/` |
 | Godot-оболонка: показує PlayerView, надсилає одну команду | ⬜ | `game/` — поки лише порожній проєкт |
-| Sim.Cli на тому ж ядрі | ⬜ | `Program.cs` поки «Hello, World» |
+| Sim.Cli на тому ж ядрі | ✅ | `Sim.Cli validate`, `Sim.Cli run`; golden-тест `GoldenTests` |
 
-Останній прогін: `dotnet test` дав 58/58 зелених (2026-10-26).
+Останній прогін: `dotnet test` дав 61/61 зелених (2026-10-26).
 
 Критерії готовності етапу 0: гра запускається і в Godot, і в Sim.Cli на одному ядрі; сейв переживає цикл save→load без змін; валідатор ловить биті посилання.
 
@@ -41,6 +41,10 @@
 - Контент: `ContentLoader.Load(IEnumerable<ContentFile>)` → `ContentDb` + список `ContentError(file, line, msg)`. Ядро не читає диск саме (`ContentFiles.FromDirectory` — хелпер для тестів/CLI), тож Godot подасть `res://`-файли так само. Тип об'єкта = перший сегмент ID (`vector`, `stage`), реєстр `TypesByKind` у `ContentLoader`. Файл — одна мапа або список мап. Невідомі поля — помилка. Зараз є лише `vector.qi` і `stage.qi.1..4` у `content/cultivation/qi_stages.yaml`.
 - Валідатор: посилання позначаються атрибутом `[ContentRef(typeof(T))]` на властивості def-класу (`string` або `List<string>`); `ContentValidator` знаходить їх рефлексією і перевіряє існування й тип. Також перевіряє непорожній `uk` у кожному `LocalizedText`. Поки лише властивості верхнього рівня: вкладені структури (вузли подій) додамо разом із подіями. `Sim.Cli validate <dir>` повертає 0/1/2 (ок / помилки / неправильні аргументи).
 - Локалізація: `LocKey(Key, Args)` у `Core.Loc`; `Localizer.FromContent(db).Resolve(key)` підставляє `{name}` (числа, рядки або вкладені `LocKey`). Відсутній ключ повертає сам ключ. Таблицю ключів будує `LocTable.FromContent`. Тест `EveryLocKeyDeclaredInCore_HasTextInRepoContent` ловить статичні `LocKey` у Core без тексту в контенті.
+- Баланс забігу: `config.run` (`content/balance/run.yaml`, клас `RunConfigDef`): `start_age_years` (§3), `weeks_per_year` (D16). `NewGameSettings.FromContent(db)` будує налаштування нового забігу з нього.
+- `PlayerViewText.Lines(view, db)` → список `LocKey`, по одному на рядок. Його використовують Sim.Cli і (далі) Godot, тексти `str.view.*`, `str.mode.*`.
+- `Sim.Cli run --seed N --weeks W [--content dir]` друкує PlayerView і `state hash`. Службові повідомлення (кількість об'єктів, помилки) йдуть у stderr, тож stdout чистий.
+- Golden: `GoldenTests.WaitTenYears_Seed42`, хеш — константа в тесті. Той самий хеш дає `sim run --seed 42 --weeks 520`.
 - Тести знаходять корінь репо через `RepoPaths` (шукає `IncarnationHero.sln`).
 
 ## Пастки і неочевидне
@@ -49,6 +53,7 @@
 
 - **Назви етапів ці — заглушки** («Перший етап ці»…): GDD §4 їх не називає. Замінити, коли автор дасть назви.
 - **`/content` лежить поза `game/`**: для експорту Godot його доведеться пакувати (етап 5). У dev-збірці читаємо з `../content`.
+- **`StageIndex` — 0-базний індекс у `stages` вектора** (0 = «Перший етап ці»). GDD не каже, чи 12-річний персонаж уже на першому етапі чи «до» нього; це тимчасове рішення, легко змінити. Підняти з автором.
 - **Атомарний сейв** зроблено через `File.Replace` (temp → slot, попередній файл стає `.bak`). Бекап використовується лише тоді, коли не зійшлася контрольна сума основного файлу.
 
 ## Відкриті питання, що стосуються поточного етапу
@@ -58,6 +63,8 @@
 ## Журнал сесій
 
 Одна-дві строки на сесію, нові зверху.
+
+- **2026-10-26** — `Sim.Cli run` (PlayerView через `Localizer` + хеш), `config.run` у YAML, `PlayerViewText`, перший golden-тест. Узгоджено обсяг Godot-оболонки.
 
 - **2026-10-26** — ключі локалізації: `LocKey` з параметрами, `Localizer`, системні тексти `str.*` у YAML (D20).
 - **2026-10-26** — валідатор контенту (`ContentValidator`, `[ContentRef]`) і перша команда `Sim.Cli validate`.

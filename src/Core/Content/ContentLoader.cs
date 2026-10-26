@@ -24,6 +24,7 @@ public static class ContentLoader
         ["vector"] = typeof(CultivationVectorDef),
         ["stage"] = typeof(CultivationStageDef),
         ["str"] = typeof(StringDef),
+        ["config"] = typeof(RunConfigDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

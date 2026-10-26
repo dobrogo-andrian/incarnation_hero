@@ -52,3 +52,15 @@ public sealed class CultivationStageDef : ContentDef
 {
     public LocalizedText Name { get; set; } = new();
 }
+
+/// <summary>Run-wide balance parameters (<c>config.run</c>). Exactly one per content set.</summary>
+public sealed class RunConfigDef : ContentDef
+{
+    public const string RunId = "config.run";
+
+    /// <summary>Age at the start of a run, §3.</summary>
+    public int StartAgeYears { get; set; }
+
+    /// <summary>Weeks in a year, D16.</summary>
+    public int WeeksPerYear { get; set; }
+}

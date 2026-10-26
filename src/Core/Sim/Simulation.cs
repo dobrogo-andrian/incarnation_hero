@@ -1,9 +1,17 @@
+using Core.Content;
 using Core.Rng;
 using Core.State;
 
 namespace Core.Sim;
 
-public sealed record NewGameSettings(int StartAgeWeeks);
+public sealed record NewGameSettings(int StartAgeWeeks)
+{
+    public static NewGameSettings FromContent(ContentDb db)
+    {
+        var run = db.Get<RunConfigDef>(RunConfigDef.RunId);
+        return new(run.StartAgeYears * run.WeeksPerYear);
+    }
+}
 
 /// <summary>
 /// Entry point for the UI, tests and Sim.Cli: owns the state and its live RNG streams,

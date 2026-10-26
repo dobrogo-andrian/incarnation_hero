@@ -43,6 +43,8 @@ public sealed class PlayerState
 public sealed class CultivationTrack
 {
     public string VectorId { get; set; } = "";
+
+    /// <summary>Index into the vector's stage list: 0 is the first stage.</summary>
     public int StageIndex { get; set; }
     public int StageProgress { get; set; }
 

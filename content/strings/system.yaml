@@ -6,3 +6,29 @@
 
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
+
+# PlayerView lines (Sim.Cli and the Godot shell).
+
+- id: str.view.week
+  text: { uk: "Тиждень забігу: {week}" }
+
+- id: str.view.age
+  text: { uk: "Вік: {years} р. {weeks} тиж." }
+
+- id: str.view.mode
+  text: { uk: "Режим: {mode}" }
+
+- id: str.view.track
+  text: { uk: "{vector}: {stage}, прогрес {progress}" }
+
+- id: str.mode.overworld
+  text: { uk: "Світ" }
+
+- id: str.mode.event_dialog
+  text: { uk: "Подія" }
+
+- id: str.mode.combat
+  text: { uk: "Бій" }
+
+- id: str.mode.run_end
+  text: { uk: "Кінець забігу" }
