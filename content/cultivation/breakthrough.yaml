@@ -41,8 +41,8 @@
 
 # Bands of the foundation deficit, (threshold − foundation) / threshold. The failure chance grows
 # linearly from chance_from to chance_to across a band. Failing costs a share of the stage scale,
-# toxins and a share of base purity; the red zone kills, and only an attempt that accepted the risk can enter it.
-# The internal injury of §4.5 comes with injuries (§8).
+# toxins, internal injuries (§8) and a share of base purity; the red zone kills, and only an attempt
+# that accepted the risk can enter it.
 - id: failure_zone.light
   name: { uk: "легка нестача" }
   up_to: 0.2
@@ -50,6 +50,7 @@
   chance_to: 0.4
   scale_loss: 0.3
   toxins: 10
+  injuries: { injury.internal: 15 }
 
 - id: failure_zone.serious
   name: { uk: "серйозна нестача" }
@@ -59,6 +60,7 @@
   scale_loss: 0.5
   toxins: 20
   purity_loss: 0.15
+  injuries: { injury.internal: 30 }
 
 - id: failure_zone.red
   name: { uk: "червона зона" }

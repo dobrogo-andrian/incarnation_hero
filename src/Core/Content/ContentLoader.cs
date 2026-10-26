@@ -40,6 +40,7 @@ public static class ContentLoader
         ["method"] = typeof(KnowledgeDef),
         ["rank"] = typeof(QualityRankDef),
         ["failure_zone"] = typeof(FailureZoneDef),
+        ["injury"] = typeof(InjuryDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>

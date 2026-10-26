@@ -27,6 +27,7 @@ public static class ActivitySystem
         switch (active.Activity)
         {
             case WaitActivity:
+                InjurySystem.Rest(state.Player, ctx, events);
                 break;
             case MeditateActivity meditation:
                 MeditationSystem.AdvanceWeek(state, ctx, meditation, events);

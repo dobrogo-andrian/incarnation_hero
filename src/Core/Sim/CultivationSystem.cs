@@ -19,11 +19,16 @@ public static class CultivationSystem
 
     /// <summary>
     /// The foundation a breakthrough is measured against (§4.1, §4.5): knowledge levels and purity,
-    /// each weighted by <c>config.run</c>.
+    /// each weighted by <c>config.run</c>, less what injuries take away (§8).
     /// </summary>
-    public static Foundation FoundationOf(PlayerState player, CharacterRules rules, RunConfigDef config) => new(
-        StateNumbers.Round(player.Knowledge.Sum(k => k.Level) * config.FoundationPerKnowledgeLevel),
-        StateNumbers.Round(rules.Value(player, config.PurityStat) * config.FoundationPerPurity));
+    public static Foundation FoundationOf(PlayerState player, CharacterRules rules, ContentDb db)
+    {
+        var config = db.Get<RunConfigDef>(RunConfigDef.RunId);
+        return new(
+            StateNumbers.Round(player.Knowledge.Sum(k => k.Level) * config.FoundationPerKnowledgeLevel),
+            StateNumbers.Round(rules.Value(player, config.PurityStat) * config.FoundationPerPurity),
+            InjurySystem.FoundationPenalty(player, db));
+    }
 
     /// <summary>
     /// Makes a method studied to level 1 or more the active one, taking its aspect profile (A2); null
@@ -138,8 +143,11 @@ public static class CultivationSystem
     }
 }
 
-/// <summary>The two parts of the foundation (§4.1); breakthroughs compare <see cref="Total"/> with a stage's threshold.</summary>
-public sealed record Foundation(double Knowledge, double Purity)
+/// <summary>
+/// The two parts of the foundation (§4.1) and what injuries take from them (§8); breakthroughs
+/// compare <see cref="Total"/> with a stage's threshold.
+/// </summary>
+public sealed record Foundation(double Knowledge, double Purity, double Injuries)
 {
-    public double Total => Knowledge + Purity;
+    public double Total => Math.Max(0, Knowledge + Purity - Injuries);
 }

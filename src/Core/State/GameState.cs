@@ -18,6 +18,7 @@ public enum InterruptCategory
     BuffExhausted,
     StageScaleFull,
     StudyCapReached,
+    InjuryHealed,
 }
 
 public enum RunEndCause
@@ -32,7 +33,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 9;
+    public const int CurrentSchemaVersion = 10;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -98,6 +99,9 @@ public sealed class PlayerState
     /// <summary>The cultivation method breakthroughs go through (§6); null without one.</summary>
     public string? ActiveMethodId { get; set; }
 
+    /// <summary>General injury scales above zero, in injury ID order (§8).</summary>
+    public List<InjuryLevel> Injuries { get; set; } = [];
+
     /// <summary>Quality ceiling a breakthrough pill adds to the next breakthrough; spent by the attempt (§4.5).</summary>
     public double BreakthroughCeilingBonus { get; set; }
 }
@@ -110,6 +114,13 @@ public sealed class KnowledgeLevel
 
     /// <summary>Comprehension points towards the next level.</summary>
     public double Progress { get; set; }
+}
+
+/// <summary>How injured the player is on one scale (§8); scales at zero have no entry.</summary>
+public sealed class InjuryLevel
+{
+    public string InjuryId { get; set; } = "";
+    public double Value { get; set; }
 }
 
 /// <summary>A number of items of one type.</summary>

@@ -42,7 +42,9 @@ public sealed class SimTextTests
                 "Фундамент: 0 (знання 0, чистота 0)",
                 "Духовні камені: 30",
                 "Пігулка збирання ці, кількість: 2, енергія наступної: 30",
+                "Аптека хабу: Пігулка зрощення кісток, ціна в каменях: 15",
                 "Аптека хабу: Пігулка закладання основи, ціна в каменях: 80",
+                "Аптека хабу: Пігулка заспокоєння меридіан, ціна в каменях: 25",
                 "Аптека хабу: Пігулка збирання ці, ціна в каменях: 12",
                 "Аптека хабу: Пігулка духовної роси, ціна в каменях: 30",
                 "Книгарня хабу: Фоліант методу лазурового подиху, ціна в каменях: 40",
@@ -67,10 +69,10 @@ public sealed class SimTextTests
         var sim = Simulation.NewGame(TestContent.Repo, 1);
 
         sim.State.Activity = new ActiveActivity { Activity = new WaitActivity(), WeeksLeft = 4 };
-        Assert.Contains("Заняття: Очікування, лишилось тижнів: 4", ViewText(sim));
+        Assert.Contains("Заняття: Відпочинок, лишилось тижнів: 4", ViewText(sim));
 
         sim.State.Activity.WeeksLeft = null;
-        Assert.Contains("Заняття: Очікування, без обмеження часу", ViewText(sim));
+        Assert.Contains("Заняття: Відпочинок, без обмеження часу", ViewText(sim));
 
         sim.State.Mode = GameMode.RunEnd;
         sim.State.EndCause = RunEndCause.OldAge;
@@ -81,8 +83,8 @@ public sealed class SimTextTests
     public void Describe_ReportsNotableEventsOnly()
     {
         Assert.Null(SimText.Describe(new WeekPassed(1, 625)));
-        Assert.Equal("Заняття завершено: Очікування.", Loc.Resolve(SimText.Describe(new ActivityFinished(new WaitActivity()))!));
-        Assert.Equal("Заняття скасовано: Очікування.", Loc.Resolve(SimText.Describe(new ActivityCancelled(new WaitActivity()))!));
+        Assert.Equal("Заняття завершено: Відпочинок.", Loc.Resolve(SimText.Describe(new ActivityFinished(new WaitActivity()))!));
+        Assert.Equal("Заняття скасовано: Відпочинок.", Loc.Resolve(SimText.Describe(new ActivityCancelled(new WaitActivity()))!));
         Assert.Equal("До очікуваного кінця життя лишилось років: 5.", Loc.Resolve(SimText.Describe(new LifeEndApproaching(5))!));
         Assert.Equal("Забіг завершено: смерть від старості.", Loc.Resolve(SimText.Describe(new RunEnded(RunEndCause.OldAge))!));
         Assert.Equal("Прибуття: Туманні пагорби.", Loc.Resolve(SimText.Describe(new ZoneEntered("zone.misty_hills"))!));
@@ -111,7 +113,7 @@ public sealed class SimTextTests
         // Foundation 0 of 40: the deficit is total. Quality 30 at age 12 + 4 weeks of seclusion: age −0.1.
         Assert.Contains(
             "Прогноз прориву: поріг 40, фундамент 0, шанс провалу 95% (червона зона); якість 29.9 — Звичайний "
-            + "(база 30, чистота +0, токсини −0, вік −0.1, відкладання −0, стеля 45)",
+            + "(база 30, чистота +0, токсини −0, травми −0, вік −0.1, відкладання −0, стеля 45)",
             ViewText(sim));
     }
 }

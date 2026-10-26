@@ -23,6 +23,8 @@ public static class MeditationSystem
             return KnowledgeSystem.CannotStudy(state.Player, ctx, meditation.SubjectId);
         if (meditation.SubjectId is not null)
             return RejectReasons.InvalidActivity;
+        if (ctx.Content.TryGet<InjuryDef>(direction.Target!, out _))
+            return InjurySystem.Value(state.Player, direction.Target!) > 0 ? null : RejectReasons.NothingToHeal;
         return ctx.Content.TryGet<CultivationVectorDef>(direction.Target!, out _)
             ? CultivationSystem.CannotAssimilate(state.Player, ctx, direction.Target!)
             : null;
@@ -64,6 +66,11 @@ public static class MeditationSystem
         if (ctx.Content.TryGet<ResourceDef>(target, out _))
         {
             ResourceSystem.Restore(player, ctx, target, gain);
+            return;
+        }
+        if (ctx.Content.TryGet<InjuryDef>(target, out _))
+        {
+            InjurySystem.Heal(player, ctx, target, gain, events);
             return;
         }
 

@@ -18,6 +18,7 @@ public sealed record PlayerView(
     IReadOnlyList<PlaceView> Places,
     IReadOnlyList<StatView> Stats,
     IReadOnlyList<ResourceView> Resources,
+    IReadOnlyList<InjuryView> Injuries,
     IReadOnlyList<TrackView> Tracks,
     IReadOnlyList<BuffView> Buffs,
     int Stones,
@@ -49,6 +50,7 @@ public sealed record PlayerView(
             player.Resources
                 .Select(r => new ResourceView(r.ResourceId, r.Current, rules.Explain(player, r.ResourceId)))
                 .ToList(),
+            player.Injuries.Select(i => new InjuryView(i.InjuryId, i.Value, content.Get<InjuryDef>(i.InjuryId).Max)).ToList(),
             player.Tracks.Select(t => TrackView.From(state, t, rules, content)).ToList(),
             player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList(),
             player.Stones,
@@ -58,7 +60,7 @@ public sealed record PlayerView(
             EconomySystem.ShopsHere(player, content)
                 .SelectMany(s => s.Prices.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => new ShopOfferView(s.Id, p.Key, p.Value)))
                 .ToList(),
-            CultivationSystem.FoundationOf(player, rules, content.Get<RunConfigDef>(RunConfigDef.RunId)),
+            CultivationSystem.FoundationOf(player, rules, content),
             player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList(),
             player.ActiveMethodId);
     }
@@ -76,6 +78,9 @@ public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> A
 
 /// <summary>A resource's current amount and its computed maximum.</summary>
 public sealed record ResourceView(string ResourceId, double Current, StatBreakdown Max);
+
+/// <summary>An injury scale above zero; what it weakens shows up as its modifiers in the breakdowns.</summary>
+public sealed record InjuryView(string InjuryId, double Value, double Max);
 
 /// <summary>
 /// A cultivation vector's stage, how full its breakthrough scale is and the rank of the last

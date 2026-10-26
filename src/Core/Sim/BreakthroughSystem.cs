@@ -7,10 +7,10 @@ using Core.State;
 namespace Core.Sim;
 
 /// <summary>A breakthrough's quality term by term, for "where does this number come from".</summary>
-public sealed record QualityBreakdown(double Base, double Purity, double Toxins, double Age, double Delay, double Ceiling)
+public sealed record QualityBreakdown(double Base, double Purity, double Toxins, double Injuries, double Age, double Delay, double Ceiling)
 {
-    /// <summary>Base + purity − toxins − age − delay, within [0, ceiling].</summary>
-    public double Value => StateNumbers.Round(Math.Clamp(Base + Purity - Toxins - Age - Delay, 0, Ceiling));
+    /// <summary>Base + purity − toxins − injuries − age − delay, within [0, ceiling].</summary>
+    public double Value => StateNumbers.Round(Math.Clamp(Base + Purity - Toxins - Injuries - Age - Delay, 0, Ceiling));
 }
 
 /// <summary>
@@ -44,7 +44,7 @@ public static class BreakthroughSystem
         var config = db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId);
         var breakthrough = CultivationSystem.Stage(track, db).Breakthrough!;
 
-        double foundation = CultivationSystem.FoundationOf(player, rules, run).Total;
+        double foundation = CultivationSystem.FoundationOf(player, rules, db).Total;
         double deficit = Math.Clamp((breakthrough.Threshold - foundation) / breakthrough.Threshold, 0, 1);
         var (zone, chance) = FailureOf(deficit, config, db);
 
@@ -132,6 +132,8 @@ public static class BreakthroughSystem
         var purity = player.Stats.First(s => s.StatId == ctx.Config.PurityStat);
         purity.Base = StateNumbers.Round(purity.Base * (1 - zone.PurityLoss));
         events.Add(new BreakthroughFailed(track.VectorId, zone.Id));
+        foreach (var (injuryId, amount) in zone.Injuries.OrderBy(i => i.Key, StringComparer.Ordinal))
+            InjurySystem.Inflict(player, ctx, injuryId, amount, events);
     }
 
     /// <summary>The deficit's zone and the failure chance in it, growing linearly across the zone.</summary>
@@ -152,8 +154,8 @@ public static class BreakthroughSystem
     }
 
     /// <summary>
-    /// Quality (§4.5): purity counts up to the method's cap; toxins, age past the free years and the
-    /// years since the scale filled take it down; the method (and a breakthrough pill) set the ceiling.
+    /// Quality (§4.5): purity counts up to the method's cap; toxins, injuries, age past the free years
+    /// and the years since the scale filled take it down; the method (and a breakthrough pill) set the ceiling.
     /// </summary>
     private static QualityBreakdown QualityOf(
         PlayerState player, CultivationTrack track, CharacterRules rules, RunConfigDef run, BreakthroughConfigDef config, ContentDb db, int weeksAhead)
@@ -176,6 +178,7 @@ public static class BreakthroughSystem
             config.BaseQuality,
             StateNumbers.Round(Math.Min(rules.Value(player, run.PurityStat), purityCap) * config.QualityPerPurity),
             StateNumbers.Round(toxins * config.QualityPerToxin),
+            InjurySystem.QualityPenalty(player, db),
             StateNumbers.Round(Years(ageWeeks - config.AgePenaltyFromYears * run.WeeksPerYear) * config.QualityPerAgeYear),
             StateNumbers.Round(delay * config.QualityPerDelayYear),
             StateNumbers.Round(ceiling + player.BreakthroughCeilingBonus));

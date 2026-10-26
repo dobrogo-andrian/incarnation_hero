@@ -82,6 +82,9 @@
 - id: str.reject.method_not_studied
   text: { uk: "Метод ще не вивчено навіть до першого рівня." }
 
+- id: str.reject.nothing_to_heal
+  text: { uk: "Немає травм, які це лікує." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -118,7 +121,7 @@
   text: { uk: "Якість останнього прориву: {rank}" }
 
 - id: str.view.breakthrough_forecast
-  text: { uk: "Прогноз прориву: поріг {threshold}, фундамент {foundation}, шанс провалу {chance}% ({zone}); якість {quality} — {rank} (база {base}, чистота +{purity}, токсини −{toxins}, вік −{age}, відкладання −{delay}, стеля {ceiling})" }
+  text: { uk: "Прогноз прориву: поріг {threshold}, фундамент {foundation}, шанс провалу {chance}% ({zone}); якість {quality} — {rank} (база {base}, чистота +{purity}, токсини −{toxins}, травми −{injuries}, вік −{age}, відкладання −{delay}, стеля {ceiling})" }
 
 - id: str.view.no_deficit
   text: { uk: "фундаменту досить" }
@@ -141,6 +144,9 @@
 - id: str.view.resource
   text: { uk: "{resource}: {current} / {max}" }
 
+- id: str.view.injury
+  text: { uk: "{injury}: {value} / {max}" }
+
 - id: str.view.zone
   text: { uk: "Місцевість: {zone}, небезпека {danger}" }
 
@@ -152,6 +158,9 @@
 
 - id: str.view.foundation
   text: { uk: "Фундамент: {total} (знання {knowledge}, чистота {purity})" }
+
+- id: str.view.foundation_injured
+  text: { uk: "Фундамент: {total} (знання {knowledge}, чистота {purity}, травми −{injuries})" }
 
 - id: str.view.knowledge
   text: { uk: "Знання: {knowledge}, рівень {level}" }
@@ -187,7 +196,7 @@
   text: { uk: "Кінець забігу" }
 
 - id: str.activity.wait
-  text: { uk: "Очікування" }
+  text: { uk: "Відпочинок" }
 
 - id: str.activity.travel
   text: { uk: "Подорож, мета — {zone}" }
@@ -245,6 +254,12 @@
 - id: str.event.breakthrough_succeeded
   text: { uk: "Прорив вдався: {stage}. Якість: {rank}. Років життя додано: {years}." }
 
+- id: str.event.injury_received
+  text: { uk: "Травми ({injury}): +{amount}." }
+
+- id: str.event.injury_healed
+  text: { uk: "Травми загоєно: {injury}." }
+
 - id: str.event.breakthrough_failed
   text: { uk: "Прорив не вдався ({zone}): частину шкали втрачено, у тілі осіли токсини." }
 
@@ -265,10 +280,10 @@
 # Godot shell.
 
 - id: str.shell.wait_week
-  text: { uk: "Чекати тиждень" }
+  text: { uk: "Відпочити тиждень" }
 
 - id: str.shell.wait_until_interrupt
-  text: { uk: "Чекати до переривання" }
+  text: { uk: "Відпочивати до переривання" }
 
 - id: str.shell.new_run
   text: { uk: "Новий забіг" }

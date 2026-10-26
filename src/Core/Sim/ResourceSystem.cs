@@ -25,6 +25,13 @@ public static class ResourceSystem
         resource.Current = StateNumbers.Round(Math.Min(max, resource.Current + amount));
     }
 
+    /// <summary>Brings every resource down to its maximum after the maximums fell: rest only heals up to the ceiling (§8).</summary>
+    public static void ClampToMax(PlayerState player, SimContext ctx)
+    {
+        foreach (var resource in player.Resources)
+            resource.Current = StateNumbers.Round(Math.Min(resource.Current, ctx.Rules.Value(player, resource.ResourceId)));
+    }
+
     /// <summary>Takes up to <paramref name="amount"/> from a resource, never below zero; returns what was taken.</summary>
     public static double Drain(PlayerState player, string resourceId, double amount)
     {

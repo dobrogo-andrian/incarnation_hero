@@ -13,3 +13,12 @@
 - id: item.pill.foundation_building
   name: { uk: "Пігулка закладання основи" }
   pill: { energy: 0, toxicity: 10, repeat_factor: 1, ceiling_bonus: 15 }
+
+# Healing pills (§8): take injury points off at once; no energy.
+- id: item.pill.bone_mending
+  name: { uk: "Пігулка зрощення кісток" }
+  pill: { energy: 0, toxicity: 6, repeat_factor: 1, heals: { injury.body: 25 } }
+
+- id: item.pill.meridian_soothing
+  name: { uk: "Пігулка заспокоєння меридіан" }
+  pill: { energy: 0, toxicity: 8, repeat_factor: 1, heals: { injury.internal: 15 } }

@@ -2,8 +2,8 @@ namespace Core.Content;
 
 /// <summary>
 /// How breakthroughs are judged (<c>config.breakthrough</c>, §4.5, D35). Exactly one per content set.
-/// Quality = base + purity (up to the method's purity cap) − toxins − age − delay since the scale
-/// filled, clamped to [0, ceiling]; the rank is the highest whose minimum it reaches.
+/// Quality = base + purity (up to the method's purity cap) − toxins − injuries − age − delay since
+/// the scale filled, clamped to [0, ceiling]; the rank is the highest whose minimum it reaches.
 /// </summary>
 public sealed class BreakthroughConfigDef : ContentDef, IValidatedDef
 {
@@ -81,7 +81,7 @@ public sealed class QualityRankDef : ContentDef
 
 /// <summary>
 /// A band of foundation deficit and what failing in it costs (§4.5): a share of the stage scale,
-/// toxins and a share of base purity. A <see cref="Fatal"/> band kills instead, and only an attempt
+/// toxins, injuries (the internal injury of §4.5) and a share of base purity. A <see cref="Fatal"/> band kills instead, and only an attempt
 /// that accepted the risk may enter it.
 /// </summary>
 public sealed class FailureZoneDef : ContentDef, IValidatedDef
@@ -102,14 +102,17 @@ public sealed class FailureZoneDef : ContentDef, IValidatedDef
 
     public double PurityLoss { get; set; }
 
+    [ContentRef(typeof(InjuryDef))]
+    public Dictionary<string, double> Injuries { get; set; } = [];
+
     public bool Fatal { get; set; }
 
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (ChanceFrom is < 0 or > 1 || ChanceTo is < 0 or > 1)
             yield return "chances must be within [0, 1].";
-        if (ScaleLoss is < 0 or > 1 || PurityLoss is < 0 or > 1 || Toxins < 0)
-            yield return "scale_loss and purity_loss must be within [0, 1], toxins non-negative.";
+        if (ScaleLoss is < 0 or > 1 || PurityLoss is < 0 or > 1 || Toxins < 0 || Injuries.Values.Any(i => i <= 0))
+            yield return "scale_loss and purity_loss must be within [0, 1], toxins non-negative, injuries positive.";
     }
 }
 

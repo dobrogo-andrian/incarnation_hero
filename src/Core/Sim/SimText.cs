@@ -24,6 +24,7 @@ public static class SimText
     private static readonly LocKey BodyStatLine = new("str.view.body_stat");
     private static readonly LocKey AspectPart = new("str.view.aspect");
     private static readonly LocKey ResourceLine = new("str.view.resource");
+    private static readonly LocKey InjuryLine = new("str.view.injury");
     private static readonly LocKey ZoneLine = new("str.view.zone");
     private static readonly LocKey PlaceLine = new("str.view.place");
     private static readonly LocKey BuffLine = new("str.view.buff");
@@ -32,6 +33,7 @@ public static class SimText
     private static readonly LocKey PillLine = new("str.view.pill");
     private static readonly LocKey OfferLine = new("str.view.offer");
     private static readonly LocKey FoundationLine = new("str.view.foundation");
+    private static readonly LocKey InjuredFoundationLine = new("str.view.foundation_injured");
     private static readonly LocKey KnowledgeLine = new("str.view.knowledge");
     private static readonly LocKey MeditateStudy = new("str.activity.meditate_study");
     private static readonly LocKey LastQualityLine = new("str.view.last_breakthrough");
@@ -69,6 +71,8 @@ public static class SimText
     private static readonly LocKey PillTakenLine = new("str.event.pill_taken");
     private static readonly LocKey LevelUp = new("str.event.knowledge_level_up");
     private static readonly LocKey CapReached = new("str.event.study_cap_reached");
+    private static readonly LocKey Injured = new("str.event.injury_received");
+    private static readonly LocKey Healed = new("str.event.injury_healed");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -128,6 +132,8 @@ public static class SimText
                 ],
             });
         }
+        foreach (var injury in view.Injuries)
+            lines.Add(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] });
 
         foreach (var track in view.Tracks)
         {
@@ -151,10 +157,10 @@ public static class SimText
         lines.Add(view.ActiveMethodId is { } method ? MethodLine with { Args = [new("method", Name(method))] } : NoMethodLine);
 
         var foundation = view.Foundation;
-        lines.Add(FoundationLine with
-        {
-            Args = [new("total", Number(foundation.Total)), new("knowledge", Number(foundation.Knowledge)), new("purity", Number(foundation.Purity))],
-        });
+        LocArg[] parts = [new("total", Number(foundation.Total)), new("knowledge", Number(foundation.Knowledge)), new("purity", Number(foundation.Purity))];
+        lines.Add(foundation.Injuries > 0
+            ? InjuredFoundationLine with { Args = [.. parts, new("injuries", Number(foundation.Injuries))] }
+            : FoundationLine with { Args = parts });
         foreach (var knowledge in view.Knowledge)
             lines.Add(KnowledgeLine with { Args = [new("knowledge", Name(knowledge.KnowledgeId)), new("level", knowledge.Level)] });
 
@@ -193,6 +199,8 @@ public static class SimText
             Args = [new("stage", Name(b.StageId)), new("rank", Name(b.RankId)), new("years", Number(b.LifespanYears))],
         },
         BreakthroughFailed b => Failed with { Args = [new("zone", Name(b.FailureZoneId))] },
+        InjuryReceived i => Injured with { Args = [new("injury", Name(i.InjuryId)), new("amount", Number(i.Amount))] },
+        InjuryHealed h => Healed with { Args = [new("injury", Name(h.InjuryId))] },
         _ => null,
     };
 
@@ -213,6 +221,7 @@ public static class SimText
                 new("base", Number(q.Base)),
                 new("purity", Number(q.Purity)),
                 new("toxins", Number(q.Toxins)),
+                new("injuries", Number(q.Injuries)),
                 new("age", Number(q.Age)),
                 new("delay", Number(q.Delay)),
             ],

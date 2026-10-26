@@ -29,8 +29,9 @@ public static class ItemSystem
 
     /// <summary>
     /// Takes a carried pill: its energy joins the pill-energy buff, a breakthrough pill raises the next
-    /// breakthrough's ceiling (the strongest one counts), and its toxins build up. Refused
-    /// when the toxins would go over their maximum, the tolerance (§4.4).
+    /// breakthrough's ceiling (the strongest one counts), a healing pill heals injuries (§8), and its
+    /// toxins build up. Refused when the toxins would go over their maximum, the tolerance (§4.4), or
+    /// when a pill that only heals has nothing to heal.
     /// </summary>
     public static CommandOutcome UsePill(PlayerState player, SimContext ctx, string itemId)
     {
@@ -38,6 +39,8 @@ public static class ItemSystem
             return CommandOutcome.Reject(RejectReasons.NoSuchItem);
         if (ctx.Content.Get<ItemDef>(itemId).Pill is not { } pill)
             return CommandOutcome.Reject(RejectReasons.NotAPill);
+        if (pill.Energy + pill.CeilingBonus <= 0 && pill.Heals.Keys.All(id => InjurySystem.Value(player, id) == 0))
+            return CommandOutcome.Reject(RejectReasons.NothingToHeal);
 
         string toxinsId = ctx.Config.ToxinsResource;
         double toxins = player.Resources.First(r => r.ResourceId == toxinsId).Current;
@@ -51,6 +54,9 @@ public static class ItemSystem
             CultivationSystem.AddPillEnergy(player, energy);
         player.BreakthroughCeilingBonus = Math.Max(player.BreakthroughCeilingBonus, pill.CeilingBonus);
         ResourceSystem.Restore(player, ctx, toxinsId, pill.Toxicity);
-        return CommandOutcome.Accept([new PillTaken(itemId, energy)]);
+        var events = new List<SimEvent> { new PillTaken(itemId, energy) };
+        foreach (var (injuryId, amount) in pill.Heals.OrderBy(h => h.Key, StringComparer.Ordinal))
+            InjurySystem.Heal(player, ctx, injuryId, amount, events);
+        return CommandOutcome.Accept(events);
     }
 }

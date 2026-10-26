@@ -12,6 +12,10 @@ public static class ModifierSystem
         player.Modifiers.Add(modifier);
     }
 
+    /// <summary>Removes every modifier <paramref name="sourceId"/> applied.</summary>
+    public static void RemoveSource(PlayerState player, string sourceId) =>
+        player.Modifiers.RemoveAll(m => m.SourceId == sourceId);
+
     public static void AdvanceWeek(GameState state)
     {
         var modifiers = state.Player.Modifiers;

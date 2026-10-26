@@ -180,7 +180,7 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
-    public void MeditationDirection_TargetsAStatResourceOrVector()
+    public void MeditationDirection_TargetsAStatResourceVectorOrInjury()
     {
         var errors = Validate("""
             - { id: zone.a, name: { uk: "А" } }
@@ -188,7 +188,21 @@ public sealed class ContentValidatorTests
             - { id: meditation.m, name: { uk: "М" }, rate: 1, target: zone.a }
             """);
 
-        Assert.Contains("target 'zone.a' is not a stat, a resource or a cultivation vector", Assert.Single(errors).Message);
+        Assert.Contains("target 'zone.a' is not a stat, a resource, a cultivation vector or an injury", Assert.Single(errors).Message);
+    }
+
+    [Fact]
+    public void Injury_EffectsTargetCharacterValues_AndNeverTakeEverything()
+    {
+        var errors = Validate("""
+            - { id: rank.a, name: { uk: "А" } }
+            - { id: stat.m, name: { uk: "М" } }
+            - { id: injury.i, name: { uk: "Т" }, max: 100, effects: { rank.a: -0.001, stat.m: -0.01 } }
+            """);
+
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Message.Contains("effect target 'rank.a' is not a stat, an aspect or a resource"));
+        Assert.Contains(errors, e => e.Message.Contains("effect on 'stat.m' would take away everything at max"));
     }
 
     [Fact]

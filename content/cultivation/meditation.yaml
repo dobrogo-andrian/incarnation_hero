@@ -26,3 +26,9 @@
   rate: 5
   studies: true                # the activity names a carried folio or an element to sense (§6)
   side_gains: { stat.perception: 0.05 }
+
+- id: meditation.healing
+  name: { uk: "Зцілення" }
+  rate: 2
+  target: injury.internal      # qi mends the meridians (§8); body injuries heal with rest and pills
+  side_gains: { stat.perception: 0.01 }

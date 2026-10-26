@@ -63,3 +63,12 @@ public sealed record PlaceQiLow(string PlaceId) : InterruptEvent
 {
     public override InterruptCategory Category => InterruptCategory.PlaceQiLow;
 }
+
+/// <summary>An injury scale rose by <paramref name="Amount"/> (§8).</summary>
+public sealed record InjuryReceived(string InjuryId, double Amount) : SimEvent;
+
+/// <summary>An injury scale healed down to zero.</summary>
+public sealed record InjuryHealed(string InjuryId) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.InjuryHealed;
+}

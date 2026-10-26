@@ -5,11 +5,13 @@
   name: { uk: "Здоров'я" }
   source: aspect.might.vitality
   coefficient: 10
+  regen_per_week: 10            # rest returns health, but only up to the ceiling injuries leave (§8)
 
 - id: resource.body_energy
   name: { uk: "Енергія тіла" }
   source: aspect.endurance.reserve
   coefficient: 10
+  regen_per_week: 10
 
 - id: resource.qi_pool
   name: { uk: "Пул ці" }

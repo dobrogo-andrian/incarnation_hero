@@ -118,7 +118,7 @@ public sealed class BreakthroughTests
         var quality = Forecast(sim).Quality;
 
         // Purity counts up to the no-method cap of 20; the attempt resolves at 22, three years after the scale filled.
-        Assert.Equal(new QualityBreakdown(30, 10, 5, 10, 6, 45), quality);
+        Assert.Equal(new QualityBreakdown(30, 10, 5, 0, 10, 6, 45), quality);
         Assert.Equal(19, quality.Value);
         Assert.Equal("rank.flawed", Forecast(sim).RankId);
 
@@ -178,7 +178,7 @@ public sealed class BreakthroughTests
     }
 
     [Fact]
-    public void Failure_InTheSeriousZone_CostsScaleToxinsAndPurity()
+    public void Failure_InTheSeriousZone_CostsScaleToxinsPurityAndAnInternalInjury()
     {
         // Purity 26: deficit 0.35 of the threshold, mid serious zone: failure chance 0.6.
         int failures = 0, successes = 0;
@@ -195,6 +195,8 @@ public sealed class BreakthroughTests
                 Assert.Equal((0, 50.0), (Qi(sim).StageIndex, Qi(sim).StageProgress));
                 Assert.Equal(20, Toxins(sim));
                 Assert.Equal(22.1, Stat(sim, "stat.purity").Base);
+                Assert.Equal(30, InjurySystem.Value(sim.State.Player, "injury.internal"));
+                Assert.Contains(new InjuryReceived("injury.internal", 30), outcome.Events);
                 Assert.Null(Qi(sim).LastBreakthroughQuality);
             }
             else

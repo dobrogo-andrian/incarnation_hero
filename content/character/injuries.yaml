@@ -1,0 +1,24 @@
+# General injury scales (§8, tech 4.6, D37). Draft numbers until Sim.Cli reports.
+# Every point applies `effects` as Mul modifiers (-0.005 is −0.5% per point), takes quality_per_point
+# off breakthrough quality and foundation_per_point off the foundation. Scales heal heal_per_week
+# whatever the player does, rest_heal_per_week more while resting; pills and healing meditation help too.
+
+- id: injury.body
+  name: { uk: "Тілесні травми" }
+  max: 100
+  heal_per_week: 0.5
+  rest_heal_per_week: 2.5
+  effects:
+    resource.health: -0.005          # the health ceiling: rest heals only up to it (§8)
+    resource.body_energy: -0.004
+  quality_per_point: 0.1
+
+- id: injury.internal
+  name: { uk: "Внутрішні травми" }
+  max: 100
+  heal_per_week: 0.2
+  rest_heal_per_week: 0.8
+  effects:
+    aspect.meridians.flow: -0.004    # hurt meridians pass less qi per turn (§7.1)
+  quality_per_point: 0.3
+  foundation_per_point: 0.3          # a deeper deficit: a higher failure chance (§4.5)

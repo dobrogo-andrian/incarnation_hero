@@ -41,6 +41,7 @@ public static class TimeSystem
             return;
         ModifierSystem.AdvanceWeek(state);
         CultivationSystem.AdvanceWeek(state, ctx, events);
+        InjurySystem.AdvanceWeek(state, ctx, events);
         ResourceSystem.AdvanceWeek(state, ctx);
         WorldSystem.AdvanceWeek(state, ctx.Content);
 

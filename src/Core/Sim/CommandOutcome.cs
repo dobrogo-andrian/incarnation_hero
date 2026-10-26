@@ -31,6 +31,7 @@ public static class RejectReasons
     public static readonly LocKey DeathRiskNotAccepted = new("str.reject.death_risk_not_accepted");
     public static readonly LocKey NotAMethod = new("str.reject.not_a_method");
     public static readonly LocKey MethodNotStudied = new("str.reject.method_not_studied");
+    public static readonly LocKey NothingToHeal = new("str.reject.nothing_to_heal");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>
