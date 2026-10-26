@@ -1,12 +1,11 @@
-namespace Core.Sim;
+using Core.Loc;
 
-/// <summary>Localization key with no parameters yet; parameters arrive with the loc layer.</summary>
-public sealed record LocKey(string Key);
+namespace Core.Sim;
 
 public static class RejectReasons
 {
-    public static readonly LocKey WrongMode = new("reject.wrong_mode");
-    public static readonly LocKey InvalidWeeks = new("reject.invalid_weeks");
+    public static readonly LocKey WrongMode = new("str.reject.wrong_mode");
+    public static readonly LocKey InvalidWeeks = new("str.reject.invalid_weeks");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

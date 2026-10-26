@@ -1,0 +1,8 @@
+# System and UI texts that belong to no content object. The id is the localization key.
+# Texts with numbers avoid number agreement: "Тижнів: {weeks}", not "{weeks} тижнів" (A9).
+
+- id: str.reject.wrong_mode
+  text: { uk: "Зараз ця дія недоступна." }
+
+- id: str.reject.invalid_weeks
+  text: { uk: "Кількість тижнів має бути додатною." }

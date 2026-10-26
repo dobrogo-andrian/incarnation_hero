@@ -53,7 +53,7 @@ dotnet run --project src/Sim.Cli -- <args>
 /src/Sim.Cli         headless bot runs and metrics export (JSONL/CSV); commands and bots: tech 6.1
 /src/Tools.Validate  (planned) content validator CLI, may become a Sim.Cli subcommand
 /game                Godot project: UI, combat scene, input, audio only
-/content             (planned) YAML content and balance; folder layout: tech 3.1
+/content             YAML content and balance; folder layout: tech 3.2
 /loc                 (planned) localization tables (uk, en, zh) as CSV
 /analysis            (planned) Python notebooks
 /docs                design docs: README.md (index), progress.md, gdd/, tech/

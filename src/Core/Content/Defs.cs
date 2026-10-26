@@ -29,6 +29,15 @@ public sealed class ContentRefAttribute(Type target) : Attribute
     public Type Target { get; } = target;
 }
 
+/// <summary>
+/// A piece of system or UI text that belongs to no content object (<c>str.reject.wrong_mode</c>).
+/// Its ID is its localization key.
+/// </summary>
+public sealed class StringDef : ContentDef
+{
+    public LocalizedText Text { get; set; } = new();
+}
+
 /// <summary>A cultivation vector (<c>vector.qi</c>) and its ordered stages.</summary>
 public sealed class CultivationVectorDef : ContentDef
 {
