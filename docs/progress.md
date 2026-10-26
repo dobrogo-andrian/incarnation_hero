@@ -11,7 +11,7 @@
 ## Зараз
 
 **Етап:** 0 «Фундамент» ([tech 9](tech/09-roadmap.md)).
-**Наступний крок:** завантажувач YAML (YamlDotNet) у Core, а потім валідатор битих посилань на ID.
+**Наступний крок:** валідатор битих посилань (`ContentValidator` у Core + підкоманда `Sim.Cli validate <dir>`, окремий `Tools.Validate` не робимо). Далі: ключі локалізації → Sim.Cli `run` → Godot-оболонка.
 
 ## Етап 0: чекліст
 
@@ -21,13 +21,13 @@
 | RNG: SplitMix64 → xoshiro256**, потоки | ✅ | `src/Core/Rng/` |
 | GameState, Command/SimEvent, FSM режимів, PlayerView | ✅ каркас | `src/Core/State/`, `src/Core/Sim/` |
 | Сейв: JSON, `schema_version`, sha256, атомарна заміна, бекап | ✅ | `src/Core/Save/` |
-| Завантажувач YAML-контенту | ⬜ | — |
-| Валідатор (биті посилання) | ⬜ | `src/Tools.Validate` або підкоманда Sim.Cli |
+| Завантажувач YAML-контенту | ✅ | `src/Core/Content/`, `content/` |
+| Валідатор (биті посилання) | ⬜ | `ContentValidator` у Core + `Sim.Cli validate` |
 | Ключі локалізації (Core повертає ключ і параметри) | ⬜ | — |
 | Godot-оболонка: показує PlayerView, надсилає одну команду | ⬜ | `game/` — поки лише порожній проєкт |
 | Sim.Cli на тому ж ядрі | ⬜ | `Program.cs` поки «Hello, World» |
 
-Останній прогін: `dotnet test` дав 37/37 зелених (2026-10-26).
+Останній прогін: `dotnet test` дав 48/48 зелених (2026-10-26).
 
 Критерії готовності етапу 0: гра запускається і в Godot, і в Sim.Cli на одному ядрі; сейв переживає цикл save→load без змін; валідатор ловить биті посилання.
 
@@ -38,11 +38,15 @@
 - `Simulation.NewGame(seed, settings)` / `Simulation.Resume(state)` — точки входу для UI, тестів і Sim.Cli.
 - `SaveSerializer.HashState(state)` — стабільний хеш стану для golden-тестів.
 - Один культиваційний трек `qi`, константа `Simulation.QiVectorId`.
+- Контент: `ContentLoader.Load(IEnumerable<ContentFile>)` → `ContentDb` + список `ContentError(file, line, msg)`. Ядро не читає диск саме (`ContentFiles.FromDirectory` — хелпер для тестів/CLI), тож Godot подасть `res://`-файли так само. Тип об'єкта = перший сегмент ID (`vector`, `stage`), реєстр `TypesByKind` у `ContentLoader`. Файл — одна мапа або список мап. Невідомі поля — помилка. Зараз є лише `vector.qi` і `stage.qi.1..4` у `content/cultivation/qi_stages.yaml`.
+- Тести знаходять корінь репо через `RepoPaths` (шукає `IncarnationHero.sln`).
 
 ## Пастки і неочевидне
 
 Постійні правила (TFM `net8.0`, два `.sln`, процес «перевірка → коміт → пуш у main») записано в `CLAUDE.md`, тут їх не повторюємо.
 
+- **Назви етапів ці — заглушки** («Перший етап ці»…): GDD §4 їх не називає. Замінити, коли автор дасть назви.
+- **`/content` лежить поза `game/`**: для експорту Godot його доведеться пакувати (етап 5). У dev-збірці читаємо з `../content`.
 - **Атомарний сейв** зроблено через `File.Replace` (temp → slot, попередній файл стає `.bak`). Бекап використовується лише тоді, коли не зійшлася контрольна сума основного файлу.
 
 ## Розбіжності в документах (ще не виправлені)
@@ -59,5 +63,6 @@
 
 Одна-дві строки на сесію, нові зверху.
 
+- **2026-10-26** — план закриття етапу 0 (5 кроків). Зроблено YAML-завантажувач (YamlDotNet 16.3.0): `ContentDb`, збір усіх помилок з рядками, перший контент `qi_stages.yaml`.
 - **2026-10-26** — додано кореневий `README.md` і цей файл. У `CLAUDE.md` з'явився розділ Workflow (перевірка → `progress.md` → коміт → пуш у `main`), зайве з нього прибрано. Ізоляцію worktree вимкнено (`.claude/settings.json`): усі сесії працюють прямо в `main`.
 - **до 2026-10-26** — scaffold, RNG, GameState/команди/PlayerView, ironman-сейв, конвертація .docx у Markdown (див. `git log`).

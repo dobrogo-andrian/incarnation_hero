@@ -1,0 +1,18 @@
+# Cultivation vector qi and its stages (tech 2.6). The MVP has 3-4 stages (§4.5).
+# Stage names are placeholders until the GDD names them.
+
+- id: vector.qi
+  name: { uk: "Ці" }
+  stages: [stage.qi.1, stage.qi.2, stage.qi.3, stage.qi.4]
+
+- id: stage.qi.1
+  name: { uk: "Перший етап ці" }
+
+- id: stage.qi.2
+  name: { uk: "Другий етап ці" }
+
+- id: stage.qi.3
+  name: { uk: "Третій етап ці" }
+
+- id: stage.qi.4
+  name: { uk: "Четвертий етап ці" }
