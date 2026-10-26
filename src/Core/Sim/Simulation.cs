@@ -68,6 +68,8 @@ public sealed class Simulation
         {
             StartActivity c => ExecuteStart(c),
             Travel c => ExecuteTravel(c),
+            AttemptBreakthrough c => ExecuteBreakthrough(c),
+            SetActiveMethod c => CultivationSystem.SetActiveMethod(State.Player, _ctx, c.MethodId),
             ContinueActivity => ExecuteContinue(),
             CancelActivity => ExecuteCancel(),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
@@ -103,6 +105,15 @@ public sealed class Simulation
 
         var travel = new TravelActivity(legs);
         return Start(travel, travel.TotalWeeks);
+    }
+
+    private CommandOutcome ExecuteBreakthrough(AttemptBreakthrough command)
+    {
+        var attempt = new BreakthroughActivity(command.VectorId, command.PlaceId, command.AcceptDeathRisk);
+        if (BreakthroughSystem.Validate(State, _ctx, attempt) is { } reason)
+            return CommandOutcome.Reject(reason);
+
+        return Start(attempt, BreakthroughSystem.Weeks(State.Player, Content, command.VectorId));
     }
 
     private CommandOutcome ExecuteContinue() =>

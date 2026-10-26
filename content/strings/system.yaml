@@ -67,6 +67,21 @@
 - id: str.reject.study_cap_reached
   text: { uk: "З цього джерела глибше не осягнути." }
 
+- id: str.reject.no_next_stage
+  text: { uk: "Це найвищий етап: прориву далі поки немає." }
+
+- id: str.reject.stage_scale_not_full
+  text: { uk: "Шкала етапу ще не заповнена." }
+
+- id: str.reject.death_risk_not_accepted
+  text: { uk: "Фундамент у червоній зоні: прорив може вбити. Потрібна свідома згода на ризик." }
+
+- id: str.reject.not_a_method
+  text: { uk: "Це не метод культивації." }
+
+- id: str.reject.method_not_studied
+  text: { uk: "Метод ще не вивчено навіть до першого рівня." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -98,6 +113,21 @@
 
 - id: str.view.track
   text: { uk: "{vector}: {stage}, шкала етапу {progress} / {required}" }
+
+- id: str.view.last_breakthrough
+  text: { uk: "Якість останнього прориву: {rank}" }
+
+- id: str.view.breakthrough_forecast
+  text: { uk: "Прогноз прориву: поріг {threshold}, фундамент {foundation}, шанс провалу {chance}% ({zone}); якість {quality} — {rank} (база {base}, чистота +{purity}, токсини −{toxins}, вік −{age}, відкладання −{delay}, стеля {ceiling})" }
+
+- id: str.view.no_deficit
+  text: { uk: "фундаменту досить" }
+
+- id: str.view.method
+  text: { uk: "Метод культивації: {method}" }
+
+- id: str.view.no_method
+  text: { uk: "Метод культивації: немає" }
 
 - id: str.view.stat
   text: { uk: "{stat}: {value}" }
@@ -168,8 +198,14 @@
 - id: str.activity.meditate_study
   text: { uk: "Медитація ({direction}: {subject}), {place}" }
 
+- id: str.activity.breakthrough
+  text: { uk: "Усамітнення для прориву, {place}" }
+
 - id: str.end.old_age
   text: { uk: "смерть від старості" }
+
+- id: str.end.breakthrough_death
+  text: { uk: "загибель під час прориву" }
 
 # Event lines (SimText.Describe).
 
@@ -205,6 +241,12 @@
 
 - id: str.event.stage_scale_full
   text: { uk: "Шкала етапу заповнена ({vector}): можна наважитись на прорив." }
+
+- id: str.event.breakthrough_succeeded
+  text: { uk: "Прорив вдався: {stage}. Якість: {rank}. Років життя додано: {years}." }
+
+- id: str.event.breakthrough_failed
+  text: { uk: "Прорив не вдався ({zone}): частину шкали втрачено, у тілі осіли токсини." }
 
 # How the ironman run was opened (RunSession).
 

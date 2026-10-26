@@ -1,6 +1,13 @@
-# Cultivation methods (§6): special folios that breakthroughs go through. For now only studied;
-# the active method, its aspect profile and quality ceiling come with breakthroughs.
+# Cultivation methods (§6): special folios that breakthroughs go through. The active one (SetActiveMethod,
+# studied to level 1 or more) sets the aspect profile (A2) and the breakthrough quality ceiling and purity
+# cap, both growing with its level (D35). Draft numbers.
 
 - id: method.azure_breath
   name: { uk: "Метод лазурового подиху" }
   tags: [school:azure_breath]
+  method:
+    aspect_profile: aspect_profile.balanced
+    quality_ceiling: 50
+    quality_ceiling_per_level: 8
+    purity_cap: 30
+    purity_cap_per_level: 20

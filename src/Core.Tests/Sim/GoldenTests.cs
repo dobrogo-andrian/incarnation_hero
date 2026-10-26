@@ -17,7 +17,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "4a562200022daeb94454ab203ec073b6d52f68837b84151f91a58da9175410cc";
+        const string expectedHash = "0db903891a15f3650aff60ecdcc3423a5e3d9558a551539d42dff828ae2621d6";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -34,7 +34,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakTakeTwoPillsThenAssimilateUntilDeath_Seed42()
     {
-        const string expectedHash = "3a7cf0985cd3e894e200c0a52ea3246f4eb0d9f66794144f2d1aa64da112112a";
+        const string expectedHash = "52b700993105c2bb72bda730a5b04caafd8f41e30574775465355d15e0805fcc";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -43,6 +43,38 @@ public sealed class GoldenTests
         RunToEnd(sim, new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null));
 
         Assert.Equal(54, sim.State.Player.Tracks.Single().StageProgress);
+        Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
+    }
+
+    /// <summary>
+    /// A first breakthrough end to end (no CLI equivalent yet): buy pill energy at the hub, purify at
+    /// the peak until the foundation covers the threshold, fill the scale, flush the pills' toxins,
+    /// break through, purify until death.
+    /// </summary>
+    [Fact]
+    public void PurifyFillTheScaleAndBreakThroughThenPurifyUntilDeath_Seed42()
+    {
+        const string expectedHash = "d298e1359461205a198cdb2dc392fe8dfd56196809a8257f404265e6afdaf7cf";
+        var purify = new MeditateActivity("meditation.purification", "place.spirit_peak.vein");
+
+        var sim = Simulation.NewGame(TestContent.Repo, 42);
+        Assert.True(sim.Execute(new Buy("item.pill.spirit_dew")).Accepted);
+        RunToEnd(sim, new Travel("zone.spirit_peak"));
+        RunToEnd(sim, new StartActivity(purify, 400));
+        foreach (string pill in new[] { "item.pill.qi_gathering", "item.pill.qi_gathering", "item.pill.spirit_dew" })
+            Assert.True(sim.Execute(new UsePill(pill)).Accepted);
+        sim.Execute(new SetInterruptStops([InterruptCategory.StageScaleFull]));
+        Assert.True(sim.Execute(new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null)).Accepted);
+        sim.Execute(new CancelActivity());
+        RunToEnd(sim, new StartActivity(purify, 15));
+        var forecast = sim.View.Tracks.Single().Forecast!;
+        RunToEnd(sim, new AttemptBreakthrough("qi", "place.spirit_peak.vein"));
+        var afterBreakthrough = (sim.State.Player.Tracks.Single().StageIndex, sim.State.Player.LifespanWeeks);
+        RunToEnd(sim, new StartActivity(purify, null));
+
+        Assert.Equal((0, "rank.common"), (forecast.FailureChance, forecast.RankId));
+        Assert.Equal((1, 64 * 52), afterBreakthrough);
+        Assert.Equal(GameMode.RunEnd, sim.State.Mode);
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
     }
 

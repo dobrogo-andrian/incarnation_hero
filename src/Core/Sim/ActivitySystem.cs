@@ -14,7 +14,7 @@ public static class ActivitySystem
     {
         WaitActivity => null,
         MeditateActivity m => MeditationSystem.Validate(state, ctx, m),
-        // Travel lasts as long as its route, so it starts with the Travel command instead.
+        // Travel and breakthroughs last as long as their route or stage, so they have their own commands.
         _ => RejectReasons.InvalidActivity,
     };
 
@@ -34,11 +34,15 @@ public static class ActivitySystem
             case TravelActivity travel:
                 EnterReachedZone(state, travel, travel.TotalWeeks - active.WeeksLeft!.Value, events);
                 break;
+            case BreakthroughActivity attempt:
+                if (active.WeeksLeft == 0)
+                    BreakthroughSystem.Resolve(state, ctx, attempt, events);
+                break;
             default:
                 throw new NotSupportedException($"No progress handler for {active.Activity.GetType().Name}.");
         }
 
-        if (active.WeeksLeft == 0)
+        if (active.WeeksLeft == 0 && state.Mode != GameMode.RunEnd)
         {
             state.Activity = null;
             events.Add(new ActivityFinished(active.Activity));

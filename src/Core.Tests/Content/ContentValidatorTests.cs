@@ -207,6 +207,65 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void Stages_HaveABreakthroughExceptTheLast_WithOneEntryPerRank()
+    {
+        var errors = Validate("""
+            - { id: rank.low, name: { uk: "Н" }, min_quality: 0 }
+            - { id: rank.high, name: { uk: "В" }, min_quality: 50 }
+            - { id: failure_zone.all, name: { uk: "З" }, up_to: 1 }
+            - { id: config.breakthrough, ranks: [rank.low, rank.high], failure_zones: [failure_zone.all] }
+            - id: vector.qi
+              name: { uk: "Ці" }
+              stages: [stage.qi.0, stage.qi.1, stage.qi.2]
+            - id: stage.qi.0
+              name: { uk: "0" }
+              progress_required: 1
+              breakthrough: { threshold: 1, weeks: 1, lifespan_years: [1], stat_gain: [1, 2] }
+            - { id: stage.qi.1, name: { uk: "1" }, progress_required: 1 }
+            - id: stage.qi.2
+              name: { uk: "2" }
+              progress_required: 1
+              breakthrough: { threshold: 1, weeks: 1, lifespan_years: [1, 2], stat_gain: [1, 2] }
+            """);
+
+        Assert.Equal(
+            [
+                "'stage.qi.0' breakthrough lifespan_years and stat_gain need one entry per quality rank.",
+                "'vector.qi' stage 'stage.qi.1' needs a breakthrough.",
+                "'vector.qi' stage 'stage.qi.2' is the last and must not have a breakthrough.",
+            ],
+            errors.Select(e => e.Message).Order(StringComparer.Ordinal).ToList());
+    }
+
+    [Fact]
+    public void BreakthroughConfig_NeedsRanksFromZero_AndFailureZonesUpToOne()
+    {
+        var errors = Validate("""
+            - { id: rank.low, name: { uk: "Н" }, min_quality: 10 }
+            - { id: failure_zone.red, name: { uk: "Ч" }, up_to: 0.5, fatal: true }
+            - { id: config.breakthrough, ranks: [rank.low], failure_zones: [failure_zone.red] }
+            """);
+
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Message.Contains("ranks need min_quality starting at 0 and growing."));
+        Assert.Contains(errors, e => e.Message.Contains("failure_zones must start with a non-fatal zone and end with up_to: 1."));
+    }
+
+    [Fact]
+    public void OnlyCultivationMethods_HaveAMethodBlock()
+    {
+        var errors = Validate("""
+            - { id: aspect_profile.p, name: { uk: "П" } }
+            - { id: method.m, name: { uk: "М" } }
+            - { id: element.e, name: { uk: "Е" }, method: { aspect_profile: aspect_profile.p, quality_ceiling: 1 } }
+            """);
+
+        Assert.Equal(
+            ["'element.e' only a cultivation method has a method block.", "'method.m' a cultivation method needs a method block."],
+            errors.Select(e => e.Message).Order(StringComparer.Ordinal).ToList());
+    }
+
+    [Fact]
     public void RepoContent_IsValid()
     {
         var loaded = ContentLoader.Load(ContentFiles.FromDirectory(RepoPaths.Content));

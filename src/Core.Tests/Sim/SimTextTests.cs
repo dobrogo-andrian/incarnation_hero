@@ -37,10 +37,12 @@ public sealed class SimTextTests
                 "Пул ці: 100 / 100",
                 "Бойова ці: 50 / 50",
                 "Токсини: 0 / 20",
-                "Ці: Перший етап ці, шкала етапу 0 / 100",
+                "Ці: Смертний, шкала етапу 0 / 100",
+                "Метод культивації: немає",
                 "Фундамент: 0 (знання 0, чистота 0)",
                 "Духовні камені: 30",
                 "Пігулка збирання ці, кількість: 2, енергія наступної: 30",
+                "Аптека хабу: Пігулка закладання основи, ціна в каменях: 80",
                 "Аптека хабу: Пігулка збирання ці, ціна в каменях: 12",
                 "Аптека хабу: Пігулка духовної роси, ціна в каменях: 30",
                 "Книгарня хабу: Фоліант методу лазурового подиху, ціна в каменях: 40",
@@ -89,5 +91,27 @@ public sealed class SimTextTests
         Assert.Equal("Заняття завершено: Медитація (Очищення), Тихий двір.", Loc.Resolve(SimText.Describe(new ActivityFinished(meditation))!));
         var travel = new TravelActivity([new TravelLeg("zone.bamboo_grove", 1)]);
         Assert.Equal("Заняття завершено: Подорож, мета — Бамбуковий гай.", Loc.Resolve(SimText.Describe(new ActivityFinished(travel))!));
+        var seclusion = new BreakthroughActivity("qi", "place.hub.quiet_courtyard", false);
+        Assert.Equal("Заняття завершено: Усамітнення для прориву, Тихий двір.", Loc.Resolve(SimText.Describe(new ActivityFinished(seclusion))!));
+        Assert.Equal(
+            "Прорив вдався: Перший етап ці. Якість: Добрий. Років життя додано: 6.",
+            Loc.Resolve(SimText.Describe(new BreakthroughSucceeded("qi", "stage.qi.1", "rank.good", 6))!));
+        Assert.Equal(
+            "Прорив не вдався (легка нестача): частину шкали втрачено, у тілі осіли токсини.",
+            Loc.Resolve(SimText.Describe(new BreakthroughFailed("qi", "failure_zone.light"))!));
+        Assert.Equal("Забіг завершено: загибель під час прориву.", Loc.Resolve(SimText.Describe(new RunEnded(RunEndCause.BreakthroughDeath))!));
+    }
+
+    [Fact]
+    public void ViewLines_ShowTheBreakthroughForecastOnceTheScaleIsFull()
+    {
+        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        sim.State.Player.Tracks.Single().StageProgress = 100;
+
+        // Foundation 0 of 40: the deficit is total. Quality 30 at age 12 + 4 weeks of seclusion: age −0.1.
+        Assert.Contains(
+            "Прогноз прориву: поріг 40, фундамент 0, шанс провалу 95% (червона зона); якість 29.9 — Звичайний "
+            + "(база 30, чистота +0, токсини −0, вік −0.1, відкладання −0, стеля 45)",
+            ViewText(sim));
     }
 }

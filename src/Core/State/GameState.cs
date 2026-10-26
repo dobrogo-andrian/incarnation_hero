@@ -23,6 +23,7 @@ public enum InterruptCategory
 public enum RunEndCause
 {
     OldAge,
+    BreakthroughDeath,
 }
 
 /// <summary>
@@ -31,7 +32,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 8;
+    public const int CurrentSchemaVersion = 9;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -93,6 +94,12 @@ public sealed class PlayerState
 
     /// <summary>Techniques, elements and methods studied at least a little, in knowledge ID order.</summary>
     public List<KnowledgeLevel> Knowledge { get; set; } = [];
+
+    /// <summary>The cultivation method breakthroughs go through (§6); null without one.</summary>
+    public string? ActiveMethodId { get; set; }
+
+    /// <summary>Quality ceiling a breakthrough pill adds to the next breakthrough; spent by the attempt (§4.5).</summary>
+    public double BreakthroughCeilingBonus { get; set; }
 }
 
 /// <summary>How far one piece of knowledge has been comprehended (§6).</summary>
@@ -171,11 +178,14 @@ public sealed class CultivationTrack
 {
     public string VectorId { get; set; } = "";
 
-    /// <summary>Index into the vector's stage list: 0 is the first stage.</summary>
+    /// <summary>Index into the vector's stage list: 0 is the mortal start, before the first breakthrough.</summary>
     public int StageIndex { get; set; }
     public double StageProgress { get; set; }
 
-    /// <summary>Quality rank of the last breakthrough; null until the first one.</summary>
+    /// <summary>Age at which the scale last became full; delaying the breakthrough after it costs quality (§4.5).</summary>
+    public int? ScaleFullSinceAgeWeeks { get; set; }
+
+    /// <summary>Quality rank index (into <c>config.breakthrough</c> ranks) of the last breakthrough; null until the first one.</summary>
     public int? LastBreakthroughQuality { get; set; }
 }
 

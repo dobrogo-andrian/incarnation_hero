@@ -3,7 +3,7 @@
 - id: shop.hub.apothecary
   name: { uk: "Аптека хабу" }
   zone: zone.hub
-  prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30 }
+  prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30, item.pill.foundation_building: 80 }
 
 - id: shop.hub.library
   name: { uk: "Книгарня хабу" }

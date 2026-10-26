@@ -28,7 +28,8 @@ public static class ItemSystem
         StateNumbers.Round(pill.Energy * Math.Pow(pill.RepeatFactor, Count(player.PillsTaken, itemId)));
 
     /// <summary>
-    /// Takes a carried pill: its energy joins the pill-energy buff and its toxins build up. Refused
+    /// Takes a carried pill: its energy joins the pill-energy buff, a breakthrough pill raises the next
+    /// breakthrough's ceiling (the strongest one counts), and its toxins build up. Refused
     /// when the toxins would go over their maximum, the tolerance (§4.4).
     /// </summary>
     public static CommandOutcome UsePill(PlayerState player, SimContext ctx, string itemId)
@@ -46,7 +47,9 @@ public static class ItemSystem
         double energy = NextPillEnergy(player, itemId, pill);
         Change(player.Items, itemId, -1);
         Change(player.PillsTaken, itemId, 1);
-        CultivationSystem.AddPillEnergy(player, energy);
+        if (energy > 0)
+            CultivationSystem.AddPillEnergy(player, energy);
+        player.BreakthroughCeilingBonus = Math.Max(player.BreakthroughCeilingBonus, pill.CeilingBonus);
         ResourceSystem.Restore(player, ctx, toxinsId, pill.Toxicity);
         return CommandOutcome.Accept([new PillTaken(itemId, energy)]);
     }

@@ -26,6 +26,11 @@ public static class RejectReasons
     public static readonly LocKey PlaceFull = new("str.reject.place_full");
     public static readonly LocKey NothingToStudy = new("str.reject.nothing_to_study");
     public static readonly LocKey StudyCapReached = new("str.reject.study_cap_reached");
+    public static readonly LocKey NoNextStage = new("str.reject.no_next_stage");
+    public static readonly LocKey StageScaleNotFull = new("str.reject.stage_scale_not_full");
+    public static readonly LocKey DeathRiskNotAccepted = new("str.reject.death_risk_not_accepted");
+    public static readonly LocKey NotAMethod = new("str.reject.not_a_method");
+    public static readonly LocKey MethodNotStudied = new("str.reject.method_not_studied");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

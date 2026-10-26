@@ -2,10 +2,10 @@ namespace Core.Content;
 
 /// <summary>
 /// Something comprehension raises the level of (§6): a technique (<c>tech.spear.piercing_dragon</c>),
-/// an element (<c>element.fire</c>) or a cultivation method (<c>method.azure_breath</c>). For now
-/// only the level matters; combat and breakthroughs give techniques and methods their effects later.
+/// an element (<c>element.fire</c>) or a cultivation method (<c>method.azure_breath</c>). A method
+/// also says what it gives as the active one (<see cref="Method"/>); techniques get their effects with combat.
 /// </summary>
-public sealed class KnowledgeDef : ContentDef
+public sealed class KnowledgeDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
 
@@ -14,6 +14,19 @@ public sealed class KnowledgeDef : ContentDef
 
     /// <summary>Elements can be sensed without a folio, up to <see cref="RunConfigDef.ElementBasicMaxLevel"/> (§6).</summary>
     public bool IsElement => Id.StartsWith("element.", StringComparison.Ordinal);
+
+    public bool IsMethod => Id.StartsWith("method.", StringComparison.Ordinal);
+
+    /// <summary>Required on a cultivation method, forbidden elsewhere.</summary>
+    public MethodDef? Method { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if ((Method is null) == IsMethod)
+            yield return IsMethod ? "a cultivation method needs a method block." : "only a cultivation method has a method block.";
+        if (Method is { } m && (m.QualityCeiling <= 0 || m.QualityCeilingPerLevel < 0 || m.PurityCap < 0 || m.PurityCapPerLevel < 0))
+            yield return "method needs a positive quality_ceiling and non-negative per-level growth and purity cap.";
+    }
 }
 
 /// <summary>

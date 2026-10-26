@@ -13,8 +13,9 @@ public sealed class ItemDef : ContentDef, IValidatedDef
     {
         if ((Pill is null) == (Folio is null))
             yield return "must be exactly one of: pill, folio.";
-        if (Pill is not null && (Pill.Energy <= 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1))
-            yield return "pill needs positive energy, non-negative toxicity and a repeat_factor in (0, 1].";
+        if (Pill is not null && (Pill.Energy < 0 || Pill.CeilingBonus < 0 || Pill.Energy + Pill.CeilingBonus <= 0
+            || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1))
+            yield return "pill needs energy or a ceiling_bonus (neither negative), non-negative toxicity and a repeat_factor in (0, 1].";
         if (Folio is not null && (Folio.MaxLevel <= 0 || Folio.Speed <= 0))
             yield return "folio needs a positive max_level and speed.";
     }
@@ -23,11 +24,14 @@ public sealed class ItemDef : ContentDef, IValidatedDef
 /// <summary>
 /// A pill's effect (§4.3–4.4): <see cref="Energy"/> pill-energy points, shrinking by
 /// <see cref="RepeatFactor"/> for every earlier pill of the same type, and the same
-/// <see cref="Toxicity"/> every time.
+/// <see cref="Toxicity"/> every time. A breakthrough pill raises the quality ceiling of the next
+/// breakthrough by <see cref="CeilingBonus"/> instead (§4.5); several do not add up.
 /// </summary>
 public sealed class PillDef
 {
     public double Energy { get; set; }
+
+    public double CeilingBonus { get; set; }
 
     public double Toxicity { get; set; }
 

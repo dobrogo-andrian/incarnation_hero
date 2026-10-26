@@ -10,6 +10,7 @@ namespace Core.State;
 [JsonDerivedType(typeof(WaitActivity), "wait")]
 [JsonDerivedType(typeof(TravelActivity), "travel")]
 [JsonDerivedType(typeof(MeditateActivity), "meditate")]
+[JsonDerivedType(typeof(BreakthroughActivity), "breakthrough")]
 public abstract record Activity;
 
 /// <summary>Let time pass doing nothing in particular.</summary>
@@ -20,6 +21,13 @@ public sealed record WaitActivity : Activity;
 /// also names what it studies: a carried folio's item ID, or an element to sense without one (§6).
 /// </summary>
 public sealed record MeditateActivity(string DirectionId, string PlaceId, string? SubjectId = null) : Activity;
+
+/// <summary>
+/// Seclusion at a meditation place for a breakthrough of the vector's stage (§4.5); it lasts the
+/// stage's breakthrough weeks and resolves in the last one. Only an attempt that accepted the risk
+/// of death can die of it.
+/// </summary>
+public sealed record BreakthroughActivity(string VectorId, string PlaceId, bool AcceptDeathRisk) : Activity;
 
 /// <summary>
 /// Moving along a route found by Core; its length is the sum of the legs, not chosen by the player.

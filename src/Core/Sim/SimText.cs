@@ -34,6 +34,15 @@ public static class SimText
     private static readonly LocKey FoundationLine = new("str.view.foundation");
     private static readonly LocKey KnowledgeLine = new("str.view.knowledge");
     private static readonly LocKey MeditateStudy = new("str.activity.meditate_study");
+    private static readonly LocKey LastQualityLine = new("str.view.last_breakthrough");
+    private static readonly LocKey ForecastLine = new("str.view.breakthrough_forecast");
+    private static readonly LocKey NoDeficit = new("str.view.no_deficit");
+    private static readonly LocKey MethodLine = new("str.view.method");
+    private static readonly LocKey NoMethodLine = new("str.view.no_method");
+    private static readonly LocKey Seclusion = new("str.activity.breakthrough");
+    private static readonly LocKey BreakthroughDeath = new("str.end.breakthrough_death");
+    private static readonly LocKey Succeeded = new("str.event.breakthrough_succeeded");
+    private static readonly LocKey Failed = new("str.event.breakthrough_failed");
 
     private static readonly LocKey CombatInsight = new("str.buff.combat_insight");
     private static readonly LocKey PillEnergy = new("str.buff.pill_energy");
@@ -134,7 +143,12 @@ public static class SimText
                     new("required", Number(track.ProgressRequired)),
                 ],
             });
+            if (track.LastBreakthroughQuality is int rank)
+                lines.Add(LastQualityLine with { Args = [new("rank", Name(db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId).Ranks[rank]))] });
+            if (track.Forecast is { } forecast)
+                lines.Add(ForecastText(forecast));
         }
+        lines.Add(view.ActiveMethodId is { } method ? MethodLine with { Args = [new("method", Name(method))] } : NoMethodLine);
 
         var foundation = view.Foundation;
         lines.Add(FoundationLine with
@@ -174,8 +188,36 @@ public static class SimText
         StudyCapReached c => CapReached with { Args = [new("knowledge", Name(c.KnowledgeId))] },
         PillTaken p => PillTakenLine with { Args = [new("item", Name(p.ItemId)), new("energy", Number(p.Energy))] },
         StageScaleFull s => ScaleFull with { Args = [new("vector", Name(CultivationSystem.VectorDefId(s.VectorId)))] },
+        BreakthroughSucceeded b => Succeeded with
+        {
+            Args = [new("stage", Name(b.StageId)), new("rank", Name(b.RankId)), new("years", Number(b.LifespanYears))],
+        },
+        BreakthroughFailed b => Failed with { Args = [new("zone", Name(b.FailureZoneId))] },
         _ => null,
     };
+
+    private static LocKey ForecastText(BreakthroughEstimate forecast)
+    {
+        var q = forecast.Quality;
+        return ForecastLine with
+        {
+            Args =
+            [
+                new("threshold", Number(forecast.Threshold)),
+                new("foundation", Number(forecast.Foundation)),
+                new("chance", Number(forecast.FailureChance * 100)),
+                new("zone", forecast.FailureZoneId is { } zone ? Name(zone) : NoDeficit),
+                new("rank", Name(forecast.RankId)),
+                new("quality", Number(q.Value)),
+                new("ceiling", Number(q.Ceiling)),
+                new("base", Number(q.Base)),
+                new("purity", Number(q.Purity)),
+                new("toxins", Number(q.Toxins)),
+                new("age", Number(q.Age)),
+                new("delay", Number(q.Delay)),
+            ],
+        };
+    }
 
     private static LocKey Name(string contentId) => new(LocTable.ContentKey(contentId, "name"));
 
@@ -201,6 +243,7 @@ public static class SimText
             Args = [new("direction", Name(m.DirectionId)), new("subject", Name(subject)), new("place", Name(m.PlaceId))],
         },
         MeditateActivity m => Meditate with { Args = [new("direction", Name(m.DirectionId)), new("place", Name(m.PlaceId))] },
+        BreakthroughActivity b => Seclusion with { Args = [new("place", Name(b.PlaceId))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
     };
 
@@ -214,6 +257,7 @@ public static class SimText
     private static LocKey CauseName(RunEndCause cause) => cause switch
     {
         RunEndCause.OldAge => OldAge,
+        RunEndCause.BreakthroughDeath => BreakthroughDeath,
         _ => throw new ArgumentOutOfRangeException(nameof(cause), cause, null),
     };
 

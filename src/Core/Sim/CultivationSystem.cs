@@ -25,6 +25,28 @@ public static class CultivationSystem
         StateNumbers.Round(player.Knowledge.Sum(k => k.Level) * config.FoundationPerKnowledgeLevel),
         StateNumbers.Round(rules.Value(player, config.PurityStat) * config.FoundationPerPurity));
 
+    /// <summary>
+    /// Makes a method studied to level 1 or more the active one, taking its aspect profile (A2); null
+    /// goes back to no method and the starting profile. Instant.
+    /// </summary>
+    public static CommandOutcome SetActiveMethod(PlayerState player, SimContext ctx, string? methodId)
+    {
+        if (methodId is null)
+        {
+            player.ActiveMethodId = null;
+            player.AspectProfileId = ctx.Config.StartAspectProfile;
+            return CommandOutcome.Accept([]);
+        }
+        if (!ctx.Content.TryGet<KnowledgeDef>(methodId, out var knowledge) || knowledge.Method is not { } method)
+            return CommandOutcome.Reject(RejectReasons.NotAMethod);
+        if (KnowledgeSystem.Level(player, methodId) == 0)
+            return CommandOutcome.Reject(RejectReasons.MethodNotStudied);
+
+        player.ActiveMethodId = methodId;
+        player.AspectProfileId = method.AspectProfile;
+        return CommandOutcome.Accept([]);
+    }
+
     /// <summary>A new combat insight does not add to an older one: the stronger of the two remains.</summary>
     public static void GrantCombatInsight(PlayerState player, double points)
     {
@@ -86,7 +108,10 @@ public static class CultivationSystem
 
         track.StageProgress = amount >= room ? required : StateNumbers.Round(track.StageProgress + amount);
         if (IsScaleFull(track, ctx.Content))
+        {
+            track.ScaleFullSinceAgeWeeks = player.AgeWeeks;
             events.Add(new StageScaleFull(track.VectorId));
+        }
     }
 
     private static bool IsScaleFull(CultivationTrack track, ContentDb db) =>

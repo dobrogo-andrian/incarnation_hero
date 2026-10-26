@@ -38,12 +38,15 @@ public static class ContentLoader
         ["tech"] = typeof(KnowledgeDef),
         ["element"] = typeof(KnowledgeDef),
         ["method"] = typeof(KnowledgeDef),
+        ["rank"] = typeof(QualityRankDef),
+        ["failure_zone"] = typeof(FailureZoneDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>
     private static readonly Dictionary<string, Type> TypesById = new(StringComparer.Ordinal)
     {
         [EconomyConfigDef.EconomyId] = typeof(EconomyConfigDef),
+        [BreakthroughConfigDef.BreakthroughId] = typeof(BreakthroughConfigDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

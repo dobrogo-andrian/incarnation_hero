@@ -1,23 +1,50 @@
-# Cultivation vector qi and its stages (tech 2.6). The MVP has 3-4 stages (§4.5).
-# Stage names are placeholders until the GDD names them.
-# progress_required: size of the breakthrough scale, filled only by assimilation (§4.1). Draft numbers.
+# Cultivation vector qi and its stages (tech 2.6). The MVP has 3-4 stages (§4.5); a run starts as a
+# mortal (stage.qi.0), so there are 4 breakthroughs (D35). Stage names are placeholders until the GDD names them.
+# progress_required: size of the breakthrough scale, filled only by assimilation (§4.1).
+# breakthrough (out of this stage, §4.5): foundation threshold, seclusion weeks, and per quality rank
+# (config.breakthrough ranks, worst to best) years of life and body stat gain. Draft numbers.
 
 - id: vector.qi
   name: { uk: "Ці" }
-  stages: [stage.qi.1, stage.qi.2, stage.qi.3, stage.qi.4]
+  stages: [stage.qi.0, stage.qi.1, stage.qi.2, stage.qi.3, stage.qi.4]
+
+- id: stage.qi.0
+  name: { uk: "Смертний" }
+  progress_required: 100
+  breakthrough:
+    threshold: 40
+    weeks: 4
+    lifespan_years: [2, 4, 6, 9, 12]
+    stat_gain: [1, 2, 3, 4, 5]
 
 - id: stage.qi.1
   name: { uk: "Перший етап ці" }
-  progress_required: 100
+  progress_required: 200
+  breakthrough:
+    threshold: 100
+    weeks: 8
+    lifespan_years: [4, 7, 10, 14, 18]
+    stat_gain: [2, 3, 5, 7, 9]
 
 - id: stage.qi.2
   name: { uk: "Другий етап ці" }
-  progress_required: 200
+  progress_required: 400
+  breakthrough:
+    threshold: 200
+    weeks: 12
+    lifespan_years: [6, 10, 15, 20, 26]
+    stat_gain: [3, 5, 8, 11, 14]
 
 - id: stage.qi.3
   name: { uk: "Третій етап ці" }
-  progress_required: 400
+  progress_required: 800
+  breakthrough:
+    threshold: 350
+    weeks: 16
+    lifespan_years: [10, 16, 22, 30, 40]
+    stat_gain: [5, 8, 12, 16, 20]
 
+# The last stage: its scale is for the crisis and the final breakthrough (§11), not built yet.
 - id: stage.qi.4
   name: { uk: "Четвертий етап ці" }
-  progress_required: 800
+  progress_required: 1600

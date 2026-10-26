@@ -17,6 +17,7 @@ public sealed class SimContext
         Rng = rng;
         Config = content.Get<RunConfigDef>(RunConfigDef.RunId);
         Economy = content.Get<EconomyConfigDef>(EconomyConfigDef.EconomyId);
+        Breakthrough = content.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId);
         Rules = new CharacterRules(content);
         Map = new WorldMap(content);
     }
@@ -25,6 +26,7 @@ public sealed class SimContext
     public RngStreams Rng { get; }
     public RunConfigDef Config { get; }
     public EconomyConfigDef Economy { get; }
+    public BreakthroughConfigDef Breakthrough { get; }
     public CharacterRules Rules { get; }
     public WorldMap Map { get; }
 }

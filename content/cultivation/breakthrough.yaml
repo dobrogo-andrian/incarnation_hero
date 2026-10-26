@@ -1,0 +1,68 @@
+# How breakthroughs are judged (§4.5, D35). Draft numbers until Sim.Cli reports.
+# Quality = base + min(purity, purity cap) × quality_per_purity − toxins × quality_per_toxin
+#   − years of age past age_penalty_from_years × quality_per_age_year
+#   − years since the scale filled × quality_per_delay_year, clamped to [0, ceiling].
+# Ceiling and purity cap come from the active method (growing with its level), or the no-method values;
+# a breakthrough pill adds to the ceiling of the next attempt.
+
+- id: config.breakthrough
+  ranks: [rank.flawed, rank.common, rank.good, rank.perfect, rank.flawless]
+  base_quality: 30
+  quality_per_purity: 0.5
+  quality_per_toxin: 0.5
+  quality_per_age_year: 1
+  age_penalty_from_years: 12
+  quality_per_delay_year: 2
+  no_method_quality_ceiling: 45
+  no_method_purity_cap: 20
+  gain_stats: [stat.might, stat.endurance, stat.speed, stat.meridians]
+  failure_zones: [failure_zone.light, failure_zone.serious, failure_zone.red]
+
+# Quality ranks, worst to best. Names are placeholders.
+- id: rank.flawed
+  name: { uk: "Ущербний" }
+  min_quality: 0
+
+- id: rank.common
+  name: { uk: "Звичайний" }
+  min_quality: 20
+
+- id: rank.good
+  name: { uk: "Добрий" }
+  min_quality: 40
+
+- id: rank.perfect
+  name: { uk: "Досконалий" }
+  min_quality: 60
+
+- id: rank.flawless
+  name: { uk: "Бездоганний" }
+  min_quality: 80
+
+# Bands of the foundation deficit, (threshold − foundation) / threshold. The failure chance grows
+# linearly from chance_from to chance_to across a band. Failing costs a share of the stage scale,
+# toxins and a share of base purity; the red zone kills, and only an attempt that accepted the risk can enter it.
+# The internal injury of §4.5 comes with injuries (§8).
+- id: failure_zone.light
+  name: { uk: "легка нестача" }
+  up_to: 0.2
+  chance_from: 0
+  chance_to: 0.4
+  scale_loss: 0.3
+  toxins: 10
+
+- id: failure_zone.serious
+  name: { uk: "серйозна нестача" }
+  up_to: 0.5
+  chance_from: 0.4
+  chance_to: 0.8
+  scale_loss: 0.5
+  toxins: 20
+  purity_loss: 0.15
+
+- id: failure_zone.red
+  name: { uk: "червона зона" }
+  up_to: 1
+  chance_from: 0.8
+  chance_to: 0.95
+  fatal: true

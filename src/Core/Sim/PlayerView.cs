@@ -24,7 +24,8 @@ public sealed record PlayerView(
     IReadOnlyList<ItemView> Items,
     IReadOnlyList<ShopOfferView> ShopOffers,
     Foundation Foundation,
-    IReadOnlyList<KnowledgeView> Knowledge)
+    IReadOnlyList<KnowledgeView> Knowledge,
+    string? ActiveMethodId)
 {
     public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
     {
@@ -48,9 +49,7 @@ public sealed record PlayerView(
             player.Resources
                 .Select(r => new ResourceView(r.ResourceId, r.Current, rules.Explain(player, r.ResourceId)))
                 .ToList(),
-            player.Tracks
-                .Select(t => new TrackView(t.VectorId, t.StageIndex, t.StageProgress, CultivationSystem.Stage(t, content).ProgressRequired))
-                .ToList(),
+            player.Tracks.Select(t => TrackView.From(state, t, rules, content)).ToList(),
             player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList(),
             player.Stones,
             player.Items
@@ -60,7 +59,8 @@ public sealed record PlayerView(
                 .SelectMany(s => s.Prices.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => new ShopOfferView(s.Id, p.Key, p.Value)))
                 .ToList(),
             CultivationSystem.FoundationOf(player, rules, content.Get<RunConfigDef>(RunConfigDef.RunId)),
-            player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList());
+            player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList(),
+            player.ActiveMethodId);
     }
 }
 
@@ -77,8 +77,33 @@ public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> A
 /// <summary>A resource's current amount and its computed maximum.</summary>
 public sealed record ResourceView(string ResourceId, double Current, StatBreakdown Max);
 
-/// <summary>A cultivation vector's stage and how full its breakthrough scale is.</summary>
-public sealed record TrackView(string VectorId, int StageIndex, double StageProgress, double ProgressRequired);
+/// <summary>
+/// A cultivation vector's stage, how full its breakthrough scale is and the rank of the last
+/// breakthrough. With a full scale and a next stage, <see cref="Forecast"/> is the breakthrough as
+/// it will resolve at the end of the seclusion (the one in progress, or one started now).
+/// </summary>
+public sealed record TrackView(
+    string VectorId,
+    int StageIndex,
+    double StageProgress,
+    double ProgressRequired,
+    int? LastBreakthroughQuality,
+    BreakthroughEstimate? Forecast)
+{
+    public static TrackView From(GameState state, CultivationTrack track, CharacterRules rules, ContentDb content)
+    {
+        var stage = CultivationSystem.Stage(track, content);
+        BreakthroughEstimate? forecast = null;
+        if (stage.Breakthrough is { } breakthrough && track.StageProgress >= stage.ProgressRequired)
+        {
+            int weeksAhead = state.Activity is { Activity: BreakthroughActivity attempt, WeeksLeft: int left } && attempt.VectorId == track.VectorId
+                ? left
+                : breakthrough.Weeks;
+            forecast = BreakthroughSystem.Estimate(state.Player, track, content, rules, weeksAhead);
+        }
+        return new(track.VectorId, track.StageIndex, track.StageProgress, stage.ProgressRequired, track.LastBreakthroughQuality, forecast);
+    }
+}
 
 public sealed record BuffView(BuffKind Kind, double Points);
 

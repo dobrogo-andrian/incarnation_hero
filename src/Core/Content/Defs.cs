@@ -48,16 +48,33 @@ public sealed class StringDef : ContentDef
     public LocalizedText Text { get; set; } = new();
 }
 
-/// <summary>A cultivation vector (<c>vector.qi</c>) and its ordered stages.</summary>
-public sealed class CultivationVectorDef : ContentDef
+/// <summary>
+/// A cultivation vector (<c>vector.qi</c>) and its ordered stages. Every stage but the last has a
+/// breakthrough into the next one.
+/// </summary>
+public sealed class CultivationVectorDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
 
     [ContentRef(typeof(CultivationStageDef))]
     public List<string> Stages { get; set; } = [];
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        // A missing stage is already reported as a broken reference; which stage is last is unclear then.
+        if (!Stages.All(id => db.TryGet<CultivationStageDef>(id, out _)))
+            yield break;
+        for (int i = 0; i < Stages.Count; i++)
+        {
+            var stage = db.Get<CultivationStageDef>(Stages[i]);
+            bool last = i == Stages.Count - 1;
+            if ((stage.Breakthrough is null) != last)
+                yield return $"stage '{Stages[i]}' {(last ? "is the last and must not have" : "needs")} a breakthrough.";
+        }
+    }
 }
 
-/// <summary>One stage of a cultivation vector (<c>stage.qi.1</c>).</summary>
+/// <summary>One stage of a cultivation vector (<c>stage.qi.1</c>); index 0 is the mortal start.</summary>
 public sealed class CultivationStageDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
@@ -65,10 +82,20 @@ public sealed class CultivationStageDef : ContentDef, IValidatedDef
     /// <summary>Stage progress that fills the breakthrough scale (§4.1).</summary>
     public double ProgressRequired { get; set; }
 
+    /// <summary>The breakthrough out of this stage; null for the last stage.</summary>
+    public StageBreakthroughDef? Breakthrough { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (ProgressRequired <= 0)
             yield return "needs a positive progress_required.";
+        if (Breakthrough is not { } b)
+            yield break;
+        if (b.Threshold <= 0 || b.Weeks <= 0)
+            yield return "breakthrough needs a positive threshold and weeks.";
+        if (db.TryGet<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId, out var config)
+            && (b.LifespanYears.Count != config.Ranks.Count || b.StatGain.Count != config.Ranks.Count))
+            yield return "breakthrough lifespan_years and stat_gain need one entry per quality rank.";
     }
 }
 

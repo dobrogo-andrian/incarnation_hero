@@ -8,3 +8,8 @@
 - id: item.pill.spirit_dew
   name: { uk: "Пігулка духовної роси" }
   pill: { energy: 60, toxicity: 15, repeat_factor: 0.8 }
+
+# A breakthrough pill (§4.5): no energy, raises the quality ceiling of the next breakthrough.
+- id: item.pill.foundation_building
+  name: { uk: "Пігулка закладання основи" }
+  pill: { energy: 0, toxicity: 10, repeat_factor: 1, ceiling_bonus: 15 }

@@ -39,5 +39,15 @@ public sealed record RestoreQiWithStones(int Stones) : OverworldCommand;
 /// <summary>Burns up to <paramref name="Stones"/> spirit stones to refill a meditation place's reserve (D19).</summary>
 public sealed record RefillPlaceWithStones(string PlaceId, int Stones) : OverworldCommand;
 
+/// <summary>
+/// Goes into seclusion at <paramref name="PlaceId"/> to break through the vector's stage (§4.5),
+/// replacing any current activity. When the forecast is in the fatal zone, it starts only with
+/// <paramref name="AcceptDeathRisk"/>.
+/// </summary>
+public sealed record AttemptBreakthrough(string VectorId, string PlaceId, bool AcceptDeathRisk = false) : OverworldCommand;
+
+/// <summary>Makes a studied cultivation method the active one, or clears it with null (§6). Instant.</summary>
+public sealed record SetActiveMethod(string? MethodId) : OverworldCommand;
+
 /// <summary>Chooses which interrupt categories stop a running activity.</summary>
 public sealed record SetInterruptStops(IReadOnlyList<InterruptCategory> Categories) : OverworldCommand;

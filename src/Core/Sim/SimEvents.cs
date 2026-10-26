@@ -52,6 +52,12 @@ public sealed record StudyCapReached(string KnowledgeId) : InterruptEvent
     public override InterruptCategory Category => InterruptCategory.StudyCapReached;
 }
 
+/// <summary>The vector broke through into <paramref name="StageId"/> with a quality rank, gaining years of life (§4.5).</summary>
+public sealed record BreakthroughSucceeded(string VectorId, string StageId, string RankId, double LifespanYears) : SimEvent;
+
+/// <summary>A breakthrough failed in a survivable zone of the deficit and its price was paid (§4.5).</summary>
+public sealed record BreakthroughFailed(string VectorId, string FailureZoneId) : SimEvent;
+
 /// <summary>The meditation place's reserve can no longer cover a full week of meditation.</summary>
 public sealed record PlaceQiLow(string PlaceId) : InterruptEvent
 {
