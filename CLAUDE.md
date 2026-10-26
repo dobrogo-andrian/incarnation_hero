@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Stage 0 has started: the projects are scaffolded, but there is no game code yet. Design docs live in `sources/` (Ukrainian, `.docx`):
+Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Stage 0 has started: the projects are scaffolded, but there is no game code yet. Design docs are Markdown in `docs/` (Ukrainian), one file per section. Start from the index `docs/README.md` and read only the files you need.
 
-- `sources/game_new.docx`: game design document (GDD), the source of truth for gameplay rules. Section refs like "§4.5" point here.
-- `sources/tech_stack.docx`: technical design. It fixes the stack, architecture, decisions D1–D15, working assumptions A1–A8 and open questions Q1–Q14.
+- `docs/gdd/`: game design document (GDD), the source of truth for gameplay rules. Section refs like "§4.5" point here (`grep "§4.5" docs/gdd`).
+- `docs/tech/`: technical design (stack, architecture, roadmap, risks). Tech sections have no `§` and are cited as "tech 2.8". Decisions D* and working assumptions A* are in `docs/tech/decisions.md`; open questions Q* are in `docs/tech/open-questions.md`.
+- `.claude/agents/game-designer.md`: design-partner subagent for GDD sessions.
+- `sources/archive/*.docx`: the original Word files. Read-only, don't edit or use as a source.
 
-Read text out of them with `unzip -p <file> word/document.xml` and strip the tags. If code contradicts the docs, or a task touches an open question (Q*), point it out and don't decide it silently.
+If code contradicts the docs, or a task touches an open question (Q*), point it out and don't decide it silently. When a design decision changes, edit the matching `.md` file. When a Q is resolved, move it into `decisions.md` as a D or A entry.
 
 ## Stack (decided)
 
@@ -42,7 +44,7 @@ dotnet run --project src/Sim.Cli -- <args>
 /content             (planned) YAML: balance/, cultivation/, knowledge/, combat/, world/, events/, rumors/, injuries/, items/
 /loc                 (planned) localization tables (uk, en, zh) as CSV
 /analysis            (planned) Python notebooks
-/docs                (planned) design docs, ai-guidelines.md
+/docs                design docs: README.md (index), gdd/, tech/; ai-guidelines.md planned
 ```
 
 Planned Sim.Cli usage: `sim run --runs 5000 --bot cautious --seed-from 1 --out runs.jsonl` and `sim arena --a grp.X --b grp.Y --n 2000`. Bots: `cautious`, `fighter`, `pill_rusher`, `random`.
