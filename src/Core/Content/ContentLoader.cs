@@ -33,6 +33,14 @@ public static class ContentLoader
         ["route"] = typeof(RouteDef),
         ["place"] = typeof(PlaceDef),
         ["meditation"] = typeof(MeditationDirectionDef),
+        ["item"] = typeof(ItemDef),
+        ["shop"] = typeof(ShopDef),
+    };
+
+    /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>
+    private static readonly Dictionary<string, Type> TypesById = new(StringComparer.Ordinal)
+    {
+        [EconomyConfigDef.EconomyId] = typeof(EconomyConfigDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()
@@ -120,7 +128,7 @@ public static class ContentLoader
         }
 
         string kind = id.Split('.', 2)[0];
-        if (!TypesByKind.TryGetValue(kind, out var type))
+        if (!TypesById.TryGetValue(id, out var type) && !TypesByKind.TryGetValue(kind, out type))
         {
             errors.Add(new ContentError(file.Path, line, $"Unknown content kind '{kind}' in id '{id}'."));
             return;

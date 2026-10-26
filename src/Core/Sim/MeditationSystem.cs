@@ -34,7 +34,11 @@ public static class MeditationSystem
         double efficiency = covered ? 1 : Math.Max(ctx.Config.MeditationDepletedFloor, place.Reserve / draw);
         place.Reserve = StateNumbers.Round(Math.Max(0, place.Reserve - draw));
 
-        Apply(state.Player, ctx, direction.Target, direction.Rate * placeDef.Density * efficiency, events);
+        double gain = direction.Rate * placeDef.Density * efficiency;
+        if (direction.Purges is { } purged)
+            gain -= ResourceSystem.Drain(state.Player, purged, gain * direction.PurgeRatio) / direction.PurgeRatio;
+        if (gain > 0)
+            Apply(state.Player, ctx, direction.Target, gain, events);
 
         if (covered && place.Reserve < draw)
             events.Add(new PlaceQiLow(meditation.PlaceId));

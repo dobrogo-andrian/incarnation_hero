@@ -14,6 +14,9 @@ public sealed record ActivityCancelled(Activity Activity) : SimEvent;
 /// <summary>The player reached a zone, on the way or at the destination.</summary>
 public sealed record ZoneEntered(string ZoneId) : SimEvent;
 
+/// <summary>A pill was taken and gave <paramref name="Energy"/> points of pill energy.</summary>
+public sealed record PillTaken(string ItemId, double Energy) : SimEvent;
+
 /// <summary>The run is over; the mode is now <see cref="GameMode.RunEnd"/>.</summary>
 public sealed record RunEnded(RunEndCause Cause) : SimEvent;
 

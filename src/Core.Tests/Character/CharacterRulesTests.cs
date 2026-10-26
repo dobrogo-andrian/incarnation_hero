@@ -12,7 +12,7 @@ public sealed class CharacterRulesTests
         new() { TargetId = target, Op = op, Value = value, SourceId = source, WeeksLeft = weeks };
 
     [Fact]
-    public void NewCharacter_StartsWithStatsFromContentAndFullResources()
+    public void NewCharacter_StartsWithStatsFromContentAndFullResourcesButNoToxins()
     {
         var player = NewGame().State.Player;
 
@@ -23,7 +23,7 @@ public sealed class CharacterRulesTests
         Assert.Equal(0, player.Stats[4].Base);
         Assert.Equal("aspect_profile.balanced", player.AspectProfileId);
         Assert.Equal(
-            [("resource.health", 100.0), ("resource.body_energy", 100.0), ("resource.qi_pool", 100.0), ("resource.combat_qi", 50.0)],
+            [("resource.health", 100.0), ("resource.body_energy", 100.0), ("resource.qi_pool", 100.0), ("resource.combat_qi", 50.0), ("resource.toxins", 0.0)],
             player.Resources.Select(r => (r.ResourceId, r.Current)));
     }
 

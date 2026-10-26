@@ -119,6 +119,10 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     /// <summary>Combat insight below this many points is gone.</summary>
     public double CombatInsightMinPoints { get; set; }
 
+    /// <summary>The resource pills fill with toxins; its maximum is the tolerance that limits pills (§4.4).</summary>
+    [ContentRef(typeof(ResourceDef))]
+    public string ToxinsResource { get; set; } = "";
+
     /// <summary>Where a run starts: the hub settlement (§9).</summary>
     [ContentRef(typeof(ZoneDef))]
     public string StartZone { get; set; } = "";

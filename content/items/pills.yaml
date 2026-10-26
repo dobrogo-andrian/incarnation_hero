@@ -1,0 +1,10 @@
+# Pills (§4.3–4.4). Energy feeds assimilation; toxicity is the same every time, while energy
+# shrinks by repeat_factor for every earlier pill of the same type. Draft numbers.
+
+- id: item.pill.qi_gathering
+  name: { uk: "Пігулка збирання ці" }
+  pill: { energy: 30, toxicity: 8, repeat_factor: 0.8 }
+
+- id: item.pill.spirit_dew
+  name: { uk: "Пігулка духовної роси" }
+  pill: { energy: 60, toxicity: 15, repeat_factor: 0.8 }

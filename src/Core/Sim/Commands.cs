@@ -27,5 +27,17 @@ public sealed record CancelActivity : OverworldCommand;
 /// <summary>Travels to <paramref name="ZoneId"/> by the fastest route (replacing any current activity).</summary>
 public sealed record Travel(string ZoneId) : OverworldCommand;
 
+/// <summary>Takes one carried pill (§4.3). Instant: no time passes.</summary>
+public sealed record UsePill(string ItemId) : OverworldCommand;
+
+/// <summary>Buys one item in a shop of the current zone (§13.3).</summary>
+public sealed record Buy(string ItemId) : OverworldCommand;
+
+/// <summary>Burns up to <paramref name="Stones"/> spirit stones to refill the qi pool (D18).</summary>
+public sealed record RestoreQiWithStones(int Stones) : OverworldCommand;
+
+/// <summary>Burns up to <paramref name="Stones"/> spirit stones to refill a meditation place's reserve (D19).</summary>
+public sealed record RefillPlaceWithStones(string PlaceId, int Stones) : OverworldCommand;
+
 /// <summary>Chooses which interrupt categories stop a running activity.</summary>
 public sealed record SetInterruptStops(IReadOnlyList<InterruptCategory> Categories) : OverworldCommand;

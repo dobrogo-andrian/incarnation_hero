@@ -58,6 +58,9 @@ public sealed class ResourceDef : ContentDef, IValidatedDef
 
     public double Coefficient { get; set; }
 
+    /// <summary>Starts a run at zero instead of full: toxins build up towards their maximum, the tolerance.</summary>
+    public bool StartEmpty { get; set; }
+
     /// <summary>How much returns on its own each week, up to the maximum (§13.4 for qi).</summary>
     public double RegenPerWeek { get; set; }
 

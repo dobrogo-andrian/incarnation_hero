@@ -16,6 +16,7 @@ public sealed class SimContext
         Content = content;
         Rng = rng;
         Config = content.Get<RunConfigDef>(RunConfigDef.RunId);
+        Economy = content.Get<EconomyConfigDef>(EconomyConfigDef.EconomyId);
         Rules = new CharacterRules(content);
         Map = new WorldMap(content);
     }
@@ -23,6 +24,7 @@ public sealed class SimContext
     public ContentDb Content { get; }
     public RngStreams Rng { get; }
     public RunConfigDef Config { get; }
+    public EconomyConfigDef Economy { get; }
     public CharacterRules Rules { get; }
     public WorldMap Map { get; }
 }

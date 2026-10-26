@@ -48,7 +48,7 @@ public sealed class CharacterRules
     {
         player.Stats = Stats.Select(s => new StatValue { StatId = s.Id, Base = s.StartValue }).ToList();
         player.AspectProfileId = StartAspectProfile;
-        player.Resources = Resources.Select(r => new ResourceValue { ResourceId = r.Id, Current = Value(player, r.Id) }).ToList();
+        player.Resources = Resources.Select(r => new ResourceValue { ResourceId = r.Id, Current = r.StartEmpty ? 0 : Value(player, r.Id) }).ToList();
     }
 
     public double Value(PlayerState player, string id) => Explain(player, id).Value;

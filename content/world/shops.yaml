@@ -1,0 +1,6 @@
+# Shops (§13.3). Prices in spirit stones.
+
+- id: shop.hub.apothecary
+  name: { uk: "Аптека хабу" }
+  zone: zone.hub
+  prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30 }

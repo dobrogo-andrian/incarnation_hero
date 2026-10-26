@@ -24,4 +24,13 @@ public static class ResourceSystem
         double max = ctx.Rules.Value(player, resourceId);
         resource.Current = StateNumbers.Round(Math.Min(max, resource.Current + amount));
     }
+
+    /// <summary>Takes up to <paramref name="amount"/> from a resource, never below zero; returns what was taken.</summary>
+    public static double Drain(PlayerState player, string resourceId, double amount)
+    {
+        var resource = player.Resources.First(r => r.ResourceId == resourceId);
+        double taken = Math.Min(resource.Current, amount);
+        resource.Current = StateNumbers.Round(resource.Current - taken);
+        return taken;
+    }
 }

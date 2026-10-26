@@ -34,6 +34,33 @@
 - id: str.reject.stage_scale_full
   text: { uk: "Шкала етапу вже заповнена." }
 
+- id: str.reject.no_such_item
+  text: { uk: "Такого предмета немає при собі." }
+
+- id: str.reject.not_a_pill
+  text: { uk: "Це не пігулка." }
+
+- id: str.reject.toxins_too_high
+  text: { uk: "Тіло не витримає ще токсинів: спершу очистіться." }
+
+- id: str.reject.not_sold_here
+  text: { uk: "Тут таке не продають." }
+
+- id: str.reject.invalid_amount
+  text: { uk: "Кількість має бути додатною." }
+
+- id: str.reject.not_enough_stones
+  text: { uk: "Бракує духовних каменів." }
+
+- id: str.reject.too_dangerous_here
+  text: { uk: "Тут надто небезпечно, щоб поглинати ці каменів." }
+
+- id: str.reject.qi_pool_full
+  text: { uk: "Пул ці вже повний." }
+
+- id: str.reject.place_full
+  text: { uk: "Резерв ці місця вже повний." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -87,6 +114,18 @@
 - id: str.view.buff
   text: { uk: "Баф культивації: {buff}, пойнтів {points}" }
 
+- id: str.view.stones
+  text: { uk: "Духовні камені: {stones}" }
+
+- id: str.view.item
+  text: { uk: "{item}, кількість: {count}" }
+
+- id: str.view.pill
+  text: { uk: "{item}, кількість: {count}, енергія наступної: {energy}" }
+
+- id: str.view.offer
+  text: { uk: "{shop}: {item}, ціна в каменях: {price}" }
+
 - id: str.buff.combat_insight
   text: { uk: "бойове осяяння" }
 
@@ -139,6 +178,9 @@
 
 - id: str.event.buff_exhausted
   text: { uk: "Баф вичерпано: {buff}." }
+
+- id: str.event.pill_taken
+  text: { uk: "Прийнято пігулку: {item}, енергія {energy}." }
 
 - id: str.event.stage_scale_full
   text: { uk: "Шкала етапу заповнена ({vector}): можна наважитись на прорив." }

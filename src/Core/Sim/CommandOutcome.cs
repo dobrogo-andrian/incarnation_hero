@@ -15,6 +15,15 @@ public static class RejectReasons
     public static readonly LocKey PlaceNotHere = new("str.reject.place_not_here");
     public static readonly LocKey NoCultivationBuff = new("str.reject.no_cultivation_buff");
     public static readonly LocKey StageScaleFull = new("str.reject.stage_scale_full");
+    public static readonly LocKey NoSuchItem = new("str.reject.no_such_item");
+    public static readonly LocKey NotAPill = new("str.reject.not_a_pill");
+    public static readonly LocKey ToxinsTooHigh = new("str.reject.toxins_too_high");
+    public static readonly LocKey NotSoldHere = new("str.reject.not_sold_here");
+    public static readonly LocKey InvalidAmount = new("str.reject.invalid_amount");
+    public static readonly LocKey NotEnoughStones = new("str.reject.not_enough_stones");
+    public static readonly LocKey TooDangerousHere = new("str.reject.too_dangerous_here");
+    public static readonly LocKey QiPoolFull = new("str.reject.qi_pool_full");
+    public static readonly LocKey PlaceFull = new("str.reject.place_full");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

@@ -19,7 +19,10 @@ public sealed record PlayerView(
     IReadOnlyList<StatView> Stats,
     IReadOnlyList<ResourceView> Resources,
     IReadOnlyList<TrackView> Tracks,
-    IReadOnlyList<BuffView> Buffs)
+    IReadOnlyList<BuffView> Buffs,
+    int Stones,
+    IReadOnlyList<ItemView> Items,
+    IReadOnlyList<ShopOfferView> ShopOffers)
 {
     public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
     {
@@ -46,7 +49,14 @@ public sealed record PlayerView(
             player.Tracks
                 .Select(t => new TrackView(t.VectorId, t.StageIndex, t.StageProgress, CultivationSystem.Stage(t, content).ProgressRequired))
                 .ToList(),
-            player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList());
+            player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList(),
+            player.Stones,
+            player.Items
+                .Select(i => new ItemView(i.ItemId, i.Count, content.Get<ItemDef>(i.ItemId).Pill is { } pill ? ItemSystem.NextPillEnergy(player, i.ItemId, pill) : null))
+                .ToList(),
+            EconomySystem.ShopsHere(player, content)
+                .SelectMany(s => s.Prices.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => new ShopOfferView(s.Id, p.Key, p.Value)))
+                .ToList());
     }
 }
 
@@ -67,3 +77,9 @@ public sealed record ResourceView(string ResourceId, double Current, StatBreakdo
 public sealed record TrackView(string VectorId, int StageIndex, double StageProgress, double ProgressRequired);
 
 public sealed record BuffView(BuffKind Kind, double Points);
+
+/// <summary>A carried item; for a pill, the energy the next one of its type would give.</summary>
+public sealed record ItemView(string ItemId, int Count, double? NextPillEnergy);
+
+/// <summary>An item for sale in a shop of the player's zone.</summary>
+public sealed record ShopOfferView(string ShopId, string ItemId, int Price);

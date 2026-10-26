@@ -5,6 +5,8 @@
   name: { uk: "Очищення" }
   rate: 0.1
   target: stat.purity          # purity widens the qi pool (resource.qi_pool)
+  purges: resource.toxins      # toxins go first: each point of gain flushes purge_ratio toxins
+  purge_ratio: 10
 
 - id: meditation.recovery
   name: { uk: "Відновлення" }

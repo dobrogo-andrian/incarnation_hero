@@ -1,0 +1,53 @@
+using Core.Content;
+using Core.State;
+
+namespace Core.Sim;
+
+/// <summary>Carried items and taking pills (§4.3–4.4).</summary>
+public static class ItemSystem
+{
+    public static int Count(List<ItemCount> counts, string itemId) =>
+        counts.Find(c => c.ItemId == itemId)?.Count ?? 0;
+
+    /// <summary>Changes the count of <paramref name="itemId"/> by <paramref name="delta"/>; keeps the list in ID order without empty entries.</summary>
+    public static void Change(List<ItemCount> counts, string itemId, int delta)
+    {
+        if (counts.Find(c => c.ItemId == itemId) is not { } entry)
+        {
+            entry = new ItemCount { ItemId = itemId };
+            counts.Add(entry);
+            counts.Sort((a, b) => string.CompareOrdinal(a.ItemId, b.ItemId));
+        }
+        entry.Count += delta;
+        if (entry.Count <= 0)
+            counts.Remove(entry);
+    }
+
+    /// <summary>Energy the next pill of this type gives: every earlier one of the same type shrinks it by the repeat factor.</summary>
+    public static double NextPillEnergy(PlayerState player, string itemId, PillDef pill) =>
+        StateNumbers.Round(pill.Energy * Math.Pow(pill.RepeatFactor, Count(player.PillsTaken, itemId)));
+
+    /// <summary>
+    /// Takes a carried pill: its energy joins the pill-energy buff and its toxins build up. Refused
+    /// when the toxins would go over their maximum, the tolerance (§4.4).
+    /// </summary>
+    public static CommandOutcome UsePill(PlayerState player, SimContext ctx, string itemId)
+    {
+        if (Count(player.Items, itemId) == 0)
+            return CommandOutcome.Reject(RejectReasons.NoSuchItem);
+        if (ctx.Content.Get<ItemDef>(itemId).Pill is not { } pill)
+            return CommandOutcome.Reject(RejectReasons.NotAPill);
+
+        string toxinsId = ctx.Config.ToxinsResource;
+        double toxins = player.Resources.First(r => r.ResourceId == toxinsId).Current;
+        if (toxins + pill.Toxicity > ctx.Rules.Value(player, toxinsId))
+            return CommandOutcome.Reject(RejectReasons.ToxinsTooHigh);
+
+        double energy = NextPillEnergy(player, itemId, pill);
+        Change(player.Items, itemId, -1);
+        Change(player.PillsTaken, itemId, 1);
+        CultivationSystem.AddPillEnergy(player, energy);
+        ResourceSystem.Restore(player, ctx, toxinsId, pill.Toxicity);
+        return CommandOutcome.Accept([new PillTaken(itemId, energy)]);
+    }
+}

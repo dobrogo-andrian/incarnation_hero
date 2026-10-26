@@ -1,0 +1,81 @@
+namespace Core.Content;
+
+/// <summary>Something the player can carry (<c>item.pill.qi_gathering</c>). For now every item is a pill.</summary>
+public sealed class ItemDef : ContentDef, IValidatedDef
+{
+    public LocalizedText Name { get; set; } = new();
+
+    public PillDef? Pill { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (Pill is null)
+            yield return "has no effect: only pills exist so far.";
+        else if (Pill.Energy <= 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1)
+            yield return "pill needs positive energy, non-negative toxicity and a repeat_factor in (0, 1].";
+    }
+}
+
+/// <summary>
+/// A pill's effect (§4.3–4.4): <see cref="Energy"/> pill-energy points, shrinking by
+/// <see cref="RepeatFactor"/> for every earlier pill of the same type, and the same
+/// <see cref="Toxicity"/> every time.
+/// </summary>
+public sealed class PillDef
+{
+    public double Energy { get; set; }
+
+    public double Toxicity { get; set; }
+
+    public double RepeatFactor { get; set; }
+}
+
+/// <summary>A shop in a zone (<c>shop.hub.apothecary</c>, §13.3) selling items at fixed prices in spirit stones.</summary>
+public sealed class ShopDef : ContentDef, IValidatedDef
+{
+    public LocalizedText Name { get; set; } = new();
+
+    [ContentRef(typeof(ZoneDef))]
+    public string Zone { get; set; } = "";
+
+    [ContentRef(typeof(ItemDef))]
+    public Dictionary<string, int> Prices { get; set; } = [];
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (Prices.Values.Any(p => p <= 0))
+            yield return "prices must be positive.";
+    }
+}
+
+/// <summary>Spirit stone rates and the starting purse (<c>config.economy</c>, §13, tech 4.7). Exactly one per content set.</summary>
+public sealed class EconomyConfigDef : ContentDef, IValidatedDef
+{
+    public const string EconomyId = "config.economy";
+
+    public int StartStones { get; set; }
+
+    [ContentRef(typeof(ItemDef))]
+    public Dictionary<string, int> StartItems { get; set; } = [];
+
+    /// <summary>The resource stones refill: the qi pool (D18).</summary>
+    [ContentRef(typeof(ResourceDef))]
+    public string StoneRestores { get; set; } = "";
+
+    /// <summary>Points of <see cref="StoneRestores"/> one stone refills.</summary>
+    public double QiPerStone { get; set; }
+
+    /// <summary>Highest zone danger where stones may restore the qi pool; dangerous zones forbid it (§13.4).</summary>
+    public int StoneRestoreMaxDanger { get; set; }
+
+    /// <summary>Meditation place reserve one stone refills, up to the place's capacity (D19).</summary>
+    public double PlaceReservePerStone { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (QiPerStone <= 0 || PlaceReservePerStone <= 0)
+            yield return "stone rates must be positive.";
+        if (StartStones < 0 || StartItems.Values.Any(c => c <= 0))
+            yield return "starting stones must be non-negative and item counts positive.";
+    }
+}

@@ -30,7 +30,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 6;
+    public const int CurrentSchemaVersion = 7;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -80,6 +80,22 @@ public sealed class PlayerState
 
     /// <summary>Active cultivation buffs, at most one per kind, in <see cref="BuffKind"/> order.</summary>
     public List<CultivationBuff> Buffs { get; set; } = [];
+
+    /// <summary>Spirit stones: the only currency, and fuel for cultivation (§13.1).</summary>
+    public int Stones { get; set; }
+
+    /// <summary>Carried items, in item ID order.</summary>
+    public List<ItemCount> Items { get; set; } = [];
+
+    /// <summary>How many pills of each type were taken this run; each repeat gives less energy. In item ID order.</summary>
+    public List<ItemCount> PillsTaken { get; set; } = [];
+}
+
+/// <summary>A number of items of one type.</summary>
+public sealed class ItemCount
+{
+    public string ItemId { get; set; } = "";
+    public int Count { get; set; }
 }
 
 /// <summary>The changing part of the region; its fixed shape (zones, routes, places) is content.</summary>

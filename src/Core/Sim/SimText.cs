@@ -27,6 +27,10 @@ public static class SimText
     private static readonly LocKey ZoneLine = new("str.view.zone");
     private static readonly LocKey PlaceLine = new("str.view.place");
     private static readonly LocKey BuffLine = new("str.view.buff");
+    private static readonly LocKey StonesLine = new("str.view.stones");
+    private static readonly LocKey ItemLine = new("str.view.item");
+    private static readonly LocKey PillLine = new("str.view.pill");
+    private static readonly LocKey OfferLine = new("str.view.offer");
 
     private static readonly LocKey CombatInsight = new("str.buff.combat_insight");
     private static readonly LocKey PillEnergy = new("str.buff.pill_energy");
@@ -50,6 +54,7 @@ public static class SimText
     private static readonly LocKey PlaceLow = new("str.event.place_qi_low");
     private static readonly LocKey BuffGone = new("str.event.buff_exhausted");
     private static readonly LocKey ScaleFull = new("str.event.stage_scale_full");
+    private static readonly LocKey PillTakenLine = new("str.event.pill_taken");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -128,6 +133,17 @@ public static class SimText
 
         foreach (var buff in view.Buffs)
             lines.Add(BuffLine with { Args = [new("buff", BuffName(buff.Kind)), new("points", Number(buff.Points))] });
+
+        lines.Add(StonesLine with { Args = [new("stones", view.Stones)] });
+        foreach (var item in view.Items)
+        {
+            LocArg[] args = [new("item", Name(item.ItemId)), new("count", item.Count)];
+            lines.Add(item.NextPillEnergy is double energy
+                ? PillLine with { Args = [.. args, new("energy", Number(energy))] }
+                : ItemLine with { Args = args });
+        }
+        foreach (var offer in view.ShopOffers)
+            lines.Add(OfferLine with { Args = [new("shop", Name(offer.ShopId)), new("item", Name(offer.ItemId)), new("price", offer.Price)] });
         return lines;
     }
 
@@ -141,6 +157,7 @@ public static class SimText
         ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
         PlaceQiLow p => PlaceLow with { Args = [new("place", Name(p.PlaceId))] },
         BuffExhausted b => BuffGone with { Args = [new("buff", BuffName(b.Kind))] },
+        PillTaken p => PillTakenLine with { Args = [new("item", Name(p.ItemId)), new("energy", Number(p.Energy))] },
         StageScaleFull s => ScaleFull with { Args = [new("vector", Name(CultivationSystem.VectorDefId(s.VectorId)))] },
         _ => null,
     };

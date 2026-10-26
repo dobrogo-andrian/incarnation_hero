@@ -50,6 +50,7 @@ public sealed class Simulation
         };
         var sim = new Simulation(content, state, rng);
         sim.Rules.InitPlayer(state.Player);
+        EconomySystem.InitPlayer(state.Player, sim._ctx.Economy);
         WorldSystem.InitWorld(state.World, content);
         return sim;
     }
@@ -70,6 +71,10 @@ public sealed class Simulation
             ContinueActivity => ExecuteContinue(),
             CancelActivity => ExecuteCancel(),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
+            UsePill c => ItemSystem.UsePill(State.Player, _ctx, c.ItemId),
+            Buy c => EconomySystem.Buy(State.Player, _ctx, c.ItemId),
+            RestoreQiWithStones c => EconomySystem.RestoreQi(State.Player, _ctx, c.Stones),
+            RefillPlaceWithStones c => EconomySystem.RefillPlace(State, _ctx, c.PlaceId, c.Stones),
             _ => throw new NotSupportedException($"No handler for {command.GetType().Name}."),
         };
 

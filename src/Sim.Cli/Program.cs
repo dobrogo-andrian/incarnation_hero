@@ -32,6 +32,11 @@ static int Run(string[] options)
     var localizer = Localizer.FromContent(db);
     if (values.TryGetValue("--travel", out string? zone) && !RunToEnd(sim, new Travel(zone), localizer))
         return 1;
+    foreach (string pill in values.GetValueOrDefault("--pills", "").Split(',', StringSplitOptions.RemoveEmptyEntries))
+    {
+        if (!RunToEnd(sim, new UsePill(pill), localizer))
+            return 1;
+    }
     if (weeks != 0 && !RunToEnd(sim, new StartActivity(WeeksActivity(sim, values.GetValueOrDefault("--meditate")), weeks), localizer))
         return 1;
 
@@ -129,9 +134,9 @@ static int Usage()
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> [--travel <zoneId>] [--weeks <W|end>] [--meditate <directionId>] [--content <dir>]
-            Travels first, then spends the weeks waiting, or meditating at the zone's first place;
-            content defaults to ./content.
+          sim run --seed <N> [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId>] [--content <dir>]
+            Travels first, takes the pills in order, then spends the weeks waiting, or meditating at
+            the zone's first place; content defaults to ./content.
         """);
     return 2;
 }

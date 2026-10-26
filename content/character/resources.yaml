@@ -22,3 +22,10 @@
   name: { uk: "Бойова ці" }
   source: aspect.meridians.capacity
   coefficient: 5
+
+- id: resource.toxins
+  name: { uk: "Токсини" }
+  start_empty: true             # pills fill it; the maximum is the tolerance (§4.4)
+  base: 20
+  source: stat.purity           # purity raises the tolerance (§4.2)
+  coefficient: 1
