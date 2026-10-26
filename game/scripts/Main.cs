@@ -86,11 +86,15 @@ public partial class Main : Control
         buttons.AddChild(_waitOpen);
         buttons.AddChild(_newRun);
 
-        column.AddChild(_eventText);
-        column.AddChild(_choices);
-        column.AddChild(_view);
+        // Controls and the dialog stay on top; the long state list scrolls, so buttons never fall off screen.
+        var scroll = new ScrollContainer { SizeFlagsVertical = SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        scroll.AddChild(_view);
+
         column.AddChild(buttons);
         column.AddChild(_status);
+        column.AddChild(_eventText);
+        column.AddChild(_choices);
+        column.AddChild(scroll);
     }
 
     private void Send(Command command)
