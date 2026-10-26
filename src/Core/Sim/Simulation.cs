@@ -1,3 +1,4 @@
+using Core.Character;
 using Core.Content;
 using Core.Rng;
 using Core.State;
@@ -21,13 +22,16 @@ public sealed class Simulation
         State = state;
         _rng = rng;
         _config = content.Get<RunConfigDef>(RunConfigDef.RunId);
+        Rules = new CharacterRules(content);
     }
 
     public ContentDb Content { get; }
 
     public GameState State { get; }
 
-    public PlayerView View => PlayerView.From(State);
+    public CharacterRules Rules { get; }
+
+    public PlayerView View => PlayerView.From(State, Rules);
 
     public static Simulation NewGame(ContentDb content, ulong seed)
     {
@@ -44,7 +48,9 @@ public sealed class Simulation
                 Tracks = [new CultivationTrack { VectorId = QiVectorId }],
             },
         };
-        return new Simulation(content, state, rng);
+        var sim = new Simulation(content, state, rng);
+        sim.Rules.InitPlayer(state.Player);
+        return sim;
     }
 
     /// <summary>Resumes from a loaded state; RNG streams continue exactly where they were saved.</summary>

@@ -25,6 +25,10 @@ public static class ContentLoader
         ["stage"] = typeof(CultivationStageDef),
         ["str"] = typeof(StringDef),
         ["config"] = typeof(RunConfigDef),
+        ["stat"] = typeof(StatDef),
+        ["aspect"] = typeof(AspectDef),
+        ["aspect_profile"] = typeof(AspectProfileDef),
+        ["resource"] = typeof(ResourceDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

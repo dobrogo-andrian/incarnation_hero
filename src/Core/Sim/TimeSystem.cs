@@ -41,6 +41,7 @@ public static class TimeSystem
         LifeSystem.AdvanceWeek(state, config, rng, events);
         if (state.Mode == GameMode.RunEnd)
             return;
+        ModifierSystem.AdvanceWeek(state);
 
         ActivitySystem.AdvanceWeek(state, events);
     }

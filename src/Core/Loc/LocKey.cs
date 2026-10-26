@@ -16,6 +16,7 @@ public sealed record LocKey(string Key, IReadOnlyList<LocArg> Args)
 
 /// <summary>
 /// One named parameter, substituted for <c>{Name}</c> in the text. <see cref="Value"/> is a
-/// number, a plain string, or another <see cref="LocKey"/> that is resolved first.
+/// number, a plain string, another <see cref="LocKey"/> that is resolved first, or a list of
+/// <see cref="LocKey"/>s resolved and joined with commas.
 /// </summary>
 public sealed record LocArg(string Name, object Value);

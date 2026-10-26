@@ -4,9 +4,9 @@ namespace Core.Content;
 
 /// <summary>
 /// Cross-object checks on loaded content (tech 3.6), run at game start and by
-/// <c>Sim.Cli validate</c>. Currently: every <see cref="ContentRefAttribute"/> reference points
-/// to an existing object of the right type, and every <see cref="LocalizedText"/> has Ukrainian
-/// text. Errors come in ID order, then property name order.
+/// <c>Sim.Cli validate</c>. Every <see cref="ContentRefAttribute"/> reference points to an existing
+/// object of the right type, every <see cref="LocalizedText"/> has Ukrainian text, and every
+/// <see cref="IValidatedDef"/> passes its own rules. Errors come in ID order, then property name order.
 /// </summary>
 public static class ContentValidator
 {
@@ -30,6 +30,12 @@ public static class ContentValidator
                         CheckReference(db, reference.Target, id, field, source, errors);
                 }
             }
+
+            if (def is IValidatedDef validated)
+            {
+                foreach (string message in validated.Validate(db))
+                    errors.Add(new ContentError(source.File, source.Line, $"'{def.Id}' {message}"));
+            }
         }
         return errors;
     }
@@ -48,6 +54,7 @@ public static class ContentValidator
     {
         string id => new[] { id },
         IEnumerable<string> ids => ids,
+        System.Collections.IDictionary map => map.Keys.Cast<string>().Order(StringComparer.Ordinal),
         null => Array.Empty<string>(),
         _ => throw new InvalidOperationException($"[ContentRef] is not supported on {value.GetType().Name}."),
     };

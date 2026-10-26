@@ -42,6 +42,18 @@
 - id: str.view.track
   text: { uk: "{vector}: {stage}, прогрес {progress}" }
 
+- id: str.view.stat
+  text: { uk: "{stat}: {value}" }
+
+- id: str.view.body_stat
+  text: { uk: "{stat}: {value} ({aspects})" }
+
+- id: str.view.aspect
+  text: { uk: "{aspect} {value}" }
+
+- id: str.view.resource
+  text: { uk: "{resource}: {current} / {max}" }
+
 - id: str.mode.overworld
   text: { uk: "Світ" }
 

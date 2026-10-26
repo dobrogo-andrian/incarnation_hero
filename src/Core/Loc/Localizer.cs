@@ -31,6 +31,7 @@ public sealed partial class Localizer(IReadOnlyDictionary<string, string> table)
     private string Format(object value) => value switch
     {
         LocKey nested => Resolve(nested),
+        IEnumerable<LocKey> list => string.Join(", ", list.Select(Resolve)),
         IFormattable number => number.ToString(null, CultureInfo.InvariantCulture),
         _ => value.ToString() ?? "",
     };

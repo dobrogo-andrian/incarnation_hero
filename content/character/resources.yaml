@@ -1,0 +1,21 @@
+# Character resources (§2.2). Maximum = base + coefficient × source (D27).
+# Injuries, purity and the like change maximums through modifiers.
+
+- id: resource.health
+  name: { uk: "Здоров'я" }
+  source: aspect.might.vitality
+  coefficient: 10
+
+- id: resource.body_energy
+  name: { uk: "Енергія тіла" }
+  source: aspect.endurance.reserve
+  coefficient: 10
+
+- id: resource.qi_pool
+  name: { uk: "Пул ці" }
+  base: 100                     # purity will add to it (§4.2)
+
+- id: resource.combat_qi
+  name: { uk: "Бойова ці" }
+  source: aspect.meridians.capacity
+  coefficient: 5

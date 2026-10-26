@@ -24,9 +24,27 @@ public sealed class SimTextTests
                 "Очікувана тривалість життя: 60 р. 0 тиж.",
                 "Режим: Світ",
                 "Заняття: немає",
+                "Міць: 10 (Живучість 10, Стійкість 10)",
+                "Витривалість: 10 (Запас 10, Віддача 10)",
+                "Швидкість: 10 (Реакція 10, Верткість 10)",
+                "Сила меридіан: 10 (Ємність 10, Потік 10)",
+                "Сприйняття: 0",
+                "Здоров'я: 100 / 100",
+                "Енергія тіла: 100 / 100",
+                "Пул ці: 100 / 100",
+                "Бойова ці: 50 / 50",
                 "Ці: Перший етап ці, прогрес 0",
             ],
             ViewText(sim));
+    }
+
+    [Fact]
+    public void ViewLines_RoundComputedValuesToOneDecimal()
+    {
+        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        ModifierSystem.Apply(sim.State.Player, new Modifier { TargetId = "stat.speed", Op = ModifierOp.Mul, Value = 0.123, SourceId = "s" });
+
+        Assert.Contains("Швидкість: 11.2 (Реакція 11.2, Верткість 11.2)", ViewText(sim));
     }
 
     [Fact]

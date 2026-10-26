@@ -1,0 +1,15 @@
+# How body stats divide between their aspects (§2.1, A2). A stat's shares add up to 1;
+# an aspect is worth stat × 2 × share, so 0.5 gives it the full stat value.
+# Cultivation methods will bring their own profiles.
+
+- id: aspect_profile.balanced
+  name: { uk: "Рівновага" }
+  shares:
+    aspect.might.vitality: 0.5
+    aspect.might.resilience: 0.5
+    aspect.endurance.reserve: 0.5
+    aspect.endurance.output: 0.5
+    aspect.speed.reaction: 0.5
+    aspect.speed.agility: 0.5
+    aspect.meridians.capacity: 0.5
+    aspect.meridians.flow: 0.5

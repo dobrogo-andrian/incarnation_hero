@@ -62,6 +62,69 @@ public sealed class ContentValidatorTests
         Assert.Contains("'stage.qi.1'.Name has no 'uk' text", Assert.Single(errors).Message);
     }
 
+    private const string TwoAspectStat = """
+        - id: stat.might
+          name: { uk: "Міць" }
+          aspects: [aspect.a, aspect.b]
+        - id: aspect.a
+          name: { uk: "А" }
+        - id: aspect.b
+          name: { uk: "Б" }
+        """;
+
+    [Fact]
+    public void DictionaryKeys_AreCheckedAsReferences()
+    {
+        var errors = Validate(TwoAspectStat + """
+
+            - id: aspect_profile.p
+              name: { uk: "П" }
+              shares: { aspect.a: 0.5, aspect.b: 0.4, aspect.zzz: 0.1 }
+            """);
+
+        Assert.Contains(errors, e => e.Message.Contains("'aspect_profile.p'.Shares references missing id 'aspect.zzz'"));
+    }
+
+    [Fact]
+    public void AspectShares_MustAddUpToOnePerStat()
+    {
+        var errors = Validate(TwoAspectStat + """
+
+            - id: aspect_profile.p
+              name: { uk: "П" }
+              shares: { aspect.a: 0.5, aspect.b: 0.4 }
+            """);
+
+        Assert.Contains("shares of 'stat.might' aspects add up to 0.9", Assert.Single(errors).Message);
+    }
+
+    [Fact]
+    public void AspectProfile_MustCoverEveryAspect()
+    {
+        var errors = Validate(TwoAspectStat + """
+
+            - id: aspect_profile.p
+              name: { uk: "П" }
+              shares: { aspect.a: 1 }
+            """);
+
+        Assert.Contains("'aspect_profile.p' has no share for aspect.b", Assert.Single(errors).Message);
+    }
+
+    [Fact]
+    public void ResourceSource_MustBeStatOrAspect()
+    {
+        var errors = Validate("""
+            - id: stage.qi.1
+              name: { uk: "Перший" }
+            - id: resource.r
+              name: { uk: "Р" }
+              source: stage.qi.1
+            """);
+
+        Assert.Contains("source 'stage.qi.1' is neither a stat nor an aspect", Assert.Single(errors).Message);
+    }
+
     [Fact]
     public void RepoContent_IsValid()
     {

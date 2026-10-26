@@ -1,0 +1,50 @@
+# Character stats and their aspects (§2.1, D25). Aspect names are placeholders until the GDD names them.
+# Start values are the same for every run (D26); prerequisites (§2.4) will vary them later.
+
+- id: stat.might
+  name: { uk: "Міць" }
+  start_value: 10
+  aspects: [aspect.might.vitality, aspect.might.resilience]
+
+- id: aspect.might.vitality
+  name: { uk: "Живучість" }     # max health
+
+- id: aspect.might.resilience
+  name: { uk: "Стійкість" }     # resistance to injuries
+
+- id: stat.endurance
+  name: { uk: "Витривалість" }
+  start_value: 10
+  aspects: [aspect.endurance.reserve, aspect.endurance.output]
+
+- id: aspect.endurance.reserve
+  name: { uk: "Запас" }         # body energy pool
+
+- id: aspect.endurance.output
+  name: { uk: "Віддача" }       # energy released per turn
+
+- id: stat.speed
+  name: { uk: "Швидкість" }
+  start_value: 10
+  aspects: [aspect.speed.reaction, aspect.speed.agility]
+
+- id: aspect.speed.reaction
+  name: { uk: "Реакція" }       # initiative and movement points
+
+- id: aspect.speed.agility
+  name: { uk: "Верткість" }     # escape chance and range
+
+- id: stat.meridians
+  name: { uk: "Сила меридіан" }
+  start_value: 10
+  aspects: [aspect.meridians.capacity, aspect.meridians.flow]
+
+- id: aspect.meridians.capacity
+  name: { uk: "Ємність" }       # combat qi capacity
+
+- id: aspect.meridians.flow
+  name: { uk: "Потік" }         # qi transferred from the pool per turn
+
+- id: stat.perception
+  name: { uk: "Сприйняття" }
+  start_value: 0

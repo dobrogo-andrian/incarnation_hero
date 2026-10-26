@@ -20,6 +20,10 @@ public static class SimText
     private static readonly LocKey NoActivityLine = new("str.view.no_activity");
     private static readonly LocKey RunEndLine = new("str.view.run_end");
     private static readonly LocKey Track = new("str.view.track");
+    private static readonly LocKey StatLine = new("str.view.stat");
+    private static readonly LocKey BodyStatLine = new("str.view.body_stat");
+    private static readonly LocKey AspectPart = new("str.view.aspect");
+    private static readonly LocKey ResourceLine = new("str.view.resource");
 
     private static readonly LocKey Overworld = new("str.mode.overworld");
     private static readonly LocKey EventDialog = new("str.mode.event_dialog");
@@ -49,6 +53,36 @@ public static class SimText
                 : ActivityText(view.Activity),
         };
 
+        foreach (var stat in view.Stats)
+        {
+            var name = new LocArg("stat", Name(stat.Stat.Id));
+            var value = new LocArg("value", Number(stat.Stat.Value));
+            lines.Add(stat.Aspects.Count == 0
+                ? StatLine with { Args = [name, value] }
+                : BodyStatLine with
+                {
+                    Args =
+                    [
+                        name,
+                        value,
+                        new("aspects", stat.Aspects.Select(a => AspectPart with { Args = [new("aspect", Name(a.Id)), new("value", Number(a.Value))] }).ToList()),
+                    ],
+                });
+        }
+
+        foreach (var resource in view.Resources)
+        {
+            lines.Add(ResourceLine with
+            {
+                Args =
+                [
+                    new("resource", Name(resource.ResourceId)),
+                    new("current", Number(resource.Current)),
+                    new("max", Number(resource.Max.Value)),
+                ],
+            });
+        }
+
         foreach (var track in view.Tracks)
         {
             string vectorId = $"vector.{track.VectorId}";
@@ -57,8 +91,8 @@ public static class SimText
             {
                 Args =
                 [
-                    new("vector", new LocKey(LocTable.ContentKey(vectorId, "name"))),
-                    new("stage", new LocKey(LocTable.ContentKey(stageId, "name"))),
+                    new("vector", Name(vectorId)),
+                    new("stage", Name(stageId)),
                     new("progress", track.StageProgress),
                 ],
             });
@@ -75,6 +109,11 @@ public static class SimText
         RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
         _ => null,
     };
+
+    private static LocKey Name(string contentId) => new(LocTable.ContentKey(contentId, "name"));
+
+    /// <summary>Computed values are shown to one decimal place.</summary>
+    private static double Number(double value) => Math.Round(value, 1);
 
     private static LocKey Years(int weeks, int weeksPerYear) =>
         Duration with { Args = [new("years", weeks / weeksPerYear), new("weeks", weeks % weeksPerYear)] };

@@ -46,6 +46,18 @@ public sealed class LocalizerTests
     }
 
     [Fact]
+    public void ListArgument_IsResolvedAndJoinedWithCommas()
+    {
+        var key = LocKey.Of("str.ui.week", new LocArg("week", new List<LocKey>
+        {
+            new("stage.qi.1.name"),
+            LocKey.Of("str.ui.week", new LocArg("week", 2)),
+        }));
+
+        Assert.Equal("Тиждень: Перший етап, Тиждень: 2", Sample.Resolve(key));
+    }
+
+    [Fact]
     public void MissingKey_ResolvesToKey_AndMissingArgStaysAsPlaceholder()
     {
         Assert.Equal("str.nope", Sample.Resolve(new LocKey("str.nope")));

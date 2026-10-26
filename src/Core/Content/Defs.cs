@@ -19,14 +19,24 @@ public sealed class LocalizedText
 }
 
 /// <summary>
-/// Marks a <c>string</c> or <c>List&lt;string&gt;</c> property as holding IDs of <see cref="Target"/>
-/// objects. <see cref="ContentValidator"/> checks every marked reference, so a new content type
-/// only declares its references here.
+/// Marks a <c>string</c>, <c>List&lt;string&gt;</c> or string-keyed dictionary property as holding
+/// IDs of <see cref="Target"/> objects (for a dictionary, its keys). <see cref="ContentValidator"/>
+/// checks every marked reference, so a new content type only declares its references here.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class ContentRefAttribute(Type target) : Attribute
 {
     public Type Target { get; } = target;
+}
+
+/// <summary>
+/// A content type with rules beyond references and texts. <see cref="ContentValidator"/> calls
+/// <see cref="Validate"/> after the generic checks, so the rules live next to the data they guard.
+/// </summary>
+public interface IValidatedDef
+{
+    /// <summary>Problems with this object, as messages; empty when it is valid.</summary>
+    IEnumerable<string> Validate(ContentDb db);
 }
 
 /// <summary>
@@ -75,4 +85,16 @@ public sealed class RunConfigDef : ContentDef
 
     /// <summary>Years before the expected lifespan at which the player is warned (D24).</summary>
     public List<int> LifeEndWarningYears { get; set; } = [];
+
+    /// <summary>The character's stats, in display order (§2.1).</summary>
+    [ContentRef(typeof(StatDef))]
+    public List<string> Stats { get; set; } = [];
+
+    /// <summary>The character's resources, in display order (§2.2).</summary>
+    [ContentRef(typeof(ResourceDef))]
+    public List<string> Resources { get; set; } = [];
+
+    /// <summary>Aspect profile at the start of a run, until a cultivation method sets its own (A2).</summary>
+    [ContentRef(typeof(AspectProfileDef))]
+    public string StartAspectProfile { get; set; } = "";
 }

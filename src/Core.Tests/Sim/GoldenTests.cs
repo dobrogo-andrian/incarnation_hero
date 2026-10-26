@@ -14,7 +14,7 @@ public sealed class GoldenTests
     [Fact]
     public void WaitUntilDeath_Seed42()
     {
-        const string expectedHash = "e7da3cf0763eeeb3c4da25d1031acd468d75dbe295fc2b43215783c3a0002db6";
+        const string expectedHash = "a2778ed6151b07fa03648798148ea78af54020945da946cb8af245285d1e718d";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         sim.Execute(TestContent.Wait(null));

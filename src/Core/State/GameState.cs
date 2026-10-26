@@ -27,7 +27,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -58,7 +58,57 @@ public sealed class PlayerState
     /// <summary>Expected lifespan; natural death becomes possible a few years before it (§3).</summary>
     public int LifespanWeeks { get; set; }
 
+    /// <summary>Base stat values, before modifiers; one per stat in <c>config.run</c>, in its order.</summary>
+    public List<StatValue> Stats { get; set; } = [];
+
+    /// <summary>Current resource amounts; maximums are computed from stats and modifiers.</summary>
+    public List<ResourceValue> Resources { get; set; } = [];
+
+    public string AspectProfileId { get; set; } = "";
+
+    /// <summary>Every active modifier on the player, in the order they were applied.</summary>
+    public List<Modifier> Modifiers { get; set; } = [];
+
     public List<CultivationTrack> Tracks { get; set; } = [];
+}
+
+public sealed class StatValue
+{
+    public string StatId { get; set; } = "";
+    public double Base { get; set; }
+}
+
+public sealed class ResourceValue
+{
+    public string ResourceId { get; set; } = "";
+    public double Current { get; set; }
+}
+
+public enum ModifierOp
+{
+    Add,
+    Mul,
+    Cap,
+    Override,
+}
+
+/// <summary>
+/// One change to a computed value (tech 2.5): injuries, buffs, elements, methods and items all use
+/// this. <see cref="TargetId"/> is a stat, aspect or resource ID; for a resource it changes the maximum.
+/// </summary>
+public sealed class Modifier
+{
+    public string TargetId { get; set; } = "";
+    public ModifierOp Op { get; set; }
+
+    /// <summary>Amount for Add, Cap and Override; a fraction for Mul (0.1 is +10%).</summary>
+    public double Value { get; set; }
+
+    /// <summary>What applied it (an injury, a buff…), shown in "where does this number come from".</summary>
+    public string SourceId { get; set; } = "";
+
+    /// <summary>Weeks until it expires; null lasts until removed.</summary>
+    public int? WeeksLeft { get; set; }
 }
 
 /// <summary>

@@ -6,3 +6,7 @@ weeks_per_year: 52              # D16
 start_lifespan_years: 60        # §3
 natural_death_window_years: 3   # D21: death possible from 3 years before the expected lifespan
 life_end_warning_years: [5, 1]  # D24
+
+stats: [stat.might, stat.endurance, stat.speed, stat.meridians, stat.perception]
+resources: [resource.health, resource.body_energy, resource.qi_pool, resource.combat_qi]
+start_aspect_profile: aspect_profile.balanced   # until cultivation methods exist (A2)
