@@ -26,11 +26,15 @@ public sealed record PlayerView(
     IReadOnlyList<ShopOfferView> ShopOffers,
     Foundation Foundation,
     IReadOnlyList<KnowledgeView> Knowledge,
-    string? ActiveMethodId)
+    string? ActiveMethodId,
+    IReadOnlyList<ReputationView> Reputation,
+    EventView? Event)
 {
-    public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
+    public static PlayerView From(GameState state, SimContext ctx)
     {
         var player = state.Player;
+        var rules = ctx.Rules;
+        var content = ctx.Content;
         return new(
             state.Week,
             player.AgeWeeks,
@@ -41,7 +45,7 @@ public sealed record PlayerView(
             new ZoneView(player.ZoneId, content.Get<ZoneDef>(player.ZoneId).Danger),
             state.World.Places
                 .Select(p => (State: p, Def: content.Get<PlaceDef>(p.PlaceId)))
-                .Where(p => p.Def.Zone == player.ZoneId)
+                .Where(p => WorldSystem.IsPlaceHere(state, content, p.Def.Id))
                 .Select(p => new PlaceView(p.State.PlaceId, p.Def.Density, p.State.Reserve, p.Def.Capacity))
                 .ToList(),
             rules.Stats
@@ -62,7 +66,9 @@ public sealed record PlayerView(
                 .ToList(),
             CultivationSystem.FoundationOf(player, rules, content),
             player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList(),
-            player.ActiveMethodId);
+            player.ActiveMethodId,
+            content.All<SectDef>().Select(s => new ReputationView(s.Id, EventSystem.ReputationOf(player, s.Id))).ToList(),
+            EventSystem.View(state, ctx));
     }
 }
 
@@ -116,6 +122,8 @@ public sealed record BuffView(BuffKind Kind, double Points);
 public sealed record ItemView(string ItemId, int Count, double? NextPillEnergy);
 
 public sealed record KnowledgeView(string KnowledgeId, int Level);
+
+public sealed record ReputationView(string SectId, int Value);
 
 /// <summary>An item for sale in a shop of the player's zone.</summary>
 public sealed record ShopOfferView(string ShopId, string ItemId, int Price);

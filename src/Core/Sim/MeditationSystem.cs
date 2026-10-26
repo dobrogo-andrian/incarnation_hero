@@ -17,7 +17,7 @@ public static class MeditationSystem
     {
         if (!ctx.Content.TryGet<MeditationDirectionDef>(meditation.DirectionId, out var direction))
             return RejectReasons.UnknownDirection;
-        if (!ctx.Content.TryGet<PlaceDef>(meditation.PlaceId, out var place) || place.Zone != state.Player.ZoneId)
+        if (!WorldSystem.IsPlaceHere(state, ctx.Content, meditation.PlaceId))
             return RejectReasons.PlaceNotHere;
         if (direction.Studies)
             return KnowledgeSystem.CannotStudy(state.Player, ctx, meditation.SubjectId);

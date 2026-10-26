@@ -41,7 +41,7 @@
 | [08-content-targets.md](tech/08-content-targets.md) | 8 обсяги контенту для демо |
 | [09-roadmap.md](tech/09-roadmap.md) | 9 етапи 0–5 з критеріями готовності |
 | [10-risks.md](tech/10-risks.md) | 10 реєстр ризиків R1–R12 |
-| [decisions.md](tech/decisions.md) | 11 ухвалені рішення D1–D20; 12 робочі припущення A1–A9 |
+| [decisions.md](tech/decisions.md) | 11 ухвалені рішення D1–D41; 12 робочі припущення A1–A11 |
 | [open-questions.md](tech/open-questions.md) | 13 відкриті питання Q2–Q12 |
 | [14-deferred.md](tech/14-deferred.md) | 14 відкладене за межі демо |
 

@@ -1,0 +1,10 @@
+# Sects of the settlement (§9, D39). Fixed on the hand-made map; randomized with region generation (stage 3).
+
+- id: sect.azure_cloud
+  name: { uk: "Секта Лазурової Хмари" }
+
+- id: sect.iron_palm
+  name: { uk: "Школа Залізної Долоні" }
+
+- id: sect.hundred_herbs
+  name: { uk: "Павільйон Ста Трав" }

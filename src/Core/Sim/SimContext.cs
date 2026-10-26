@@ -18,6 +18,8 @@ public sealed class SimContext
         Config = content.Get<RunConfigDef>(RunConfigDef.RunId);
         Economy = content.Get<EconomyConfigDef>(EconomyConfigDef.EconomyId);
         Breakthrough = content.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId);
+        Events = content.Get<EventsConfigDef>(EventsConfigDef.EventsId);
+        Combat = content.Get<CombatConfigDef>(CombatConfigDef.CombatId);
         Rules = new CharacterRules(content);
         Map = new WorldMap(content);
     }
@@ -27,6 +29,8 @@ public sealed class SimContext
     public RunConfigDef Config { get; }
     public EconomyConfigDef Economy { get; }
     public BreakthroughConfigDef Breakthrough { get; }
+    public EventsConfigDef Events { get; }
+    public CombatConfigDef Combat { get; }
     public CharacterRules Rules { get; }
     public WorldMap Map { get; }
 }

@@ -1,0 +1,10 @@
+# Weekly event rolls (§10, tech 4.3, D38). Draft numbers until Sim.Cli coverage reports (tech 4.3).
+
+id: config.events
+week_chance: { travel: 0.15, meditation: 0.03, settlement: 0.05, rest: 0.05 }
+recent_weeks: 104                         # an event shown within two years…
+recent_weight_factor: 0.25                # …is four times less likely to come again
+chance_range_width: 0.4                   # shown chance of success: 40 points wide with no perception,
+chance_range_narrow_per_perception: 0.02  # each point of perception narrows it: 20 shows the exact chance
+chance_range_step: 0.05
+perception_stat: stat.perception

@@ -72,3 +72,30 @@ public sealed record InjuryHealed(string InjuryId) : InterruptEvent
 {
     public override InterruptCategory Category => InterruptCategory.InjuryHealed;
 }
+
+/// <summary>An event dialog opened (§10); the mode is now <see cref="GameMode.EventDialog"/>.</summary>
+public sealed record EventStarted(string EventId) : SimEvent;
+
+/// <summary>The event dialog closed; the interrupted activity can be continued.</summary>
+public sealed record EventEnded(string EventId) : SimEvent;
+
+/// <summary>A stat's base value changed by <paramref name="Amount"/>.</summary>
+public sealed record StatChanged(string StatId, double Amount) : SimEvent;
+
+/// <summary>A resource's current amount changed by <paramref name="Amount"/>.</summary>
+public sealed record ResourceChanged(string ResourceId, double Amount) : SimEvent;
+
+/// <summary>Items were gained (positive) or lost (negative).</summary>
+public sealed record ItemsChanged(string ItemId, int Count) : SimEvent;
+
+public sealed record StonesChanged(int Amount) : SimEvent;
+
+/// <summary>A cultivation buff was gained or topped up by <paramref name="Points"/>.</summary>
+public sealed record BuffGained(BuffKind Kind, double Points) : SimEvent;
+
+public sealed record ReputationChanged(string SectId, int Amount) : SimEvent;
+
+/// <summary>A hidden zone or meditation place became known (D40).</summary>
+public sealed record Revealed(string Id) : SimEvent;
+
+public sealed record CombatResolved(string GroupId, bool Won) : SimEvent;

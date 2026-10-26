@@ -1,0 +1,98 @@
+# Events in the settlement (§10, D38): rolled in any week spent in a zone with settlement: true.
+
+- id: evt.settlement.iron_palm_duels
+  contexts: [settlement]
+  weight: 8
+  cooldown_weeks: 52
+  nodes:
+    start:
+      text: { uk: "На площі учні Школи Залізної Долоні влаштовують показові двобої й кличуть охочих випробувати себе." }
+      options:
+        - text: { uk: "Вийти на поміст" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { stat.might: 0.2 }
+              success: true
+              effects: [ { stones: 10 }, { reputation: { id: sect.iron_palm, amount: 10 } }, { combat_insight: 15 } ]
+              next: won
+            - weight: 5
+              effects: [ { injury: { id: injury.body, amount: 8 } }, { reputation: { id: sect.iron_palm, amount: 3 } } ]
+              next: lost
+        - text: { uk: "Подивитися збоку" }
+          effects: [ { stat: { id: stat.perception, amount: 0.5 } } ]
+          next: watched
+    won:
+      text: { uk: "Суперник падає з помосту, і натовп гуде. Наставник школи схвально киває й кидає вам гаманець." }
+    lost:
+      text: { uk: "Ви опиняєтеся на бруківці з гудінням у вухах. Утім, учні школи поважають тих, хто не боїться вийти." }
+    watched:
+      text: { uk: "Ви уважно стежите за ногами бійців і помічаєте, як вага переходить перед кожним ударом." }
+
+- id: evt.settlement.herb_pavilion_tonic
+  contexts: [settlement]
+  weight: 6
+  cooldown_weeks: 52
+  conditions:
+    - resource: { id: resource.toxins, max: 10 }
+  nodes:
+    start:
+      text: { uk: "Аптекар Павільйону Ста Трав шукає, хто б випробував новий відвар. Платять 15 каменів, але від казанка тхне болотом." }
+      options:
+        - text: { uk: "Випити відвар" }
+          effects: [ { resource: { id: resource.toxins, amount: 6 } }, { stones: 15 } ]
+          outcomes:
+            - weight: 6
+              weight_per_stat: { stat.endurance: 0.2 }
+              success: true
+              effects: [ { reputation: { id: sect.hundred_herbs, amount: 10 } } ]
+              next: fine
+            - weight: 3
+              effects: [ { injury: { id: injury.internal, amount: 6 } } ]
+              next: sick
+        - text: { uk: "Відмовитися" }
+    fine:
+      text: { uk: "Відвар обпікає горло, а потім розходиться теплом. Аптекар старанно записує кожне ваше слово." }
+    sick:
+      text: { uk: "Нутрощі скручує, і ви цілу ніч не відходите від відра. Аптекар задоволено нотує: «Пропорцію змінити»." }
+
+- id: evt.settlement.tea_house_storyteller
+  contexts: [settlement]
+  weight: 6
+  cooldown_weeks: 26
+  nodes:
+    start:
+      text: { uk: "У чайній старий оповідач за чашку чаю переказує байки про давні гробниці за старим полем бою." }
+      options:
+        - text: { uk: "Пригостити його чаєм (3 камені) і розпитати" }
+          conditions: [ { stones: { min: 3 } } ]
+          effects: [ { stones: -3 } ]
+          outcomes:
+            - weight: 3
+              weight_per_stat: { stat.perception: 0.3 }
+              success: true
+              effects: [ { reveal: zone.ancient_tomb } ]
+              next: map
+            - weight: 5
+              next: tales
+        - text: { uk: "Послухати й піти" }
+    map:
+      text: { uk: "Серед вигадок проступає справжнє: оповідач малює пальцем на столі стежку від старого поля бою до запечатаної гробниці." }
+    tales:
+      text: { uk: "Оповідач плутається в іменах і за третьою чашкою вже розповідає про дракона з дев'ятьма хвостами." }
+
+- id: evt.settlement.azure_cloud_lecture
+  contexts: [settlement]
+  weight: 10
+  once_per_run: true
+  conditions:
+    - reputation: { id: sect.azure_cloud, min: 10 }
+  nodes:
+    start:
+      text: { uk: "Учень Секти Лазурової Хмари, якого ви колись урятували, запрошує вас на відкриту лекцію старійшини про лазуровий подих." }
+      options:
+        - text: { uk: "Слухати (2 тижні)" }
+          effects: [ { time: 2 }, { knowledge: { id: method.azure_breath, amount: 30 } }, { reputation: { id: sect.azure_cloud, amount: 5 } } ]
+          next: lecture
+        - text: { uk: "Подякувати й відмовитися" }
+    lecture:
+      text: { uk: "Старійшина говорить повільно, і кожне слово лягає в меридіани, як вода в сухе русло." }

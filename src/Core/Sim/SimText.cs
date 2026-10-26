@@ -73,6 +73,29 @@ public static class SimText
     private static readonly LocKey CapReached = new("str.event.study_cap_reached");
     private static readonly LocKey Injured = new("str.event.injury_received");
     private static readonly LocKey Healed = new("str.event.injury_healed");
+    private static readonly LocKey EventOpened = new("str.event.event_started");
+    private static readonly LocKey StatChangedLine = new("str.event.stat_changed");
+    private static readonly LocKey ResourceChangedLine = new("str.event.resource_changed");
+    private static readonly LocKey ItemsChangedLine = new("str.event.items_changed");
+    private static readonly LocKey StonesChangedLine = new("str.event.stones_changed");
+    private static readonly LocKey BuffGainedLine = new("str.event.buff_gained");
+    private static readonly LocKey ReputationChangedLine = new("str.event.reputation_changed");
+    private static readonly LocKey RevealedLine = new("str.event.revealed");
+    private static readonly LocKey CombatWon = new("str.event.combat_won");
+    private static readonly LocKey CombatLost = new("str.event.combat_lost");
+
+    private static readonly LocKey ReputationLine = new("str.view.reputation");
+    private static readonly LocKey Continue = new("str.dialog.continue");
+    private static readonly LocKey OptionRequires = new("str.dialog.option_requires");
+    private static readonly LocKey OptionChance = new("str.dialog.option_chance");
+    private static readonly LocKey NeedMin = new("str.need.min");
+    private static readonly LocKey NeedMax = new("str.need.max");
+    private static readonly LocKey NeedRange = new("str.need.range");
+    private static readonly LocKey NeedZone = new("str.need.zone");
+    private static readonly LocKey StonesName = new("str.need.stones");
+    private static readonly LocKey DangerName = new("str.need.zone_danger");
+    private static readonly LocKey StageName = new("str.need.stage");
+    private static readonly LocKey AgeName = new("str.need.age_years");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -177,8 +200,57 @@ public static class SimText
         }
         foreach (var offer in view.ShopOffers)
             lines.Add(OfferLine with { Args = [new("shop", Name(offer.ShopId)), new("item", Name(offer.ItemId)), new("price", offer.Price)] });
+        foreach (var reputation in view.Reputation)
+            lines.Add(ReputationLine with { Args = [new("sect", Name(reputation.SectId)), new("value", reputation.Value)] });
         return lines;
     }
+
+    /// <summary>The open event node's text; the current zone is available to it as <c>{zone}</c>.</summary>
+    public static LocKey EventText(EventView view, PlayerView player) =>
+        new($"{view.EventId}.nodes.{view.NodeId}.text", [new("zone", Name(player.Zone.ZoneId))]);
+
+    /// <summary>
+    /// The choices to offer, each with the index to send in <c>ChooseEventOption</c>: an option's
+    /// text with its unmet requirements or its observed chance of success, or "continue" at a node
+    /// without options.
+    /// </summary>
+    public static IReadOnlyList<(int Index, LocKey Text, bool Available)> EventChoices(EventView view)
+    {
+        if (view.Options.Count == 0)
+            return [(0, Continue, true)];
+        return view.Options.Select(o =>
+        {
+            var text = new LocKey($"{view.EventId}.nodes.{view.NodeId}.options.{o.Index}.text");
+            if (!o.Available)
+                text = OptionRequires with { Args = [new("option", text), new("requires", o.Unmet.Select(Requirement).ToList())] };
+            else if (o.Success is { } chance)
+                text = OptionChance with { Args = [new("option", text), new("low", Number(chance.Low * 100)), new("high", Number(chance.High * 100))] };
+            return (o.Index, text, o.Available);
+        }).ToList();
+    }
+
+    private static LocKey Requirement(EventConditionDef c) => c switch
+    {
+        { Stat: { } r } => Need(Name(r.Id), r),
+        { Resource: { } r } => Need(Name(r.Id), r),
+        { Injury: { } r } => Need(Name(r.Id), r),
+        { Knowledge: { } r } => Need(Name(r.Id), r),
+        { Item: { } r } => Need(Name(r.Id), r),
+        { Reputation: { } r } => Need(Name(r.Id), r),
+        { Stones: { } r } => Need(StonesName, r),
+        { ZoneDanger: { } r } => Need(DangerName, r),
+        { Stage: { } r } => Need(StageName, r),
+        { AgeYears: { } r } => Need(AgeName, r),
+        { Zone: { } zones } => NeedZone with { Args = [new("zones", zones.Select(Name).ToList())] },
+        _ => throw new ArgumentOutOfRangeException(nameof(c)),
+    };
+
+    private static LocKey Need(LocKey what, NumberRange range) => range switch
+    {
+        { Min: { } min, Max: null } => NeedMin with { Args = [new("what", what), new("min", min)] },
+        { Min: null, Max: { } max } => NeedMax with { Args = [new("what", what), new("max", max)] },
+        _ => NeedRange with { Args = [new("what", what), new("min", range.Min ?? 0), new("max", range.Max ?? 0)] },
+    };
 
     /// <summary>A line for the player about <paramref name="e"/>, or null for routine events like a passing week.</summary>
     public static LocKey? Describe(SimEvent e) => e switch
@@ -201,6 +273,15 @@ public static class SimText
         BreakthroughFailed b => Failed with { Args = [new("zone", Name(b.FailureZoneId))] },
         InjuryReceived i => Injured with { Args = [new("injury", Name(i.InjuryId)), new("amount", Number(i.Amount))] },
         InjuryHealed h => Healed with { Args = [new("injury", Name(h.InjuryId))] },
+        EventStarted => EventOpened,
+        StatChanged s => StatChangedLine with { Args = [new("stat", Name(s.StatId)), new("amount", Signed(s.Amount))] },
+        ResourceChanged r => ResourceChangedLine with { Args = [new("resource", Name(r.ResourceId)), new("amount", Signed(r.Amount))] },
+        ItemsChanged i => ItemsChangedLine with { Args = [new("item", Name(i.ItemId)), new("amount", Signed(i.Count))] },
+        StonesChanged s => StonesChangedLine with { Args = [new("amount", Signed(s.Amount))] },
+        BuffGained b => BuffGainedLine with { Args = [new("buff", BuffName(b.Kind)), new("points", Number(b.Points))] },
+        ReputationChanged r => ReputationChangedLine with { Args = [new("sect", Name(r.SectId)), new("amount", Signed(r.Amount))] },
+        Revealed r => RevealedLine with { Args = [new("place", Name(r.Id))] },
+        CombatResolved c => (c.Won ? CombatWon : CombatLost) with { Args = [new("group", Name(c.GroupId))] },
         _ => null,
     };
 
@@ -232,6 +313,10 @@ public static class SimText
 
     /// <summary>Computed values are shown to one decimal place.</summary>
     private static double Number(double value) => Math.Round(value, 1);
+
+    /// <summary>A change with its sign: "+5", "-2".</summary>
+    private static string Signed(double value) =>
+        Number(value).ToString("+0.#;-0.#;0", System.Globalization.CultureInfo.InvariantCulture);
 
     private static LocKey Years(int weeks, int weeksPerYear) =>
         Duration with { Args = [new("years", weeks / weeksPerYear), new("weeks", weeks % weeksPerYear)] };

@@ -10,6 +10,7 @@ public static class RunEndSystem
         state.Mode = GameMode.RunEnd;
         state.EndCause = cause;
         state.Activity = null;
+        state.Event = null;
         events.Add(new RunEnded(cause));
     }
 }

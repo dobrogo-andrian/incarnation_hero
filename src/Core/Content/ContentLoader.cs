@@ -41,6 +41,9 @@ public static class ContentLoader
         ["rank"] = typeof(QualityRankDef),
         ["failure_zone"] = typeof(FailureZoneDef),
         ["injury"] = typeof(InjuryDef),
+        ["evt"] = typeof(EventDef),
+        ["sect"] = typeof(SectDef),
+        ["grp"] = typeof(EnemyGroupDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>
@@ -48,6 +51,8 @@ public static class ContentLoader
     {
         [EconomyConfigDef.EconomyId] = typeof(EconomyConfigDef),
         [BreakthroughConfigDef.BreakthroughId] = typeof(BreakthroughConfigDef),
+        [EventsConfigDef.EventsId] = typeof(EventsConfigDef),
+        [CombatConfigDef.CombatId] = typeof(CombatConfigDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

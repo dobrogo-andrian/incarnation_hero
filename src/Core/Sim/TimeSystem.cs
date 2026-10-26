@@ -6,8 +6,8 @@ namespace Core.Sim;
 public static class TimeSystem
 {
     /// <summary>
-    /// Advances weeks until the activity ends, an interrupt of a stopping category fires or the
-    /// run ends. Non-stopping interrupts are still reported in <paramref name="events"/>.
+    /// Advances weeks until the activity ends, an interrupt of a stopping category fires, an event
+    /// opens or the run ends. Non-stopping interrupts are still reported in <paramref name="events"/>.
     /// </summary>
     public static void RunActivity(GameState state, SimContext ctx, List<SimEvent> events)
     {
@@ -16,7 +16,7 @@ public static class TimeSystem
             int weekStart = events.Count;
             AdvanceWeek(state, ctx, events);
 
-            if (state.Mode == GameMode.RunEnd || state.Activity is null)
+            if (state.Mode != GameMode.Overworld || state.Activity is null)
                 return;
             for (int i = weekStart; i < events.Count; i++)
             {
@@ -27,10 +27,37 @@ public static class TimeSystem
     }
 
     /// <summary>
+    /// Weeks the world lives through while the player is busy with an event (D38): no activity
+    /// progress and no event rolls. Stops early if the run ends.
+    /// </summary>
+    public static void PassWeeks(GameState state, SimContext ctx, int weeks, List<SimEvent> events)
+    {
+        for (int i = 0; i < weeks; i++)
+        {
+            if (!AdvanceWorld(state, ctx, events))
+                return;
+        }
+    }
+
+    /// <summary>
     /// One week in the fixed order: world systems, player activity progress, event roll,
     /// interrupt collection. Systems not built yet are simply absent.
     /// </summary>
     private static void AdvanceWeek(GameState state, SimContext ctx, List<SimEvent> events)
+    {
+        if (!AdvanceWorld(state, ctx, events))
+            return;
+
+        // The week's context is what the player did during it, before a journey's arrival or an activity's end.
+        string? context = EventSystem.ContextOf(state, ctx.Content);
+        ActivitySystem.AdvanceWeek(state, ctx, events);
+        if (state.Mode == GameMode.RunEnd)
+            return;
+        EventSystem.RollWeek(state, ctx, context, events);
+    }
+
+    /// <summary>The week's world phase: age, natural death, modifiers, buffs, injuries, resources, places. False if the run ended.</summary>
+    private static bool AdvanceWorld(GameState state, SimContext ctx, List<SimEvent> events)
     {
         state.Week++;
         state.Player.AgeWeeks++;
@@ -38,13 +65,12 @@ public static class TimeSystem
 
         LifeSystem.AdvanceWeek(state, ctx.Config, ctx.Rng, events);
         if (state.Mode == GameMode.RunEnd)
-            return;
+            return false;
         ModifierSystem.AdvanceWeek(state);
         CultivationSystem.AdvanceWeek(state, ctx, events);
         InjurySystem.AdvanceWeek(state, ctx, events);
         ResourceSystem.AdvanceWeek(state, ctx);
         WorldSystem.AdvanceWeek(state, ctx.Content);
-
-        ActivitySystem.AdvanceWeek(state, ctx, events);
+        return true;
     }
 }

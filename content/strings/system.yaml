@@ -290,3 +290,76 @@
 
 - id: str.shell.content_errors
   text: { uk: "Помилки контенту, гру не запущено:" }
+
+# Events (D38)
+- id: str.reject.invalid_option
+  text: { uk: "Такого варіанта немає." }
+
+- id: str.reject.option_unavailable
+  text: { uk: "Цей варіант зараз недоступний." }
+
+- id: str.event.event_started
+  text: { uk: "Щось стається…" }
+
+- id: str.event.stat_changed
+  text: { uk: "{stat}: {amount}." }
+
+- id: str.event.resource_changed
+  text: { uk: "{resource}: {amount}." }
+
+- id: str.event.items_changed
+  text: { uk: "{item}: {amount}." }
+
+- id: str.event.stones_changed
+  text: { uk: "Духовні камені: {amount}." }
+
+- id: str.event.buff_gained
+  text: { uk: "{buff}: +{points}." }
+
+- id: str.event.reputation_changed
+  text: { uk: "Репутація ({sect}): {amount}." }
+
+- id: str.event.revealed
+  text: { uk: "Відкрито нове місце: {place}." }
+
+- id: str.event.combat_won
+  text: { uk: "Бій виграно: {group}." }
+
+- id: str.event.combat_lost
+  text: { uk: "Бій програно: {group}." }
+
+- id: str.view.reputation
+  text: { uk: "Репутація ({sect}): {value}" }
+
+- id: str.dialog.continue
+  text: { uk: "Далі" }
+
+- id: str.dialog.option_requires
+  text: { uk: "{option} (потрібно: {requires})" }
+
+- id: str.dialog.option_chance
+  text: { uk: "{option} (шанс успіху: {low}–{high}%)" }
+
+- id: str.need.min
+  text: { uk: "{what} від {min}" }
+
+- id: str.need.max
+  text: { uk: "{what} до {max}" }
+
+- id: str.need.range
+  text: { uk: "{what} від {min} до {max}" }
+
+- id: str.need.zone
+  text: { uk: "місцевість: {zones}" }
+
+- id: str.need.stones
+  text: { uk: "духовні камені" }
+
+- id: str.need.zone_danger
+  text: { uk: "небезпека місцевості" }
+
+- id: str.need.stage
+  text: { uk: "етап ці" }
+
+- id: str.need.age_years
+  text: { uk: "вік (роки)" }

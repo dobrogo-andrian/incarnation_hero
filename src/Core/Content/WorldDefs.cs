@@ -7,6 +7,12 @@ public sealed class ZoneDef : ContentDef, IValidatedDef
 
     public int Danger { get; set; }
 
+    /// <summary>A settlement: any activity here rolls settlement events (D38).</summary>
+    public bool Settlement { get; set; }
+
+    /// <summary>Unknown until an event or rumor reveals it; routes do not lead through it before (D40).</summary>
+    public bool Hidden { get; set; }
+
     /// <summary>Meditation needs a place (D30), so every zone offers at least one.</summary>
     public IEnumerable<string> Validate(ContentDb db)
     {
@@ -55,6 +61,9 @@ public sealed class PlaceDef : ContentDef, IValidatedDef
     public double Capacity { get; set; }
 
     public double RegenPerWeek { get; set; }
+
+    /// <summary>Unknown, so unusable, until revealed (D40).</summary>
+    public bool Hidden { get; set; }
 
     public IEnumerable<string> Validate(ContentDb db)
     {

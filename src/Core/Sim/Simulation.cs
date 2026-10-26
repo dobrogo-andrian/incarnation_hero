@@ -30,7 +30,7 @@ public sealed class Simulation
 
     public WorldMap Map => _ctx.Map;
 
-    public PlayerView View => PlayerView.From(State, Rules, Content);
+    public PlayerView View => PlayerView.From(State, _ctx);
 
     public static Simulation NewGame(ContentDb content, ulong seed)
     {
@@ -73,6 +73,7 @@ public sealed class Simulation
             ContinueActivity => ExecuteContinue(),
             CancelActivity => ExecuteCancel(),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
+            ChooseEventOption c => EventSystem.Choose(State, _ctx, c.Index),
             UsePill c => ItemSystem.UsePill(State.Player, _ctx, c.ItemId),
             Buy c => EconomySystem.Buy(State.Player, _ctx, c.ItemId),
             RestoreQiWithStones c => EconomySystem.RestoreQi(State.Player, _ctx, c.Stones),
@@ -96,11 +97,11 @@ public sealed class Simulation
 
     private CommandOutcome ExecuteTravel(Travel command)
     {
-        if (!Content.TryGet<ZoneDef>(command.ZoneId, out _))
+        if (!Content.TryGet<ZoneDef>(command.ZoneId, out _) || !WorldSystem.IsKnown(State.World, Content, command.ZoneId))
             return CommandOutcome.Reject(RejectReasons.UnknownZone);
         if (command.ZoneId == State.Player.ZoneId)
             return CommandOutcome.Reject(RejectReasons.AlreadyThere);
-        if (Map.FindRoute(State.Player.ZoneId, command.ZoneId) is not { } legs)
+        if (Map.FindRoute(State.Player.ZoneId, command.ZoneId, zone => WorldSystem.IsKnown(State.World, Content, zone)) is not { } legs)
             return CommandOutcome.Reject(RejectReasons.NoRoute);
 
         var travel = new TravelActivity(legs);

@@ -65,7 +65,7 @@ public static class BreakthroughSystem
             return RejectReasons.NoNextStage;
         if (track.StageProgress < stage.ProgressRequired)
             return RejectReasons.StageScaleNotFull;
-        if (!ctx.Content.TryGet<PlaceDef>(attempt.PlaceId, out var place) || place.Zone != player.ZoneId)
+        if (!WorldSystem.IsPlaceHere(state, ctx.Content, attempt.PlaceId))
             return RejectReasons.PlaceNotHere;
         return Estimate(player, track, ctx.Content, ctx.Rules, breakthrough.Weeks).Fatal && !attempt.AcceptDeathRisk
             ? RejectReasons.DeathRiskNotAccepted

@@ -13,6 +13,15 @@ internal static class TestContent
 
     public static StartActivity Wait(int? weeks) => new(new WaitActivity(), weeks);
 
+    /// <summary>
+    /// What a run that goes on by itself sends next, like <c>sim run</c>: the first available choice
+    /// in an event dialog, otherwise continuing the activity.
+    /// </summary>
+    public static Command Proceed(PlayerView view) =>
+        view.Event is { } dialog
+            ? new ChooseEventOption(SimText.EventChoices(dialog).First(c => c.Available).Index)
+            : new ContinueActivity();
+
     /// <summary>The repository content plus one extra file, for tests that need objects the game does not have.</summary>
     public static ContentDb WithExtra(string yaml) => Load(new ContentFile("test/extra.yaml", yaml));
 

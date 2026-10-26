@@ -1,7 +1,7 @@
 namespace Core.Rng;
 
 /// <summary>
-/// SplitMix64. Used only to expand a single seed into xoshiro state and per-stream seeds.
+/// SplitMix64. Expands a single seed into xoshiro state and per-stream seeds, and mixes <see cref="StableHash"/>.
 /// </summary>
 public struct SplitMix64
 {

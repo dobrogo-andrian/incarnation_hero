@@ -62,9 +62,10 @@ public static class EconomySystem
         var player = state.Player;
         if (CannotSpend(player, stones) is { } reason)
             return CommandOutcome.Reject(reason);
-        if (!ctx.Content.TryGet<PlaceDef>(placeId, out var def) || def.Zone != player.ZoneId)
+        if (!WorldSystem.IsPlaceHere(state, ctx.Content, placeId))
             return CommandOutcome.Reject(RejectReasons.PlaceNotHere);
 
+        var def = ctx.Content.Get<PlaceDef>(placeId);
         var place = state.World.Places.First(p => p.PlaceId == placeId);
         double room = def.Capacity - place.Reserve;
         if (room <= 0)

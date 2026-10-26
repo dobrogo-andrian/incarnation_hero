@@ -1,0 +1,62 @@
+# Events while resting outside the settlement (§10, D38).
+
+- id: evt.rest.night_thief
+  contexts: [rest]
+  weight: 8
+  cooldown_weeks: 52
+  conditions:
+    - stones: { min: 5 }
+  nodes:
+    start:
+      text: { uk: "Уночі вас будить ледь чутний шурхіт: хтось нишпорить у вашій торбі." }
+      options:
+        - text: { uk: "Схопити злодія" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { aspect.speed.reaction: 0.3 }
+              success: true
+              effects: [ { stones: 5 } ]
+              next: caught
+            - weight: 4
+              effects: [ { stones: -8 } ]
+              next: escaped
+        - text: { uk: "Вдати, що спите" }
+          effects: [ { stones: -5 } ]
+          next: pretended
+    caught:
+      text: { uk: "Ви перехоплюєте худу руку. Малий злодюжка, плачучи, віддає все, що встиг поцупити в інших." }
+    escaped:
+      text: { uk: "Тінь вислизає з-під пальців і зникає разом із частиною ваших каменів." }
+    pretended:
+      text: { uk: "Злодій бере небагато й тихо йде. Принаймні ніхто не постраждав." }
+
+- id: evt.rest.battlefield_ghosts
+  contexts: [rest]
+  weight: 8
+  cooldown_weeks: 52
+  conditions:
+    - zone: [zone.old_battlefield]
+  nodes:
+    start:
+      text: { uk: "Опівночі над полем бою здіймаються бліді вогні. Шепіт загиблих кличе вас на ім'я." }
+      options:
+        - text: { uk: "Стати проти духів" }
+          effects: [ { start_combat: { group: grp.undead.battlefield_ghosts, win: won, loss: lost } } ]
+        - text: { uk: "Прочитати заупокійну молитву" }
+          conditions: [ { stat: { id: stat.perception, min: 3 } } ]
+          effects: [ { stat: { id: stat.purity, amount: 1 } } ]
+          next: prayed
+        - text: { uk: "Тікати до світанку" }
+          effects: [ { injury: { id: injury.internal, amount: 3 } } ]
+          next: fled
+    won:
+      text: { uk: "Останній вогник гасне, і над полем стає тихо. У траві поблискують уламки старої зброї." }
+      options:
+        - text: { uk: "Зібрати уламки" }
+          effects: [ { stones: 12 }, { combat_insight: 30 } ]
+    lost:
+      text: { uk: "Холод духів пробирає до самих меридіан. Ви отямлюєтеся вранці, знесилені." }
+    prayed:
+      text: { uk: "Вогні один за одним опускаються в траву. На душі стає легко й чисто." }
+    fled:
+      text: { uk: "Шепіт женеться за вами до самого ранку й лишає по собі важкість у грудях." }

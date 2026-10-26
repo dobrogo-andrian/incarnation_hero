@@ -1,0 +1,6 @@
+# Fights (tech 4.1). Until the formula resolver, only the stand-in's numbers (D38):
+# chance to win = player power / (player power + group power).
+
+id: config.combat
+stub_power_stats: [stat.might, stat.endurance, stat.speed, stat.meridians]   # 40 at the start
+stub_power_per_stage: 20

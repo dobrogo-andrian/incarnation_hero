@@ -33,7 +33,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 10;
+    public const int CurrentSchemaVersion = 11;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -50,6 +50,12 @@ public sealed class GameState
 
     /// <summary>The activity in progress; it stays here when an interrupt stops time.</summary>
     public ActiveActivity? Activity { get; set; }
+
+    /// <summary>The event dialog in progress (<see cref="GameMode.EventDialog"/>).</summary>
+    public ActiveEvent? Event { get; set; }
+
+    /// <summary>Every event shown this run, in event ID order: for once-per-run, cooldowns and the repeat penalty (D38).</summary>
+    public List<EventRecord> EventHistory { get; set; } = [];
 
     /// <summary>Interrupt categories that stop a running activity. Others are reported and time goes on.</summary>
     public List<InterruptCategory> StoppingInterrupts { get; set; } = [.. Enum.GetValues<InterruptCategory>()];
@@ -104,6 +110,32 @@ public sealed class PlayerState
 
     /// <summary>Quality ceiling a breakthrough pill adds to the next breakthrough; spent by the attempt (§4.5).</summary>
     public double BreakthroughCeilingBonus { get; set; }
+
+    /// <summary>Reputation with sects other than zero, in sect ID order (D39).</summary>
+    public List<Reputation> Reputation { get; set; } = [];
+}
+
+public sealed class Reputation
+{
+    public string SectId { get; set; } = "";
+    public int Value { get; set; }
+}
+
+/// <summary>An event dialog in progress: which event, at which node, since which week.</summary>
+public sealed class ActiveEvent
+{
+    public string EventId { get; set; } = "";
+    public string NodeId { get; set; } = "";
+
+    /// <summary>Week it started; with the seed it fixes how the chances of its options are misjudged.</summary>
+    public int StartedWeek { get; set; }
+}
+
+public sealed class EventRecord
+{
+    public string EventId { get; set; } = "";
+    public int Count { get; set; }
+    public int LastWeek { get; set; }
 }
 
 /// <summary>How far one piece of knowledge has been comprehended (§6).</summary>
@@ -135,6 +167,9 @@ public sealed class WorldState
 {
     /// <summary>One entry per meditation place, in place ID order.</summary>
     public List<PlaceState> Places { get; set; } = [];
+
+    /// <summary>Hidden zones and places the player has found, in ID order (D40).</summary>
+    public List<string> Revealed { get; set; } = [];
 }
 
 public sealed class PlaceState

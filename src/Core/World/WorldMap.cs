@@ -41,8 +41,9 @@ public sealed class WorldMap
     /// <summary>
     /// The fastest way from <paramref name="from"/> to <paramref name="to"/> as legs (zone entered,
     /// weeks to reach it), or null when there is none. Equal routes are settled by zone ID order.
+    /// Only zones <paramref name="passable"/> accepts are entered (unknown zones are not, D40).
     /// </summary>
-    public IReadOnlyList<TravelLeg>? FindRoute(string from, string to)
+    public IReadOnlyList<TravelLeg>? FindRoute(string from, string to, Func<string, bool>? passable = null)
     {
         var best = new Dictionary<string, (int Weeks, string? Previous, int LegWeeks)>(StringComparer.Ordinal) { [from] = (0, null, 0) };
         var open = new SortedSet<(int Weeks, string Zone)>(Comparer<(int Weeks, string Zone)>.Create((x, y) =>
@@ -57,6 +58,8 @@ public sealed class WorldMap
 
             foreach (var (next, legWeeks) in NeighboursOf(zone))
             {
+                if (passable is not null && !passable(next))
+                    continue;
                 int total = weeks + legWeeks;
                 if (best.TryGetValue(next, out var known) && known.Weeks <= total)
                     continue;

@@ -1,0 +1,131 @@
+# Events on the road (§10, D38): rolled in weeks of travel.
+
+- id: evt.travel.road_bandits
+  contexts: [travel]
+  weight: 10
+  cooldown_weeks: 52
+  conditions:
+    - zone_danger: { min: 1 }
+  nodes:
+    start:
+      text: { uk: "На вузькій стежці ({zone}) дорогу заступають троє розбійників з іржавими шаблями. «Камені або життя, мандрівнику!»" }
+      options:
+        - text: { uk: "Віддати 10 каменів" }
+          conditions: [ { stones: { min: 10 } } ]
+          effects: [ { stones: -10 } ]
+          next: paid
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.bandits.road, win: won, loss: lost } } ]
+        - text: { uk: "Тікати в хащі" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { aspect.speed.agility: 0.3 }
+              success: true
+              next: escaped
+            - weight: 6
+              effects: [ { injury: { id: injury.body, amount: 10 } }, { stones: -5 } ]
+              next: caught
+    paid:
+      text: { uk: "Розбійники, регочучи, ховають камені й зникають у заростях." }
+    won:
+      text: { uk: "Останній розбійник тікає, кинувши все. Після сутички ці в меридіанах ще довго не вгамовується." }
+      options:
+        - text: { uk: "Обшукати розбійників" }
+          effects: [ { stones: 15 }, { combat_insight: 20 } ]
+    lost:
+      text: { uk: "Вас збивають з ніг і обчищають кишені. Добре, що лишили живим." }
+      options:
+        - text: { uk: "Підвестися" }
+          effects: [ { stones: -10 } ]
+    escaped:
+      text: { uk: "Ви пірнаєте в хащі, і погоня швидко відстає." }
+    caught:
+      text: { uk: "Гілля чіпляється за одяг, і розбійники наздоганяють вас. Ви відкупаєтеся побитими боками й частиною каменів." }
+
+- id: evt.travel.wounded_disciple
+  contexts: [travel]
+  weight: 6
+  once_per_run: true
+  conditions:
+    - zone_danger: { min: 1 }
+  nodes:
+    start:
+      text: { uk: "Біля дороги лежить поранений юнак у лазуровому вбранні учня Секти Лазурової Хмари. Він ледь дихає." }
+      options:
+        - text: { uk: "Перев'язати рани й допровадити до безпечного місця (1 тиждень)" }
+          effects: [ { time: 1 }, { reputation: { id: sect.azure_cloud, amount: 10 } }, { reveal: place.bamboo_grove.hidden_spring } ]
+          next: thanks
+        - text: { uk: "Віддати йому пігулку зрощення кісток" }
+          conditions: [ { item: { id: item.pill.bone_mending, min: 1 } } ]
+          effects: [ { item: { id: item.pill.bone_mending, amount: -1 } }, { reputation: { id: sect.azure_cloud, amount: 15 } }, { reveal: place.bamboo_grove.hidden_spring } ]
+          next: thanks
+        - text: { uk: "Обшукати його речі" }
+          effects: [ { stones: 12 }, { reputation: { id: sect.azure_cloud, amount: -10 } } ]
+          next: robbed
+        - text: { uk: "Пройти повз" }
+    thanks:
+      text: { uk: "Учень приходить до тями. «Секта Лазурової Хмари не забуває добра», — шепоче він і розповідає про заводь у бамбуковому гаю, де ці б'є з-під землі." }
+    robbed:
+      text: { uk: "У його гаманці знаходяться камені. Хтось у лазуровому, напевно, ще згадає ваше обличчя." }
+
+- id: evt.travel.wandering_merchant
+  contexts: [travel]
+  weight: 8
+  cooldown_weeks: 26
+  nodes:
+    start:
+      text: { uk: "Ви наздоганяєте мандрівного торговця з навантаженим мулом. Серед мотлоху на возі поблискує склянка з пігулками." }
+      options:
+        - text: { uk: "Купити пігулку збирання ці за 10 каменів" }
+          conditions: [ { stones: { min: 10 } } ]
+          effects: [ { stones: -10 }, { item: { id: item.pill.qi_gathering, amount: 1 } } ]
+        - text: { uk: "Поторгуватися за 7 каменів" }
+          conditions: [ { stones: { min: 7 } } ]
+          outcomes:
+            - weight: 3
+              weight_per_stat: { stat.perception: 0.3 }
+              success: true
+              effects: [ { stones: -7 }, { item: { id: item.pill.qi_gathering, amount: 1 } } ]
+              next: bargained
+            - weight: 5
+              next: offended
+        - text: { uk: "Розминутися" }
+    bargained:
+      text: { uk: "Торговець довго бідкається, що ви пустите його з торбою, але врешті поступається." }
+    offended:
+      text: { uk: "Торговець ображено цмокає, хльоскає мула й не озирається." }
+
+- id: evt.travel.grey_wolves
+  contexts: [travel]
+  weight: 6
+  cooldown_weeks: 52
+  conditions:
+    - zone: [zone.bamboo_grove, zone.misty_hills, zone.river_valley]
+  nodes:
+    start:
+      text: { uk: "З туману виринають сірі вовки, ціла зграя. Вожак уже пригинається до стрибка." }
+      options:
+        - text: { uk: "Прийняти бій" }
+          effects: [ { start_combat: { group: grp.beast.grey_wolves, win: won, loss: lost } } ]
+        - text: { uk: "Відлякати вогнем" }
+          conditions: [ { knowledge: { id: element.fire, min: 1 } } ]
+          outcomes:
+            - weight: 8
+              success: true
+              next: scared
+            - weight: 2
+              effects: [ { start_combat: { group: grp.beast.grey_wolves, win: won, loss: lost } } ]
+        - text: { uk: "Вилізти на дерево й перечекати (1 тиждень)" }
+          effects: [ { time: 1 } ]
+          next: waited
+    won:
+      text: { uk: "Вожак падає, і зграя розбігається. Шкури сірих вовків у поселенні беруть охоче." }
+      options:
+        - text: { uk: "Зняти шкури" }
+          effects: [ { stones: 8 }, { combat_insight: 25 } ]
+    lost:
+      text: { uk: "Ви ледве відбиваєтеся й, стікаючи кров'ю, відступаєте." }
+    scared:
+      text: { uk: "Вогонь спалахує на долоні, і зграя з виском кидається в туман." }
+    waited:
+      text: { uk: "Вовки кружляють під деревом кілька днів, а потім ідуть шукати легшої здобичі." }

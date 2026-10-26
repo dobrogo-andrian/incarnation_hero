@@ -104,7 +104,7 @@ public sealed class RunSessionTests : IDisposable
         var session = RunSession.OpenOrStart(store, TestContent.Repo, () => seed++);
         session.Execute(TestContent.Wait(null));
         while (session.Sim.State.Mode != GameMode.RunEnd)
-            session.Execute(new ContinueActivity());
+            session.Execute(TestContent.Proceed(session.Sim.View));
 
         Assert.True(session.TryStartNewRun());
 

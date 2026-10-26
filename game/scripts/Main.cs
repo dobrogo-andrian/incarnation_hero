@@ -6,8 +6,9 @@ using Core.State;
 using Godot;
 
 /// <summary>
-/// Temporary shell until the stage 1 UI: shows the PlayerView and sends wait commands. All rules,
-/// saving included, stay in Core; this node only loads content, draws text and forwards input.
+/// Temporary shell until the stage 1 UI: shows the PlayerView, sends wait commands and answers
+/// event dialogs. All rules, saving included, stay in Core; this node only loads content, draws
+/// text and forwards input.
 /// </summary>
 public partial class Main : Control
 {
@@ -22,6 +23,8 @@ public partial class Main : Control
 
     private Label _view = null!;
     private Label _status = null!;
+    private Label _eventText = null!;
+    private VBoxContainer _choices = null!;
     private Button _waitWeek = null!;
     private Button _waitOpen = null!;
     private Button _newRun = null!;
@@ -68,6 +71,8 @@ public partial class Main : Control
 
         _view = new Label();
         _status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _eventText = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _choices = new VBoxContainer();
         _waitWeek = new Button();
         _waitOpen = new Button();
         _newRun = new Button();
@@ -81,6 +86,8 @@ public partial class Main : Control
         buttons.AddChild(_waitOpen);
         buttons.AddChild(_newRun);
 
+        column.AddChild(_eventText);
+        column.AddChild(_choices);
         column.AddChild(_view);
         column.AddChild(buttons);
         column.AddChild(_status);
@@ -108,8 +115,27 @@ public partial class Main : Control
         var view = _session!.Sim.View;
         _view.Text = string.Join("\n", SimText.ViewLines(view, _db).Select(_loc.Resolve));
         bool over = view.Mode == GameMode.RunEnd;
-        _waitWeek.Disabled = _waitOpen.Disabled = over;
+        _waitWeek.Disabled = _waitOpen.Disabled = view.Mode != GameMode.Overworld;
         _newRun.Visible = over;
+        ShowEvent(view);
+    }
+
+    /// <summary>The open event node's text and one button per choice; hidden outside a dialog.</summary>
+    private void ShowEvent(PlayerView view)
+    {
+        foreach (var child in _choices.GetChildren())
+            child.QueueFree();
+        _eventText.Visible = _choices.Visible = view.Event is not null;
+        if (view.Event is not { } dialog)
+            return;
+
+        _eventText.Text = _loc.Resolve(SimText.EventText(dialog, view));
+        foreach (var (index, text, available) in SimText.EventChoices(dialog))
+        {
+            var button = new Button { Text = _loc.Resolve(text), Disabled = !available, Alignment = HorizontalAlignment.Left };
+            button.Pressed += () => Send(new ChooseEventOption(index));
+            _choices.AddChild(button);
+        }
     }
 
     /// <summary>The run seed comes from the shell; Core itself never reads the clock or OS randomness.</summary>

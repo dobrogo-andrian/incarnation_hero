@@ -1,0 +1,52 @@
+# Events during meditation outside the settlement (§10, D38): rare and quiet.
+
+- id: evt.meditation.flash_of_insight
+  contexts: [meditation]
+  weight: 6
+  cooldown_weeks: 52
+  nodes:
+    start:
+      text: { uk: "Посеред медитації потік ці раптом вибудовується в ясний візерунок. Ще трохи, і щось відкриється." }
+      options:
+        - text: { uk: "Піти за відчуттям" }
+          outcomes:
+            - weight: 5
+              weight_per_stat: { stat.perception: 0.5 }
+              success: true
+              effects: [ { stat: { id: stat.perception, amount: 1 } }, { stat: { id: stat.purity, amount: 2 } } ]
+              next: clarity
+            - weight: 3
+              effects: [ { injury: { id: injury.internal, amount: 5 } } ]
+              next: backlash
+        - text: { uk: "Не поспішати й утримати спокій" }
+          effects: [ { resource: { id: resource.qi_pool, amount: 20 } } ]
+          next: calm
+    clarity:
+      text: { uk: "Візерунок складається до кінця. Світ на мить стає прозорим, і ця прозорість лишається з вами." }
+    backlash:
+      text: { uk: "Візерунок розсипається, і ці б'є у зворотний бік. У грудях пече." }
+    calm:
+      text: { uk: "Ви відпускаєте видіння, і ці спокійно наповнює дань-тянь." }
+
+- id: evt.meditation.hermit_visit
+  contexts: [meditation]
+  weight: 4
+  once_per_run: true
+  conditions:
+    - zone: [zone.bamboo_grove, zone.river_valley, zone.misty_hills]
+  nodes:
+    start:
+      text: { uk: "Неподалік сідає сивий самітник і довго мовчки дивиться, як ви медитуєте. «Подих у тебе рваний, як старий мішок», — каже він нарешті." }
+      options:
+        - text: { uk: "Попросити настанов (2 тижні)" }
+          effects: [ { time: 2 }, { knowledge: { id: element.earth, amount: 25 } } ]
+          next: teaching
+        - text: { uk: "Пригостити самітника (5 каменів)" }
+          conditions: [ { stones: { min: 5 } } ]
+          effects: [ { stones: -5 }, { reveal: place.misty_hills.hermit_grotto } ]
+          next: grotto
+        - text: { uk: "Не зважати на нього" }
+    teaching:
+      text: { uk: "Два тижні самітник змушує вас слухати, як дихає земля. Наостанок лише пирхає: «Бувало й гірше»." }
+    grotto:
+      text: { uk: "Самітник смакує частування й, подобрівши, розповідає про грот у Туманних пагорбах, де колись медитував сам." }

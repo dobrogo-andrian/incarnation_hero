@@ -17,7 +17,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "448ff4a5e2540c84d5ac392479c984d199a686a3f2d06847abeb024caa25927f";
+        const string expectedHash = "57a840f9b64c4491fda7dcec4fd5a129875011d27cb429b5aa0aa8f71830ca3b";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -34,7 +34,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakTakeTwoPillsThenAssimilateUntilDeath_Seed42()
     {
-        const string expectedHash = "e6e3d2f237ea7f13394388fae1337da49733c5d5bd68f3cb99341d105216cbcf";
+        const string expectedHash = "7137a30d0206d587bf5a0a22456cbc4768fa56a1f0b3ac09d4d14a7bdef51257";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -54,7 +54,7 @@ public sealed class GoldenTests
     [Fact]
     public void PurifyFillTheScaleAndBreakThroughThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "f0c9645337b4ad8e1417eb1380189325a70dc63818ef7de051262db0d5103a88";
+        const string expectedHash = "7dff41e8f3d536fe812984714c4fb2dc41794176a48ba6fe50835ffab26b567f";
         var purify = new MeditateActivity("meditation.purification", "place.spirit_peak.vein");
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
@@ -78,10 +78,11 @@ public sealed class GoldenTests
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
     }
 
+    /// <summary>Like <c>sim run</c>: continues through interrupts and takes the first available choice in events.</summary>
     private static void RunToEnd(Simulation sim, Command command)
     {
         Assert.True(sim.Execute(command).Accepted);
-        while (sim.State.Activity is not null)
-            sim.Execute(new ContinueActivity());
+        while (sim.State.Event is not null || sim.State.Activity is not null)
+            Assert.True(sim.Execute(TestContent.Proceed(sim.View)).Accepted);
     }
 }

@@ -5,11 +5,15 @@
 #
 # Routes (weeks): hub–bamboo_grove 1, hub–river_valley 2, bamboo_grove–misty_hills 2,
 # river_valley–misty_hills 2, river_valley–old_battlefield 3, misty_hills–spirit_peak 3,
-# old_battlefield–spirit_peak 2.
+# old_battlefield–spirit_peak 2; hidden: old_battlefield–ancient_tomb 2.
+#
+# Hidden zones and places (D40) are unknown until an event reveals them: the tomb, the spring
+# in the grove and the hermit's grotto in the hills.
 
 - id: zone.hub
   name: { uk: "Поселення Біля Підніжжя" }
   danger: 0
+  settlement: true
 
 - id: zone.bamboo_grove
   name: { uk: "Бамбуковий гай" }
@@ -30,6 +34,11 @@
 - id: zone.spirit_peak
   name: { uk: "Пік духовної жили" }
   danger: 3
+
+- id: zone.ancient_tomb
+  name: { uk: "Гробниця Забутого Майстра" }
+  danger: 3
+  hidden: true
 
 - id: route.hub.bamboo_grove
   a: zone.hub
@@ -64,6 +73,11 @@
 - id: route.old_battlefield.spirit_peak
   a: zone.old_battlefield
   b: zone.spirit_peak
+  weeks: 2
+
+- id: route.old_battlefield.ancient_tomb
+  a: zone.old_battlefield
+  b: zone.ancient_tomb
   weeks: 2
 
 # Meditation places: wild spots are weak, caves medium, the spirit vein strong (§9).
@@ -109,3 +123,27 @@
   density: 4
   capacity: 200
   regen_per_week: 1
+
+- id: place.ancient_tomb.sealed_hall
+  name: { uk: "Запечатана зала" }
+  zone: zone.ancient_tomb
+  density: 3.5
+  capacity: 150
+  regen_per_week: 1
+
+# Hidden places: a little better than what their zone offers in the open.
+- id: place.bamboo_grove.hidden_spring
+  name: { uk: "Прихована джерельна заводь" }
+  zone: zone.bamboo_grove
+  density: 2
+  capacity: 25
+  regen_per_week: 0.5
+  hidden: true
+
+- id: place.misty_hills.hermit_grotto
+  name: { uk: "Грот самітника" }
+  zone: zone.misty_hills
+  density: 3
+  capacity: 80
+  regen_per_week: 0.75
+  hidden: true

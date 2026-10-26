@@ -13,6 +13,17 @@ public abstract record OverworldCommand : Command
     public override GameMode Mode => GameMode.Overworld;
 }
 
+public abstract record EventDialogCommand : Command
+{
+    public override GameMode Mode => GameMode.EventDialog;
+}
+
+/// <summary>
+/// Chooses option <paramref name="Index"/> of the current event node; at a node without options,
+/// index 0 is the implicit "continue" that closes the dialog (D38).
+/// </summary>
+public sealed record ChooseEventOption(int Index) : EventDialogCommand;
+
 /// <summary>
 /// Starts <paramref name="Activity"/> (replacing any current one) and runs weeks until it ends,
 /// a stopping interrupt fires or the run ends. Null <paramref name="Weeks"/> means no limit.

@@ -153,7 +153,7 @@ public class SimulationTests
 
         var outcome = sim.Execute(TestContent.Wait(null));
         while (sim.State.Mode != GameMode.RunEnd)
-            outcome = sim.Execute(new ContinueActivity());
+            outcome = sim.Execute(TestContent.Proceed(sim.View));
 
         Assert.Equal(new RunEnded(RunEndCause.OldAge), outcome.Events[^1]);
         Assert.Equal(RunEndCause.OldAge, sim.State.EndCause);

@@ -24,31 +24,38 @@ public static class KnowledgeSystem
         return Level(player, source.KnowledgeId) >= source.MaxLevel ? RejectReasons.StudyCapReached : null;
     }
 
-    /// <summary>
-    /// Adds <paramref name="gain"/> × the source's speed; levels up while the points cover the next
-    /// level. At the ceiling nothing is gained, and the interrupt fires only on reaching it.
-    /// </summary>
+    /// <summary>Adds <paramref name="gain"/> × the source's speed, up to the source's ceiling.</summary>
     public static void Study(PlayerState player, SimContext ctx, string subjectId, double gain, List<SimEvent> events)
     {
         var source = SourceOf(player, ctx, subjectId)!;
-        if (Level(player, source.KnowledgeId) >= source.MaxLevel)
+        Gain(player, ctx, source.KnowledgeId, gain * source.Speed, source.MaxLevel, events);
+    }
+
+    /// <summary>
+    /// Adds comprehension points; levels up while the points cover the next level, up to
+    /// <paramref name="maxLevel"/> (the level table's end when null). At the ceiling nothing is
+    /// gained, and the interrupt fires only on reaching it.
+    /// </summary>
+    public static void Gain(PlayerState player, SimContext ctx, string knowledgeId, double points, int? maxLevel, List<SimEvent> events)
+    {
+        var table = ctx.Config.KnowledgeLevelPoints;
+        int ceiling = Math.Min(maxLevel ?? table.Count, table.Count);
+        if (Level(player, knowledgeId) >= ceiling)
             return;
 
-        var knowledge = GetOrAdd(player, source.KnowledgeId);
-        var points = ctx.Config.KnowledgeLevelPoints;
-
-        double progress = knowledge.Progress + gain * source.Speed;
-        while (knowledge.Level < source.MaxLevel && progress >= points[knowledge.Level])
+        var knowledge = GetOrAdd(player, knowledgeId);
+        double progress = knowledge.Progress + points;
+        while (knowledge.Level < ceiling && progress >= table[knowledge.Level])
         {
-            progress -= points[knowledge.Level];
+            progress -= table[knowledge.Level];
             knowledge.Level++;
-            events.Add(new KnowledgeLevelUp(source.KnowledgeId, knowledge.Level));
+            events.Add(new KnowledgeLevelUp(knowledgeId, knowledge.Level));
         }
 
-        if (knowledge.Level >= source.MaxLevel)
+        if (knowledge.Level >= ceiling)
         {
             knowledge.Progress = 0;
-            events.Add(new StudyCapReached(source.KnowledgeId));
+            events.Add(new StudyCapReached(knowledgeId));
         }
         else
         {

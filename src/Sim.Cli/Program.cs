@@ -62,7 +62,8 @@ static Activity WeeksActivity(Simulation sim, string? direction, string? subject
 
 /// <summary>
 /// Executes <paramref name="command"/> and keeps continuing its activity through interrupts,
-/// printing notable events. False when Core rejects it.
+/// printing notable events. In an event dialog it takes the first available choice, printing the
+/// text and the choice. False when Core rejects a command.
 /// </summary>
 static bool RunToEnd(Simulation sim, Command command, Localizer localizer)
 {
@@ -81,6 +82,14 @@ static bool RunToEnd(Simulation sim, Command command, Localizer localizer)
                 week = passed.Week;
             else if (SimText.Describe(e) is { } text)
                 Console.WriteLine($"[{week}] {localizer.Resolve(text)}");
+        }
+        if (sim.View.Event is { } dialog)
+        {
+            var choice = SimText.EventChoices(dialog).First(c => c.Available);
+            Console.WriteLine($"[{week}] {localizer.Resolve(SimText.EventText(dialog, sim.View))}");
+            Console.WriteLine($"[{week}] > {localizer.Resolve(choice.Text)}");
+            command = new ChooseEventOption(choice.Index);
+            continue;
         }
         if (sim.State.Activity is null)
             return true;
@@ -138,7 +147,8 @@ static int Usage()
           sim validate <contentDir>
           sim run --seed <N> [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId> [--subject <folio or element>]] [--content <dir>]
             Travels first, takes the pills in order, then spends the weeks waiting, or meditating at
-            the zone's first place; content defaults to ./content.
+            the zone's first place; in events, takes the first available choice. Content defaults
+            to ./content.
         """);
     return 2;
 }
