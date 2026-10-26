@@ -13,6 +13,7 @@ public enum RngStream
     Loot,
     Combat,
     Ai,
+    Life,
 }
 
 /// <summary>One xoshiro256** generator per <see cref="RngStream"/>, all derived from a master seed.</summary>

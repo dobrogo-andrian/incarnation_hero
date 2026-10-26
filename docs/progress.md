@@ -11,7 +11,7 @@
 ## Зараз
 
 **Етап:** 1 «Макропетля, MVP-0» ([tech 9](tech/09-roadmap.md)). Етап 0 закрито 2026-10-26.
-**Наступний крок:** модель часу з активностями й перериваннями плюс старіння, тривалість життя і смерть → RunEnd (tech 2.3, §3). Перед початком узгодити обсяг з автором (великий модуль).
+**Наступний крок:** персонаж (стати, ресурси) і єдина система модифікаторів (tech 2.4–2.5, §2). Перед початком узгодити обсяг з автором.
 
 ## Етап 1: чекліст
 
@@ -19,7 +19,7 @@
 
 | Пункт | Стан | Де |
 |---|---|---|
-| Модель часу: активність із тривалістю або «до кінця», переривання, старіння, тривалість життя, смерть → RunEnd | ⬜ | tech 2.3, §3 |
+| Модель часу: активність із тривалістю або «до кінця», переривання, старіння, тривалість життя, смерть → RunEnd | ✅ | `TimeSystem`, `LifeSystem`, `ActivitySystem`; D21–D24 |
 | Персонаж: стати, ресурси; єдина система модифікаторів із джерелами | ⬜ | tech 2.4–2.5, §2 |
 | Ручна карта 5–6 зон, подорож; місця медитації з резервом ці | ⬜ | §9, tech 4.4 |
 | Медитація у 4 напрямах: фундамент (знання, чистота), шкала етапу | ⬜ | §4.1–4.2, tech 4.4 |
@@ -33,7 +33,7 @@
 | Перші Python-звіти | ⬜ | tech 6.2 |
 | Плейтест гіпотези «тиск часу створює цікаві рішення» (автор + 2–3 тестери) | ⬜ | tech 9 |
 
-Останній прогін: `dotnet test` дав 66/66 зелених (2026-10-26).
+Останній прогін: `dotnet test` дав 79/79 зелених (2026-10-26).
 
 Критерії готовності етапу 1: повний забіг від 12 років до смерті проходиться в простому UI; 1000 headless-забігів за хвилини; звіти показують різницю між стратегіями ботів; автор і 2–3 тестери відповіли на гіпотезу. Якщо ні — правимо макропетлю до бою.
 
@@ -41,20 +41,24 @@
 
 ## Що вже є в коді (щоб не перечитувати)
 
-- `RngStream`: Worldgen, Events, Rumors, Npc, Loot, Combat, Ai. Стани всіх потоків записуються в `GameState.RngStates` після кожної команди.
-- Команд поки одна: `WaitWeeks(weeks)` (режим Overworld). Подія теж одна: `WeekPassed`. Команда з чужого режиму відхиляється з `RejectReasons.WrongMode`.
-- `Simulation.NewGame(seed, settings)` / `Simulation.Resume(state)` — точки входу для UI, тестів і Sim.Cli.
+- `RngStream`: Worldgen, Events, Rumors, Npc, Loot, Combat, Ai, Life (нові потоки — лише в кінець). Стани всіх потоків записуються в `GameState.RngStates` після кожної команди.
+- Команди (Overworld): `StartActivity(activity, weeks?)`, `ContinueActivity`, `CancelActivity`, `SetInterruptStops(categories)`. Команда з чужого режиму відхиляється з `RejectReasons.WrongMode`; у RunEnd відхиляється все.
+- Активності — records від `Activity` у `State/Activities.cs` (JSON-дискримінатор `kind`), поки лише `WaitActivity`. Нова активність: record + `[JsonDerivedType]` там же + гілка в `ActivitySystem` і назва в `SimText.ActivityName`.
+- Тиждень: `TimeSystem.RunActivity` крутить тижні (тиждень/вік → `LifeSystem` → `ActivitySystem`), доки активність не скінчиться, не спрацює переривання із `StoppingInterrupts` або забіг не завершиться. Переривання — SimEvent від `InterruptEvent` з `Category`. Кінець забігу — лише через `RunEndSystem.End`.
+- Події: `WeekPassed`, `ActivityFinished`, `ActivityCancelled`, `LifeEndApproaching`, `RunEnded`.
+- `Simulation.NewGame(content, seed)` / `Simulation.Resume(content, state)` — точки входу для UI, тестів і Sim.Cli. Коефіцієнти система бере з `config.run` через `ContentDb`.
 - `SaveSerializer.HashState(state)` — стабільний хеш стану для golden-тестів.
 - Один культиваційний трек `qi`, константа `Simulation.QiVectorId`.
 - Контент: `ContentLoader.Load(IEnumerable<ContentFile>)` → `ContentDb` + список `ContentError(file, line, msg)`. Ядро не читає диск саме (`ContentFiles.FromDirectory` — хелпер для тестів/CLI), тож Godot подасть `res://`-файли так само. Тип об'єкта = перший сегмент ID (`vector`, `stage`), реєстр `TypesByKind` у `ContentLoader`. Файл — одна мапа або список мап. Невідомі поля — помилка. Зараз є лише `vector.qi` і `stage.qi.1..4` у `content/cultivation/qi_stages.yaml`.
 - Валідатор: посилання позначаються атрибутом `[ContentRef(typeof(T))]` на властивості def-класу (`string` або `List<string>`); `ContentValidator` знаходить їх рефлексією і перевіряє існування й тип. Також перевіряє непорожній `uk` у кожному `LocalizedText`. Поки лише властивості верхнього рівня: вкладені структури (вузли подій) додамо разом із подіями. `Sim.Cli validate <dir>` повертає 0/1/2 (ок / помилки / неправильні аргументи).
 - Локалізація: `LocKey(Key, Args)` у `Core.Loc`; `Localizer.FromContent(db).Resolve(key)` підставляє `{name}` (числа, рядки або вкладені `LocKey`). Відсутній ключ повертає сам ключ. Таблицю ключів будує `LocTable.FromContent`. Тест `EveryLocKeyDeclaredInCore_HasTextInRepoContent` ловить статичні `LocKey` у Core без тексту в контенті.
-- Баланс забігу: `config.run` (`content/balance/run.yaml`, клас `RunConfigDef`): `start_age_years` (§3), `weeks_per_year` (D16). `NewGameSettings.FromContent(db)` будує налаштування нового забігу з нього.
-- `PlayerViewText.Lines(view, db)` → список `LocKey`, по одному на рядок. Його використовують Sim.Cli і Godot-оболонка (`game/scripts/Main.cs`), тексти `str.view.*`, `str.mode.*`.
-- `Sim.Cli run --seed N --weeks W [--content dir]` друкує PlayerView і `state hash`. Службові повідомлення (кількість об'єктів, помилки) йдуть у stderr, тож stdout чистий.
-- Golden: `GoldenTests.WaitTenYears_Seed42`, хеш — константа в тесті. Той самий хеш дає `sim run --seed 42 --weeks 520`.
-- `RunSession.OpenOrStart(store, newGame)` — ironman-забіг: продовжує сейв або починає новий (пошкоджений чи несумісний сейв замінюється новим забігом, `Notice` пояснює гравцю). `Execute` зберігає після кожної прийнятої команди до повернення результату; відхилена команда не пише.
-- Тести знаходять корінь репо через `RepoPaths` (шукає `IncarnationHero.sln`).
+- Баланс забігу: `config.run` (`content/balance/run.yaml`, клас `RunConfigDef`): `start_age_years`, `start_lifespan_years` (§3), `weeks_per_year` (D16), `natural_death_window_years` (D21), `life_end_warning_years` (D24).
+- `SimText.ViewLines(view, db)` і `SimText.Describe(event)` → `LocKey`. Їх використовують Sim.Cli і Godot-оболонка (`game/scripts/Main.cs`), тексти `str.view.*`, `str.event.*`, `str.mode.*`, `str.activity.*`, `str.end.*`.
+- `Sim.Cli run --seed N --weeks W|end [--content dir]` друкує помітні події з тижнем, PlayerView і `state hash`; переривання сам продовжує. Службові повідомлення йдуть у stderr, тож stdout чистий.
+- Golden: `GoldenTests.WaitUntilDeath_Seed42`, хеш — константа в тесті. Той самий хеш дає `sim run --seed 42 --weeks end`.
+- `RunSession.OpenOrStart(store, content, newSeed)` — ironman-забіг: продовжує сейв або починає новий (пошкоджений чи несумісний сейв замінюється новим забігом, `Notice` пояснює гравцю). `Execute` зберігає після кожної прийнятої команди до повернення результату; відхилена команда не пише. `TryStartNewRun()` — новий забіг лише після RunEnd.
+- Тести: `TestContent.Repo` (контент репо, завантажений раз), `TestContent.Wait(weeks)`; корінь репо — `RepoPaths`.
+- Сейв `schema_version` = 2 (без міграції з 1: старі сейви несумісні → новий забіг).
 
 ## Пастки і неочевидне
 
@@ -74,6 +78,7 @@
 
 Одна-дві строки на сесію, нові зверху.
 
+- **2026-10-26** — модель часу: активності, переривання з налаштуванням зупинок, тривалість життя, природна смерть у вікні ризику, RunEnd (D21–D24). Оболонка: «Чекати до переривання», «Новий забіг».
 - **2026-10-26** — Godot-оболонка підтверджена в редакторі; етап 0 закрито, складено чекліст етапу 1.
 - **2026-10-26** — `RunSession` (автосейв після команди, продовження/новий забіг) у Core; Godot-оболонка написана.
 - **2026-10-26** — `Sim.Cli run` (PlayerView через `Localizer` + хеш), `config.run` у YAML, `PlayerViewText`, перший golden-тест. Узгоджено обсяг Godot-оболонки.

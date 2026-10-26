@@ -10,13 +10,24 @@ public enum GameMode
     RunEnd,
 }
 
+/// <summary>Kinds of interrupt signals (tech 2.3). The player chooses which of them stop time.</summary>
+public enum InterruptCategory
+{
+    LifeEndApproaching,
+}
+
+public enum RunEndCause
+{
+    OldAge,
+}
+
 /// <summary>
 /// The whole true state of a run. Plain serializable data: no logic, no references to content
 /// objects (only string IDs), no Godot types.
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -29,11 +40,24 @@ public sealed class GameState
 
     public GameMode Mode { get; set; } = GameMode.Overworld;
     public PlayerState Player { get; set; } = new();
+
+    /// <summary>The activity in progress; it stays here when an interrupt stops time.</summary>
+    public ActiveActivity? Activity { get; set; }
+
+    /// <summary>Interrupt categories that stop a running activity. Others are reported and time goes on.</summary>
+    public List<InterruptCategory> StoppingInterrupts { get; set; } = [.. Enum.GetValues<InterruptCategory>()];
+
+    /// <summary>Set when the run is over (<see cref="GameMode.RunEnd"/>).</summary>
+    public RunEndCause? EndCause { get; set; }
 }
 
 public sealed class PlayerState
 {
     public int AgeWeeks { get; set; }
+
+    /// <summary>Expected lifespan; natural death becomes possible a few years before it (§3).</summary>
+    public int LifespanWeeks { get; set; }
+
     public List<CultivationTrack> Tracks { get; set; } = [];
 }
 

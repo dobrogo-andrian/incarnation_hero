@@ -7,8 +7,6 @@ namespace Core.Tests.Save;
 
 public sealed class SaveTests : IDisposable
 {
-    private static readonly NewGameSettings Settings = new(StartAgeWeeks: 12 * 52);
-
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "ih-save-tests", Guid.NewGuid().ToString("N"));
 
     public void Dispose()
@@ -21,8 +19,8 @@ public sealed class SaveTests : IDisposable
 
     private static GameState PlayedState(ulong seed, int weeks)
     {
-        var sim = Simulation.NewGame(seed, Settings);
-        sim.Execute(new WaitWeeks(weeks));
+        var sim = Simulation.NewGame(TestContent.Repo, seed);
+        sim.Execute(TestContent.Wait(weeks));
         return sim.State;
     }
 
@@ -35,6 +33,21 @@ public sealed class SaveTests : IDisposable
 
         Assert.Equal(LoadStatus.Ok, decoded.Status);
         Assert.Equal(first, SaveSerializer.Encode(decoded.State!));
+    }
+
+    [Fact]
+    public void InterruptedActivity_SurvivesSaveLoad()
+    {
+        var state = PlayedState(42, 10);
+        state.Activity = new ActiveActivity { Activity = new WaitActivity(), WeeksLeft = 3 };
+        state.EndCause = RunEndCause.OldAge;
+
+        var decoded = SaveSerializer.Decode(SaveSerializer.Encode(state)).State!;
+
+        Assert.IsType<WaitActivity>(decoded.Activity!.Activity);
+        Assert.Equal(3, decoded.Activity.WeeksLeft);
+        Assert.Equal(RunEndCause.OldAge, decoded.EndCause);
+        Assert.Equal(SaveSerializer.HashState(state), SaveSerializer.HashState(decoded));
     }
 
     [Fact]
@@ -53,14 +66,14 @@ public sealed class SaveTests : IDisposable
     [Fact]
     public void LoadedState_ContinuesExactlyLikeTheOriginal()
     {
-        var original = Simulation.NewGame(7, Settings);
-        original.Execute(new WaitWeeks(3));
+        var original = Simulation.NewGame(TestContent.Repo, 7);
+        original.Execute(TestContent.Wait(3));
         var store = NewStore();
         store.Save(original.State);
 
-        var resumed = Simulation.Resume(store.Load().State!);
-        original.Execute(new WaitWeeks(5));
-        resumed.Execute(new WaitWeeks(5));
+        var resumed = Simulation.Resume(TestContent.Repo, store.Load().State!);
+        original.Execute(TestContent.Wait(5));
+        resumed.Execute(TestContent.Wait(5));
 
         Assert.Equal(SaveSerializer.HashState(original.State), SaveSerializer.HashState(resumed.State));
     }
@@ -142,7 +155,7 @@ public sealed class SaveTests : IDisposable
         // Valid checksum but a field the schema does not know.
         string state = "{\"bogus\":1}";
         string checksum = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(state))).ToLowerInvariant();
-        string forged = $"{{\"schema_version\":1,\"checksum\":\"{checksum}\",\"state\":{state}}}";
+        string forged = $"{{\"schema_version\":{GameState.CurrentSchemaVersion},\"checksum\":\"{checksum}\",\"state\":{state}}}";
 
         Assert.Equal(LoadStatus.Corrupt, SaveSerializer.Decode(Encoding.UTF8.GetBytes(forged)).Status);
     }

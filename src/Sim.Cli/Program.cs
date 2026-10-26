@@ -2,6 +2,7 @@ using Core.Content;
 using Core.Loc;
 using Core.Save;
 using Core.Sim;
+using Core.State;
 
 return args switch
 {
@@ -20,27 +21,39 @@ static int Run(string[] options)
 {
     if (!TryParseOptions(options, out var values)
         || !ulong.TryParse(values.GetValueOrDefault("--seed"), out ulong seed)
-        || !int.TryParse(values.GetValueOrDefault("--weeks"), out int weeks)
-        || weeks < 0)
+        || !TryParseWeeks(values.GetValueOrDefault("--weeks"), out int? weeks))
         return Usage();
 
     var db = LoadContent(values.GetValueOrDefault("--content", "content"));
     if (db is null)
         return 1;
 
-    var sim = Simulation.NewGame(seed, NewGameSettings.FromContent(db));
+    var sim = Simulation.NewGame(db, seed);
     var localizer = Localizer.FromContent(db);
-    if (weeks > 0)
+    if (weeks != 0)
     {
-        var outcome = sim.Execute(new WaitWeeks(weeks));
-        if (!outcome.Accepted)
+        // Interrupts stop the wait; a headless run just reports them and keeps going.
+        Command command = new StartActivity(new WaitActivity(), weeks);
+        while (true)
         {
-            Console.Error.WriteLine(localizer.Resolve(outcome.RejectReason!));
-            return 1;
+            var outcome = sim.Execute(command);
+            if (!outcome.Accepted)
+            {
+                Console.Error.WriteLine(localizer.Resolve(outcome.RejectReason!));
+                return 1;
+            }
+            foreach (var e in outcome.Events)
+            {
+                if (SimText.Describe(e) is { } text)
+                    Console.WriteLine($"[{sim.State.Week}] {localizer.Resolve(text)}");
+            }
+            if (sim.State.Activity is null)
+                break;
+            command = new ContinueActivity();
         }
     }
 
-    foreach (var line in PlayerViewText.Lines(sim.View, db))
+    foreach (var line in SimText.ViewLines(sim.View, db))
         Console.WriteLine(localizer.Resolve(line));
     Console.WriteLine($"state hash: {SaveSerializer.HashState(sim.State)}");
     return 0;
@@ -77,12 +90,24 @@ static bool TryParseOptions(string[] options, out Dictionary<string, string> val
     return true;
 }
 
+/// <summary>A non-negative week count, or "end" (null) for no limit.</summary>
+static bool TryParseWeeks(string? text, out int? weeks)
+{
+    weeks = null;
+    if (text == "end")
+        return true;
+    if (!int.TryParse(text, out int value) || value < 0)
+        return false;
+    weeks = value;
+    return true;
+}
+
 static int Usage()
 {
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> --weeks <W> [--content <dir>]   (content defaults to ./content)
+          sim run --seed <N> --weeks <W|end> [--content <dir>]   (content defaults to ./content)
         """);
     return 2;
 }

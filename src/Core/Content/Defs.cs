@@ -63,4 +63,16 @@ public sealed class RunConfigDef : ContentDef
 
     /// <summary>Weeks in a year, D16.</summary>
     public int WeeksPerYear { get; set; }
+
+    /// <summary>Expected lifespan at the start of a run, §3.</summary>
+    public int StartLifespanYears { get; set; }
+
+    /// <summary>
+    /// How long before the expected lifespan natural death becomes possible (D21). The mean age of
+    /// death equals the expected lifespan; a wider window spreads deaths further around it.
+    /// </summary>
+    public int NaturalDeathWindowYears { get; set; }
+
+    /// <summary>Years before the expected lifespan at which the player is warned (D24).</summary>
+    public List<int> LifeEndWarningYears { get; set; } = [];
 }

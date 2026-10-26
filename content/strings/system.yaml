@@ -7,16 +7,37 @@
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 
-# PlayerView lines (Sim.Cli and the Godot shell).
+- id: str.reject.no_activity
+  text: { uk: "Зараз немає заняття." }
+
+# PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
   text: { uk: "Тиждень забігу: {week}" }
 
 - id: str.view.age
-  text: { uk: "Вік: {years} р. {weeks} тиж." }
+  text: { uk: "Вік: {age}" }
+
+- id: str.view.lifespan
+  text: { uk: "Очікувана тривалість життя: {lifespan}" }
+
+- id: str.view.duration
+  text: { uk: "{years} р. {weeks} тиж." }
 
 - id: str.view.mode
   text: { uk: "Режим: {mode}" }
+
+- id: str.view.activity
+  text: { uk: "Заняття: {activity}, лишилось тижнів: {weeks}" }
+
+- id: str.view.activity_open
+  text: { uk: "Заняття: {activity}, без обмеження часу" }
+
+- id: str.view.no_activity
+  text: { uk: "Заняття: немає" }
+
+- id: str.view.run_end
+  text: { uk: "Забіг завершено: {cause}" }
 
 - id: str.view.track
   text: { uk: "{vector}: {stage}, прогрес {progress}" }
@@ -32,6 +53,26 @@
 
 - id: str.mode.run_end
   text: { uk: "Кінець забігу" }
+
+- id: str.activity.wait
+  text: { uk: "Очікування" }
+
+- id: str.end.old_age
+  text: { uk: "смерть від старості" }
+
+# Event lines (SimText.Describe).
+
+- id: str.event.activity_finished
+  text: { uk: "Заняття завершено: {activity}." }
+
+- id: str.event.activity_cancelled
+  text: { uk: "Заняття скасовано: {activity}." }
+
+- id: str.event.life_end_approaching
+  text: { uk: "До очікуваного кінця життя лишилось років: {years}." }
+
+- id: str.event.run_ended
+  text: { uk: "Забіг завершено: {cause}." }
 
 # How the ironman run was opened (RunSession).
 
@@ -51,6 +92,12 @@
 
 - id: str.shell.wait_week
   text: { uk: "Чекати тиждень" }
+
+- id: str.shell.wait_until_interrupt
+  text: { uk: "Чекати до переривання" }
+
+- id: str.shell.new_run
+  text: { uk: "Новий забіг" }
 
 - id: str.shell.content_errors
   text: { uk: "Помилки контенту, гру не запущено:" }

@@ -1,5 +1,8 @@
 # Run-wide balance parameters.
 
 id: config.run
-start_age_years: 12   # §3
-weeks_per_year: 52    # D16
+start_age_years: 12             # §3
+weeks_per_year: 52              # D16
+start_lifespan_years: 60        # §3
+natural_death_window_years: 3   # D21: death possible from 3 years before the expected lifespan
+life_end_warning_years: [5, 1]  # D24

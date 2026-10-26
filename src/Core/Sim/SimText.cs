@@ -1,0 +1,109 @@
+using Core.Content;
+using Core.Loc;
+using Core.State;
+
+namespace Core.Sim;
+
+/// <summary>
+/// Turns the PlayerView and SimEvents into localization keys. Shared by Sim.Cli and the Godot
+/// shell so both say the same thing; each resolves the keys with its Localizer.
+/// </summary>
+public static class SimText
+{
+    private static readonly LocKey Week = new("str.view.week");
+    private static readonly LocKey Age = new("str.view.age");
+    private static readonly LocKey Lifespan = new("str.view.lifespan");
+    private static readonly LocKey Duration = new("str.view.duration");
+    private static readonly LocKey ModeLine = new("str.view.mode");
+    private static readonly LocKey ActivityLine = new("str.view.activity");
+    private static readonly LocKey OpenActivityLine = new("str.view.activity_open");
+    private static readonly LocKey NoActivityLine = new("str.view.no_activity");
+    private static readonly LocKey RunEndLine = new("str.view.run_end");
+    private static readonly LocKey Track = new("str.view.track");
+
+    private static readonly LocKey Overworld = new("str.mode.overworld");
+    private static readonly LocKey EventDialog = new("str.mode.event_dialog");
+    private static readonly LocKey Combat = new("str.mode.combat");
+    private static readonly LocKey RunEnd = new("str.mode.run_end");
+
+    private static readonly LocKey Wait = new("str.activity.wait");
+
+    private static readonly LocKey OldAge = new("str.end.old_age");
+
+    private static readonly LocKey Finished = new("str.event.activity_finished");
+    private static readonly LocKey Cancelled = new("str.event.activity_cancelled");
+    private static readonly LocKey LifeEnd = new("str.event.life_end_approaching");
+    private static readonly LocKey Ended = new("str.event.run_ended");
+
+    public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
+    {
+        int weeksPerYear = db.Get<RunConfigDef>(RunConfigDef.RunId).WeeksPerYear;
+        var lines = new List<LocKey>
+        {
+            Week with { Args = [new("week", view.Week)] },
+            Age with { Args = [new("age", Years(view.AgeWeeks, weeksPerYear))] },
+            Lifespan with { Args = [new("lifespan", Years(view.LifespanWeeks, weeksPerYear))] },
+            ModeLine with { Args = [new("mode", ModeName(view.Mode))] },
+            view.EndCause is { } cause
+                ? RunEndLine with { Args = [new("cause", CauseName(cause))] }
+                : ActivityText(view.Activity),
+        };
+
+        foreach (var track in view.Tracks)
+        {
+            string vectorId = $"vector.{track.VectorId}";
+            string stageId = db.Get<CultivationVectorDef>(vectorId).Stages[track.StageIndex];
+            lines.Add(Track with
+            {
+                Args =
+                [
+                    new("vector", new LocKey(LocTable.ContentKey(vectorId, "name"))),
+                    new("stage", new LocKey(LocTable.ContentKey(stageId, "name"))),
+                    new("progress", track.StageProgress),
+                ],
+            });
+        }
+        return lines;
+    }
+
+    /// <summary>A line for the player about <paramref name="e"/>, or null for routine events like a passing week.</summary>
+    public static LocKey? Describe(SimEvent e) => e switch
+    {
+        ActivityFinished f => Finished with { Args = [new("activity", ActivityName(f.Activity))] },
+        ActivityCancelled c => Cancelled with { Args = [new("activity", ActivityName(c.Activity))] },
+        LifeEndApproaching l => LifeEnd with { Args = [new("years", l.YearsLeft)] },
+        RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
+        _ => null,
+    };
+
+    private static LocKey Years(int weeks, int weeksPerYear) =>
+        Duration with { Args = [new("years", weeks / weeksPerYear), new("weeks", weeks % weeksPerYear)] };
+
+    private static LocKey ActivityText(ActivityView? activity) => activity switch
+    {
+        null => NoActivityLine,
+        { WeeksLeft: int left } => ActivityLine with { Args = [new("activity", ActivityName(activity.Activity)), new("weeks", left)] },
+        _ => OpenActivityLine with { Args = [new("activity", ActivityName(activity.Activity))] },
+    };
+
+    private static LocKey ActivityName(Activity activity) => activity switch
+    {
+        WaitActivity => Wait,
+        _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
+    };
+
+    private static LocKey CauseName(RunEndCause cause) => cause switch
+    {
+        RunEndCause.OldAge => OldAge,
+        _ => throw new ArgumentOutOfRangeException(nameof(cause), cause, null),
+    };
+
+    private static LocKey ModeName(GameMode mode) => mode switch
+    {
+        GameMode.Overworld => Overworld,
+        GameMode.EventDialog => EventDialog,
+        GameMode.Combat => Combat,
+        GameMode.RunEnd => RunEnd,
+        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+    };
+}

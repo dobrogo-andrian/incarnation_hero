@@ -1,6 +1,6 @@
-using Core.Content;
 using Core.Save;
 using Core.Sim;
+using Core.State;
 
 namespace Core.Tests.Sim;
 
@@ -10,15 +10,16 @@ namespace Core.Tests.Sim;
 /// </summary>
 public sealed class GoldenTests
 {
+    /// <summary>Same run as <c>sim run --seed 42 --weeks end</c>, which prints the same hash.</summary>
     [Fact]
-    public void WaitTenYears_Seed42()
+    public void WaitUntilDeath_Seed42()
     {
-        const string expectedHash = "2c7aa769f2e905cb2e17863d3ba72cf91a7e84570bf2699e5bc5ec65cc3b746c";
+        const string expectedHash = "e7da3cf0763eeeb3c4da25d1031acd468d75dbe295fc2b43215783c3a0002db6";
 
-        var loaded = ContentLoader.Load(ContentFiles.FromDirectory(RepoPaths.Content));
-        var sim = Simulation.NewGame(42, NewGameSettings.FromContent(loaded.Db));
-        for (int i = 0; i < 10; i++)
-            sim.Execute(new WaitWeeks(52));
+        var sim = Simulation.NewGame(TestContent.Repo, 42);
+        sim.Execute(TestContent.Wait(null));
+        while (sim.State.Mode != GameMode.RunEnd)
+            sim.Execute(new ContinueActivity());
 
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
     }

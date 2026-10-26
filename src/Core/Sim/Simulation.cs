@@ -4,15 +4,6 @@ using Core.State;
 
 namespace Core.Sim;
 
-public sealed record NewGameSettings(int StartAgeWeeks)
-{
-    public static NewGameSettings FromContent(ContentDb db)
-    {
-        var run = db.Get<RunConfigDef>(RunConfigDef.RunId);
-        return new(run.StartAgeYears * run.WeeksPerYear);
-    }
-}
-
 /// <summary>
 /// Entry point for the UI, tests and Sim.Cli: owns the state and its live RNG streams,
 /// validates commands and dispatches them to systems.
@@ -22,19 +13,25 @@ public sealed class Simulation
     public const string QiVectorId = "qi";
 
     private readonly RngStreams _rng;
+    private readonly RunConfigDef _config;
 
-    private Simulation(GameState state, RngStreams rng)
+    private Simulation(ContentDb content, GameState state, RngStreams rng)
     {
+        Content = content;
         State = state;
         _rng = rng;
+        _config = content.Get<RunConfigDef>(RunConfigDef.RunId);
     }
+
+    public ContentDb Content { get; }
 
     public GameState State { get; }
 
     public PlayerView View => PlayerView.From(State);
 
-    public static Simulation NewGame(ulong seed, NewGameSettings settings)
+    public static Simulation NewGame(ContentDb content, ulong seed)
     {
+        var config = content.Get<RunConfigDef>(RunConfigDef.RunId);
         var rng = RngStreams.FromSeed(seed);
         var state = new GameState
         {
@@ -42,15 +39,17 @@ public sealed class Simulation
             RngStates = rng.GetStates(),
             Player = new PlayerState
             {
-                AgeWeeks = settings.StartAgeWeeks,
+                AgeWeeks = config.StartAgeYears * config.WeeksPerYear,
+                LifespanWeeks = config.StartLifespanYears * config.WeeksPerYear,
                 Tracks = [new CultivationTrack { VectorId = QiVectorId }],
             },
         };
-        return new Simulation(state, rng);
+        return new Simulation(content, state, rng);
     }
 
     /// <summary>Resumes from a loaded state; RNG streams continue exactly where they were saved.</summary>
-    public static Simulation Resume(GameState state) => new(state, RngStreams.FromStates(state.RngStates));
+    public static Simulation Resume(ContentDb content, GameState state) =>
+        new(content, state, RngStreams.FromStates(state.RngStates));
 
     public CommandOutcome Execute(Command command)
     {
@@ -59,7 +58,10 @@ public sealed class Simulation
 
         var outcome = command switch
         {
-            WaitWeeks c => ExecuteWait(c),
+            StartActivity c => ExecuteStart(c),
+            ContinueActivity => ExecuteContinue(),
+            CancelActivity => ExecuteCancel(),
+            SetInterruptStops c => ExecuteSetInterruptStops(c),
             _ => throw new NotSupportedException($"No handler for {command.GetType().Name}."),
         };
 
@@ -67,14 +69,37 @@ public sealed class Simulation
         return outcome;
     }
 
-    private CommandOutcome ExecuteWait(WaitWeeks command)
+    private CommandOutcome ExecuteStart(StartActivity command)
     {
         if (command.Weeks <= 0)
             return CommandOutcome.Reject(RejectReasons.InvalidWeeks);
 
+        State.Activity = new ActiveActivity { Activity = command.Activity, WeeksLeft = command.Weeks };
+        return RunActivity();
+    }
+
+    private CommandOutcome ExecuteContinue() =>
+        State.Activity is null ? CommandOutcome.Reject(RejectReasons.NoActivity) : RunActivity();
+
+    private CommandOutcome ExecuteCancel()
+    {
+        if (State.Activity is not { } active)
+            return CommandOutcome.Reject(RejectReasons.NoActivity);
+
+        State.Activity = null;
+        return CommandOutcome.Accept([new ActivityCancelled(active.Activity)]);
+    }
+
+    private CommandOutcome ExecuteSetInterruptStops(SetInterruptStops command)
+    {
+        State.StoppingInterrupts = command.Categories.Distinct().Order().ToList();
+        return CommandOutcome.Accept([]);
+    }
+
+    private CommandOutcome RunActivity()
+    {
         var events = new List<SimEvent>();
-        for (int i = 0; i < command.Weeks; i++)
-            TimeSystem.AdvanceWeek(State, _rng, events);
+        TimeSystem.RunActivity(State, _config, _rng, events);
         return CommandOutcome.Accept(events);
     }
 }
