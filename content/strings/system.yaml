@@ -10,6 +10,18 @@
 - id: str.reject.no_activity
   text: { uk: "Зараз немає заняття." }
 
+- id: str.reject.invalid_activity
+  text: { uk: "Це заняття так не почати." }
+
+- id: str.reject.unknown_zone
+  text: { uk: "Такої місцевості немає." }
+
+- id: str.reject.already_there
+  text: { uk: "Ви вже тут." }
+
+- id: str.reject.no_route
+  text: { uk: "Туди немає шляху." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -54,6 +66,12 @@
 - id: str.view.resource
   text: { uk: "{resource}: {current} / {max}" }
 
+- id: str.view.zone
+  text: { uk: "Місцевість: {zone}, небезпека {danger}" }
+
+- id: str.view.place
+  text: { uk: "Місце медитації: {place}, щільність {density}, резерв ці {reserve} / {capacity}" }
+
 - id: str.mode.overworld
   text: { uk: "Світ" }
 
@@ -68,6 +86,9 @@
 
 - id: str.activity.wait
   text: { uk: "Очікування" }
+
+- id: str.activity.travel
+  text: { uk: "Подорож, мета — {zone}" }
 
 - id: str.end.old_age
   text: { uk: "смерть від старості" }
@@ -85,6 +106,9 @@
 
 - id: str.event.run_ended
   text: { uk: "Забіг завершено: {cause}." }
+
+- id: str.event.zone_entered
+  text: { uk: "Прибуття: {zone}." }
 
 # How the ironman run was opened (RunSession).
 

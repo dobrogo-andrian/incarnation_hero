@@ -29,6 +29,9 @@ public static class ContentLoader
         ["aspect"] = typeof(AspectDef),
         ["aspect_profile"] = typeof(AspectProfileDef),
         ["resource"] = typeof(ResourceDef),
+        ["zone"] = typeof(ZoneDef),
+        ["route"] = typeof(RouteDef),
+        ["place"] = typeof(PlaceDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

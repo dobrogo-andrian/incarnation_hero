@@ -126,6 +126,47 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void Route_MustJoinTwoZonesAndTakeTime()
+    {
+        var errors = Validate("""
+            - { id: zone.a, name: { uk: "А" } }
+            - { id: route.aa, a: zone.a, b: zone.a, weeks: 0 }
+            """);
+
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Message.Contains("'route.aa' connects a zone to itself"));
+        Assert.Contains(errors, e => e.Message.Contains("'route.aa' must take at least one week"));
+    }
+
+    [Fact]
+    public void Place_NeedsPositiveNumbers()
+    {
+        var errors = Validate("""
+            - { id: zone.a, name: { uk: "А" } }
+            - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 0, capacity: 10, regen_per_week: -1 }
+            """);
+
+        Assert.Equal(2, errors.Count);
+        Assert.Contains(errors, e => e.Message.Contains("positive density and capacity"));
+        Assert.Contains(errors, e => e.Message.Contains("negative regeneration"));
+    }
+
+    [Fact]
+    public void EveryZone_MustBeReachableFromTheStartZone()
+    {
+        var errors = Validate("""
+            - { id: zone.a, name: { uk: "А" } }
+            - { id: zone.b, name: { uk: "Б" } }
+            - { id: zone.c, name: { uk: "В" } }
+            - { id: route.ab, a: zone.a, b: zone.b, weeks: 1 }
+            - { id: config.run, start_zone: zone.a }
+            """);
+
+        // The trimmed config also lacks its other references; only the reachability error matters here.
+        Assert.Contains(errors, e => e.Message.Contains("zones unreachable from 'zone.a': zone.c."));
+    }
+
+    [Fact]
     public void RepoContent_IsValid()
     {
         var loaded = ContentLoader.Load(ContentFiles.FromDirectory(RepoPaths.Content));

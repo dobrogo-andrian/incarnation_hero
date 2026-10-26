@@ -27,7 +27,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -40,6 +40,7 @@ public sealed class GameState
 
     public GameMode Mode { get; set; } = GameMode.Overworld;
     public PlayerState Player { get; set; } = new();
+    public WorldState World { get; set; } = new();
 
     /// <summary>The activity in progress; it stays here when an interrupt stops time.</summary>
     public ActiveActivity? Activity { get; set; }
@@ -58,6 +59,9 @@ public sealed class PlayerState
     /// <summary>Expected lifespan; natural death becomes possible a few years before it (§3).</summary>
     public int LifespanWeeks { get; set; }
 
+    /// <summary>The zone the player is in; while travelling, the last zone reached.</summary>
+    public string ZoneId { get; set; } = "";
+
     /// <summary>Base stat values, before modifiers; one per stat in <c>config.run</c>, in its order.</summary>
     public List<StatValue> Stats { get; set; } = [];
 
@@ -70,6 +74,19 @@ public sealed class PlayerState
     public List<Modifier> Modifiers { get; set; } = [];
 
     public List<CultivationTrack> Tracks { get; set; } = [];
+}
+
+/// <summary>The changing part of the region; its fixed shape (zones, routes, places) is content.</summary>
+public sealed class WorldState
+{
+    /// <summary>One entry per meditation place, in place ID order.</summary>
+    public List<PlaceState> Places { get; set; } = [];
+}
+
+public sealed class PlaceState
+{
+    public string PlaceId { get; set; } = "";
+    public double Reserve { get; set; }
 }
 
 public sealed class StatValue

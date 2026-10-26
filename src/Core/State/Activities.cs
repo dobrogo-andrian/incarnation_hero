@@ -8,10 +8,27 @@ namespace Core.State;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(WaitActivity), "wait")]
+[JsonDerivedType(typeof(TravelActivity), "travel")]
 public abstract record Activity;
 
 /// <summary>Let time pass doing nothing in particular.</summary>
 public sealed record WaitActivity : Activity;
+
+/// <summary>
+/// Moving along a route found by Core; its length is the sum of the legs, not chosen by the player.
+/// The player is in a leg's zone once all weeks up to and including that leg have passed.
+/// </summary>
+public sealed record TravelActivity(IReadOnlyList<TravelLeg> Legs) : Activity
+{
+    [JsonIgnore]
+    public string Destination => Legs[^1].ZoneId;
+
+    [JsonIgnore]
+    public int TotalWeeks => Legs.Sum(l => l.Weeks);
+}
+
+/// <summary>One step of a journey: the zone reached and the weeks it takes to get there.</summary>
+public sealed record TravelLeg(string ZoneId, int Weeks);
 
 public sealed class ActiveActivity
 {

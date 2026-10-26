@@ -24,6 +24,8 @@ public static class SimText
     private static readonly LocKey BodyStatLine = new("str.view.body_stat");
     private static readonly LocKey AspectPart = new("str.view.aspect");
     private static readonly LocKey ResourceLine = new("str.view.resource");
+    private static readonly LocKey ZoneLine = new("str.view.zone");
+    private static readonly LocKey PlaceLine = new("str.view.place");
 
     private static readonly LocKey Overworld = new("str.mode.overworld");
     private static readonly LocKey EventDialog = new("str.mode.event_dialog");
@@ -31,6 +33,7 @@ public static class SimText
     private static readonly LocKey RunEnd = new("str.mode.run_end");
 
     private static readonly LocKey Wait = new("str.activity.wait");
+    private static readonly LocKey TravelTo = new("str.activity.travel");
 
     private static readonly LocKey OldAge = new("str.end.old_age");
 
@@ -38,6 +41,7 @@ public static class SimText
     private static readonly LocKey Cancelled = new("str.event.activity_cancelled");
     private static readonly LocKey LifeEnd = new("str.event.life_end_approaching");
     private static readonly LocKey Ended = new("str.event.run_ended");
+    private static readonly LocKey Entered = new("str.event.zone_entered");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -51,7 +55,22 @@ public static class SimText
             view.EndCause is { } cause
                 ? RunEndLine with { Args = [new("cause", CauseName(cause))] }
                 : ActivityText(view.Activity),
+            ZoneLine with { Args = [new("zone", Name(view.Zone.ZoneId)), new("danger", view.Zone.Danger)] },
         };
+
+        foreach (var place in view.Places)
+        {
+            lines.Add(PlaceLine with
+            {
+                Args =
+                [
+                    new("place", Name(place.PlaceId)),
+                    new("density", Number(place.Density)),
+                    new("reserve", Number(place.Reserve)),
+                    new("capacity", Number(place.Capacity)),
+                ],
+            });
+        }
 
         foreach (var stat in view.Stats)
         {
@@ -107,6 +126,7 @@ public static class SimText
         ActivityCancelled c => Cancelled with { Args = [new("activity", ActivityName(c.Activity))] },
         LifeEndApproaching l => LifeEnd with { Args = [new("years", l.YearsLeft)] },
         RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
+        ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
         _ => null,
     };
 
@@ -128,6 +148,7 @@ public static class SimText
     private static LocKey ActivityName(Activity activity) => activity switch
     {
         WaitActivity => Wait,
+        TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
     };
 

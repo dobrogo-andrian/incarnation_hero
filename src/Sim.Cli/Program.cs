@@ -21,7 +21,7 @@ static int Run(string[] options)
 {
     if (!TryParseOptions(options, out var values)
         || !ulong.TryParse(values.GetValueOrDefault("--seed"), out ulong seed)
-        || !TryParseWeeks(values.GetValueOrDefault("--weeks"), out int? weeks))
+        || !TryParseWeeks(values.GetValueOrDefault("--weeks", "0"), out int? weeks))
         return Usage();
 
     var db = LoadContent(values.GetValueOrDefault("--content", "content"));
@@ -30,33 +30,50 @@ static int Run(string[] options)
 
     var sim = Simulation.NewGame(db, seed);
     var localizer = Localizer.FromContent(db);
+    var commands = new List<Command>();
+    if (values.TryGetValue("--travel", out string? zone))
+        commands.Add(new Travel(zone));
     if (weeks != 0)
+        commands.Add(new StartActivity(new WaitActivity(), weeks));
+
+    foreach (var command in commands)
     {
-        // Interrupts stop the wait; a headless run just reports them and keeps going.
-        Command command = new StartActivity(new WaitActivity(), weeks);
-        while (true)
-        {
-            var outcome = sim.Execute(command);
-            if (!outcome.Accepted)
-            {
-                Console.Error.WriteLine(localizer.Resolve(outcome.RejectReason!));
-                return 1;
-            }
-            foreach (var e in outcome.Events)
-            {
-                if (SimText.Describe(e) is { } text)
-                    Console.WriteLine($"[{sim.State.Week}] {localizer.Resolve(text)}");
-            }
-            if (sim.State.Activity is null)
-                break;
-            command = new ContinueActivity();
-        }
+        if (!RunToEnd(sim, command, localizer))
+            return 1;
     }
 
     foreach (var line in SimText.ViewLines(sim.View, db))
         Console.WriteLine(localizer.Resolve(line));
     Console.WriteLine($"state hash: {SaveSerializer.HashState(sim.State)}");
     return 0;
+}
+
+/// <summary>
+/// Executes <paramref name="command"/> and keeps continuing its activity through interrupts,
+/// printing notable events. False when Core rejects it.
+/// </summary>
+static bool RunToEnd(Simulation sim, Command command, Localizer localizer)
+{
+    while (true)
+    {
+        var outcome = sim.Execute(command);
+        if (!outcome.Accepted)
+        {
+            Console.Error.WriteLine(localizer.Resolve(outcome.RejectReason!));
+            return false;
+        }
+        int week = sim.State.Week;
+        foreach (var e in outcome.Events)
+        {
+            if (e is WeekPassed passed)
+                week = passed.Week;
+            else if (SimText.Describe(e) is { } text)
+                Console.WriteLine($"[{week}] {localizer.Resolve(text)}");
+        }
+        if (sim.State.Activity is null)
+            return true;
+        command = new ContinueActivity();
+    }
 }
 
 /// <summary>Loads and validates content, printing every error. Null means the content is unusable.</summary>
@@ -107,7 +124,8 @@ static int Usage()
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> --weeks <W|end> [--content <dir>]   (content defaults to ./content)
+          sim run --seed <N> [--travel <zoneId>] [--weeks <W|end>] [--content <dir>]
+            Travels first, then waits; content defaults to ./content.
         """);
     return 2;
 }

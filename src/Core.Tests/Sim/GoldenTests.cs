@@ -10,17 +10,27 @@ namespace Core.Tests.Sim;
 /// </summary>
 public sealed class GoldenTests
 {
-    /// <summary>Same run as <c>sim run --seed 42 --weeks end</c>, which prints the same hash.</summary>
+    /// <summary>
+    /// Same run as <c>sim run --seed 42 --travel zone.spirit_peak --weeks end</c>, which prints the
+    /// same hash: interrupts are continued until the activity ends.
+    /// </summary>
     [Fact]
-    public void WaitUntilDeath_Seed42()
+    public void TravelToPeakThenWaitUntilDeath_Seed42()
     {
-        const string expectedHash = "a2778ed6151b07fa03648798148ea78af54020945da946cb8af245285d1e718d";
+        const string expectedHash = "d2e79e6e134ea55844342093d9054acf6004452a5f1b485f87bec1b1814dda3b";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
-        sim.Execute(TestContent.Wait(null));
-        while (sim.State.Mode != GameMode.RunEnd)
-            sim.Execute(new ContinueActivity());
+        RunToEnd(sim, new Travel("zone.spirit_peak"));
+        RunToEnd(sim, TestContent.Wait(null));
 
+        Assert.Equal(GameMode.RunEnd, sim.State.Mode);
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
+    }
+
+    private static void RunToEnd(Simulation sim, Command command)
+    {
+        Assert.True(sim.Execute(command).Accepted);
+        while (sim.State.Activity is not null)
+            sim.Execute(new ContinueActivity());
     }
 }

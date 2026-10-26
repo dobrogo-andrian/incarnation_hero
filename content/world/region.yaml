@@ -1,0 +1,110 @@
+# Hand-made region for stage 1 (§9, D29): a hub and 5 zones. Names and numbers are a draft.
+# Danger grows away from the hub; place quality stays at or below its zone's danger (tech 4.2).
+# Place numbers are placeholders until the meditation step defines how reserve is spent.
+#
+# Routes (weeks): hub–bamboo_grove 1, hub–river_valley 2, bamboo_grove–misty_hills 2,
+# river_valley–misty_hills 2, river_valley–old_battlefield 3, misty_hills–spirit_peak 3,
+# old_battlefield–spirit_peak 2.
+
+- id: zone.hub
+  name: { uk: "Поселення Біля Підніжжя" }
+  danger: 0
+
+- id: zone.bamboo_grove
+  name: { uk: "Бамбуковий гай" }
+  danger: 1
+
+- id: zone.river_valley
+  name: { uk: "Річкова долина" }
+  danger: 1
+
+- id: zone.misty_hills
+  name: { uk: "Туманні пагорби" }
+  danger: 2
+
+- id: zone.old_battlefield
+  name: { uk: "Старе поле битви" }
+  danger: 2
+
+- id: zone.spirit_peak
+  name: { uk: "Пік духовної жили" }
+  danger: 3
+
+- id: route.hub.bamboo_grove
+  a: zone.hub
+  b: zone.bamboo_grove
+  weeks: 1
+
+- id: route.hub.river_valley
+  a: zone.hub
+  b: zone.river_valley
+  weeks: 2
+
+- id: route.bamboo_grove.misty_hills
+  a: zone.bamboo_grove
+  b: zone.misty_hills
+  weeks: 2
+
+- id: route.river_valley.misty_hills
+  a: zone.river_valley
+  b: zone.misty_hills
+  weeks: 2
+
+- id: route.river_valley.old_battlefield
+  a: zone.river_valley
+  b: zone.old_battlefield
+  weeks: 3
+
+- id: route.misty_hills.spirit_peak
+  a: zone.misty_hills
+  b: zone.spirit_peak
+  weeks: 3
+
+- id: route.old_battlefield.spirit_peak
+  a: zone.old_battlefield
+  b: zone.spirit_peak
+  weeks: 2
+
+# Meditation places: wild spots are weak, caves medium, the spirit vein strong (§9).
+
+- id: place.hub.quiet_courtyard
+  name: { uk: "Тихий двір" }
+  zone: zone.hub
+  density: 1
+  capacity: 20
+  regen_per_week: 2
+
+- id: place.bamboo_grove.clearing
+  name: { uk: "Галявина серед бамбуку" }
+  zone: zone.bamboo_grove
+  density: 1
+  capacity: 30
+  regen_per_week: 2
+
+- id: place.river_valley.boulder
+  name: { uk: "Валун над водою" }
+  zone: zone.river_valley
+  density: 1.5
+  capacity: 30
+  regen_per_week: 2
+
+- id: place.misty_hills.cave
+  name: { uk: "Печера туману" }
+  zone: zone.misty_hills
+  density: 2
+  capacity: 60
+  regen_per_week: 3
+
+- id: place.old_battlefield.altar
+  name: { uk: "Розбитий вівтар" }
+  zone: zone.old_battlefield
+  density: 2.5
+  capacity: 60
+  regen_per_week: 3
+
+- id: place.spirit_peak.vein
+  name: { uk: "Духовна жила" }
+  zone: zone.spirit_peak
+  density: 4
+  capacity: 150
+  regen_per_week: 4

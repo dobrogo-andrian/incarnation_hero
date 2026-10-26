@@ -64,7 +64,7 @@ public sealed class CultivationStageDef : ContentDef
 }
 
 /// <summary>Run-wide balance parameters (<c>config.run</c>). Exactly one per content set.</summary>
-public sealed class RunConfigDef : ContentDef
+public sealed class RunConfigDef : ContentDef, IValidatedDef
 {
     public const string RunId = "config.run";
 
@@ -97,4 +97,19 @@ public sealed class RunConfigDef : ContentDef
     /// <summary>Aspect profile at the start of a run, until a cultivation method sets its own (A2).</summary>
     [ContentRef(typeof(AspectProfileDef))]
     public string StartAspectProfile { get; set; } = "";
+
+    /// <summary>Where a run starts: the hub settlement (§9).</summary>
+    [ContentRef(typeof(ZoneDef))]
+    public string StartZone { get; set; } = "";
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (!db.Contains(StartZone))
+            yield break;
+
+        var reachable = new World.WorldMap(db).ReachableFrom(StartZone);
+        var cutOff = db.All<ZoneDef>().Select(z => z.Id).Where(id => !reachable.Contains(id)).ToList();
+        if (cutOff.Count > 0)
+            yield return $"zones unreachable from '{StartZone}': {string.Join(", ", cutOff)}.";
+    }
 }

@@ -24,5 +24,8 @@ public sealed record ContinueActivity : OverworldCommand;
 
 public sealed record CancelActivity : OverworldCommand;
 
+/// <summary>Travels to <paramref name="ZoneId"/> by the fastest route (replacing any current activity).</summary>
+public sealed record Travel(string ZoneId) : OverworldCommand;
+
 /// <summary>Chooses which interrupt categories stop a running activity.</summary>
 public sealed record SetInterruptStops(IReadOnlyList<InterruptCategory> Categories) : OverworldCommand;

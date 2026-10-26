@@ -2,6 +2,7 @@ using Core.Character;
 using Core.Content;
 using Core.Rng;
 using Core.State;
+using Core.World;
 
 namespace Core.Sim;
 
@@ -14,15 +15,14 @@ public sealed class Simulation
     public const string QiVectorId = "qi";
 
     private readonly RngStreams _rng;
-    private readonly RunConfigDef _config;
 
     private Simulation(ContentDb content, GameState state, RngStreams rng)
     {
         Content = content;
         State = state;
         _rng = rng;
-        _config = content.Get<RunConfigDef>(RunConfigDef.RunId);
         Rules = new CharacterRules(content);
+        Map = new WorldMap(content);
     }
 
     public ContentDb Content { get; }
@@ -31,7 +31,9 @@ public sealed class Simulation
 
     public CharacterRules Rules { get; }
 
-    public PlayerView View => PlayerView.From(State, Rules);
+    public WorldMap Map { get; }
+
+    public PlayerView View => PlayerView.From(State, Rules, Content);
 
     public static Simulation NewGame(ContentDb content, ulong seed)
     {
@@ -45,11 +47,13 @@ public sealed class Simulation
             {
                 AgeWeeks = config.StartAgeYears * config.WeeksPerYear,
                 LifespanWeeks = config.StartLifespanYears * config.WeeksPerYear,
+                ZoneId = config.StartZone,
                 Tracks = [new CultivationTrack { VectorId = QiVectorId }],
             },
         };
         var sim = new Simulation(content, state, rng);
         sim.Rules.InitPlayer(state.Player);
+        WorldSystem.InitWorld(state.World, content);
         return sim;
     }
 
@@ -65,6 +69,7 @@ public sealed class Simulation
         var outcome = command switch
         {
             StartActivity c => ExecuteStart(c),
+            Travel c => ExecuteTravel(c),
             ContinueActivity => ExecuteContinue(),
             CancelActivity => ExecuteCancel(),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
@@ -77,11 +82,25 @@ public sealed class Simulation
 
     private CommandOutcome ExecuteStart(StartActivity command)
     {
+        if (!ActivitySystem.HasPlayerChosenLength(command.Activity))
+            return CommandOutcome.Reject(RejectReasons.InvalidActivity);
         if (command.Weeks <= 0)
             return CommandOutcome.Reject(RejectReasons.InvalidWeeks);
 
-        State.Activity = new ActiveActivity { Activity = command.Activity, WeeksLeft = command.Weeks };
-        return RunActivity();
+        return Start(command.Activity, command.Weeks);
+    }
+
+    private CommandOutcome ExecuteTravel(Travel command)
+    {
+        if (!Content.TryGet<ZoneDef>(command.ZoneId, out _))
+            return CommandOutcome.Reject(RejectReasons.UnknownZone);
+        if (command.ZoneId == State.Player.ZoneId)
+            return CommandOutcome.Reject(RejectReasons.AlreadyThere);
+        if (Map.FindRoute(State.Player.ZoneId, command.ZoneId) is not { } legs)
+            return CommandOutcome.Reject(RejectReasons.NoRoute);
+
+        var travel = new TravelActivity(legs);
+        return Start(travel, travel.TotalWeeks);
     }
 
     private CommandOutcome ExecuteContinue() =>
@@ -102,10 +121,16 @@ public sealed class Simulation
         return CommandOutcome.Accept([]);
     }
 
+    private CommandOutcome Start(Activity activity, int? weeks)
+    {
+        State.Activity = new ActiveActivity { Activity = activity, WeeksLeft = weeks };
+        return RunActivity();
+    }
+
     private CommandOutcome RunActivity()
     {
         var events = new List<SimEvent>();
-        TimeSystem.RunActivity(State, _config, _rng, events);
+        TimeSystem.RunActivity(State, Content, _rng, events);
         return CommandOutcome.Accept(events);
     }
 }

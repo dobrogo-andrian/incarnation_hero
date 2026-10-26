@@ -36,6 +36,23 @@ public sealed class SaveTests : IDisposable
     }
 
     [Fact]
+    public void TravelActivity_SurvivesSaveLoad()
+    {
+        var state = PlayedState(42, 1);
+        state.Activity = new ActiveActivity
+        {
+            Activity = new TravelActivity([new TravelLeg("zone.bamboo_grove", 1), new TravelLeg("zone.misty_hills", 2)]),
+            WeeksLeft = 2,
+        };
+
+        var decoded = SaveSerializer.Decode(SaveSerializer.Encode(state)).State!;
+
+        var travel = Assert.IsType<TravelActivity>(decoded.Activity!.Activity);
+        Assert.Equal([new TravelLeg("zone.bamboo_grove", 1), new TravelLeg("zone.misty_hills", 2)], travel.Legs);
+        Assert.Equal(SaveSerializer.HashState(state), SaveSerializer.HashState(decoded));
+    }
+
+    [Fact]
     public void InterruptedActivity_SurvivesSaveLoad()
     {
         var state = PlayedState(42, 10);

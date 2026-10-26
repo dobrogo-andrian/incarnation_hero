@@ -1,4 +1,5 @@
 using Core.Character;
+using Core.Content;
 using Core.State;
 
 namespace Core.Sim;
@@ -13,11 +14,13 @@ public sealed record PlayerView(
     GameMode Mode,
     ActivityView? Activity,
     RunEndCause? EndCause,
+    ZoneView Zone,
+    IReadOnlyList<PlaceView> Places,
     IReadOnlyList<StatView> Stats,
     IReadOnlyList<ResourceView> Resources,
     IReadOnlyList<TrackView> Tracks)
 {
-    public static PlayerView From(GameState state, CharacterRules rules)
+    public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
     {
         var player = state.Player;
         return new(
@@ -27,6 +30,12 @@ public sealed record PlayerView(
             state.Mode,
             state.Activity is { } active ? new ActivityView(active.Activity, active.WeeksLeft) : null,
             state.EndCause,
+            new ZoneView(player.ZoneId, content.Get<ZoneDef>(player.ZoneId).Danger),
+            state.World.Places
+                .Select(p => (State: p, Def: content.Get<PlaceDef>(p.PlaceId)))
+                .Where(p => p.Def.Zone == player.ZoneId)
+                .Select(p => new PlaceView(p.State.PlaceId, p.Def.Density, p.State.Reserve, p.Def.Capacity))
+                .ToList(),
             rules.Stats
                 .Select(s => new StatView(rules.Explain(player, s.Id), s.Aspects.Select(a => rules.Explain(player, a)).ToList()))
                 .ToList(),
@@ -38,6 +47,11 @@ public sealed record PlayerView(
 }
 
 public sealed record ActivityView(Activity Activity, int? WeeksLeft);
+
+public sealed record ZoneView(string ZoneId, int Danger);
+
+/// <summary>A meditation place in the player's zone; being there, the player sees its reserve.</summary>
+public sealed record PlaceView(string PlaceId, double Density, double Reserve, double Capacity);
 
 /// <summary>A stat and, for a body stat, its aspects; each with its breakdown for tooltips.</summary>
 public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> Aspects);

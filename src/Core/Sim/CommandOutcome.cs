@@ -7,6 +7,10 @@ public static class RejectReasons
     public static readonly LocKey WrongMode = new("str.reject.wrong_mode");
     public static readonly LocKey InvalidWeeks = new("str.reject.invalid_weeks");
     public static readonly LocKey NoActivity = new("str.reject.no_activity");
+    public static readonly LocKey InvalidActivity = new("str.reject.invalid_activity");
+    public static readonly LocKey UnknownZone = new("str.reject.unknown_zone");
+    public static readonly LocKey AlreadyThere = new("str.reject.already_there");
+    public static readonly LocKey NoRoute = new("str.reject.no_route");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

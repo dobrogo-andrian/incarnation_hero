@@ -24,6 +24,8 @@ public sealed class SimTextTests
                 "Очікувана тривалість життя: 60 р. 0 тиж.",
                 "Режим: Світ",
                 "Заняття: немає",
+                "Місцевість: Поселення Біля Підніжжя, небезпека 0",
+                "Місце медитації: Тихий двір, щільність 1, резерв ці 20 / 20",
                 "Міць: 10 (Живучість 10, Стійкість 10)",
                 "Витривалість: 10 (Запас 10, Віддача 10)",
                 "Швидкість: 10 (Реакція 10, Верткість 10)",
@@ -71,5 +73,8 @@ public sealed class SimTextTests
         Assert.Equal("Заняття скасовано: Очікування.", Loc.Resolve(SimText.Describe(new ActivityCancelled(new WaitActivity()))!));
         Assert.Equal("До очікуваного кінця життя лишилось років: 5.", Loc.Resolve(SimText.Describe(new LifeEndApproaching(5))!));
         Assert.Equal("Забіг завершено: смерть від старості.", Loc.Resolve(SimText.Describe(new RunEnded(RunEndCause.OldAge))!));
+        Assert.Equal("Прибуття: Туманні пагорби.", Loc.Resolve(SimText.Describe(new ZoneEntered("zone.misty_hills"))!));
+        var travel = new TravelActivity([new TravelLeg("zone.bamboo_grove", 1)]);
+        Assert.Equal("Заняття завершено: Подорож, мета — Бамбуковий гай.", Loc.Resolve(SimText.Describe(new ActivityFinished(travel))!));
     }
 }
