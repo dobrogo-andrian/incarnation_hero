@@ -41,3 +41,6 @@ __pycache__/
 
 # Sim.Cli run outputs
 *.jsonl
+
+# Claude Code worktrees of background sessions
+.claude/worktrees/
