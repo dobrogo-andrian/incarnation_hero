@@ -1,12 +1,10 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project state
 
-Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Stage 0 is in progress (see `docs/progress.md` for what is done). Design docs are Markdown in `docs/` (Ukrainian), one file per section. Start from the index `docs/README.md` and read only the files you need.
+Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Design docs are Markdown in `docs/` (Ukrainian), one file per section. Start from the index `docs/README.md` and read only the files you need.
 
-- `docs/progress.md`: **read this first every session.** Current stage, the next step, the stage checklist, gotchas from earlier sessions and a short session log. Items marked done there are trusted: don't re-verify earlier stages unless something is broken. Update it at the end of every session, in the same commit as the work.
+- `docs/progress.md`: current stage, next step, stage checklist, gotchas from earlier sessions, short session log. See Workflow.
 - `docs/gdd/`: game design document (GDD), the source of truth for gameplay rules. Section refs like "§4.5" point here (`grep "§4.5" docs/gdd`).
 - `docs/tech/`: technical design (stack, architecture, roadmap, risks). Tech sections have no `§` and are cited as "tech 2.8". Decisions D* and working assumptions A* are in `docs/tech/decisions.md`; open questions Q* are in `docs/tech/open-questions.md`.
 - `.claude/agents/game-designer.md`: design-partner subagent for GDD sessions.
@@ -14,12 +12,22 @@ Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo deve
 
 If code contradicts the docs, or a task touches an open question (Q*), point it out and don't decide it silently. When a design decision changes, edit the matching `.md` file. When a Q is resolved, move it into `decisions.md` as a D or A entry.
 
+## Workflow
+
+1. **Start of session:** read `docs/progress.md`. Items marked done there are trusted: don't re-verify earlier steps or stages unless something is actually broken. Take the next step from it, and read only the GDD/tech sections that step needs.
+2. **One small step at a time**, inside the current stage (tech 9). A step is one checklist item or a clear part of one. Don't build ahead for later stages.
+3. **Verified means:** `dotnet build IncarnationHero.sln` has no errors and `dotnet test IncarnationHero.sln` is fully green. New Core logic comes with tests (fixed seeds). Changes in `game/` additionally need the user to confirm they run in the Godot editor, because Claude can't see the game window.
+4. **After a verified step:** update `docs/progress.md` (checklist, next step, gotchas, one log line), commit to `main` and push to `origin main`. Docs and code go in the same commit. Never commit or push a red build. Never force-push. If working from a worktree or branch, push with `git push origin HEAD:main`; if that is rejected, rebase on `origin/main`, re-run the tests, then push.
+5. **Stage done:** when every "Готово, коли" criterion of the stage in tech 9 is met, mark the stage done in `docs/progress.md` and set up the next stage's checklist there.
+
+Conventions: code, identifiers, comments and commit messages are in English; `docs/` and player-facing text are in Ukrainian. Commit subject is imperative ("Add YAML content loader"), and the body explains why.
+
 ## Stack (decided)
 
 - Godot 4.x **.NET edition, C# only**. Never write GDScript and never use Godot 3 APIs (e.g. no `TileMap`, use `TileMapLayer`). AI assistants commonly mix these up.
 - Pure C# `Core` class library with **zero Godot dependencies**. The Godot project references it via `ProjectReference`.
 - Content in YAML (YamlDotNet), saves in JSON (System.Text.Json) with `schema_version` and a checksum.
-- Tests in xUnit/NUnit with fixed seeds. Python (pandas, Jupyter) is used only for balance analysis under `/analysis`, never in the game.
+- Tests in xUnit with fixed seeds. Python (pandas, Jupyter) is used only for balance analysis under `/analysis`, never in the game.
 
 ## Commands
 
@@ -39,16 +47,14 @@ dotnet run --project src/Sim.Cli -- <args>
 ```
 /src/Core            game rules, state, systems, RNG, content loading
 /src/Core.Tests      xUnit
-/src/Sim.Cli         headless bot runs and metrics export (JSONL/CSV)
+/src/Sim.Cli         headless bot runs and metrics export (JSONL/CSV); commands and bots: tech 6.1
 /src/Tools.Validate  (planned) content validator CLI, may become a Sim.Cli subcommand
 /game                Godot project: UI, combat scene, input, audio only
-/content             (planned) YAML: balance/, cultivation/, knowledge/, combat/, world/, events/, rumors/, injuries/, items/
+/content             (planned) YAML content and balance; folder layout: tech 3.1
 /loc                 (planned) localization tables (uk, en, zh) as CSV
 /analysis            (planned) Python notebooks
-/docs                design docs: README.md (index), gdd/, tech/; ai-guidelines.md planned
+/docs                design docs: README.md (index), progress.md, gdd/, tech/
 ```
-
-Planned Sim.Cli usage: `sim run --runs 5000 --bot cautious --seed-from 1 --out runs.jsonl` and `sim arena --a grp.X --b grp.Y --n 2000`. Bots: `cautious`, `fighter`, `pill_rusher`, `random`.
 
 ## Architecture rules
 
@@ -70,4 +76,4 @@ Core idea: the game is a simulation and Godot is only a window into it. The same
 
 ## Development plan
 
-Stage 0 is the foundation: RNG, GameState, save/load, YAML loader and validator, a Godot shell. Stage 1 is the macro loop with formula combat plus Sim.Cli, and it is validated **before** any real combat work starts. Stage 2 is the hex combat prototype, stage 3 integration, stage 4 content/meta/crisis, stage 5 demo release. Keep work scoped to the current stage.
+Stage 0 is the foundation: RNG, GameState, save/load, YAML loader and validator, a Godot shell. Stage 1 is the macro loop with formula combat plus Sim.Cli, and it is validated **before** any real combat work starts. Stage 2 is the hex combat prototype, stage 3 integration, stage 4 content/meta/crisis, stage 5 demo release. Done criteria per stage: tech 9. Where we are: `docs/progress.md`.
