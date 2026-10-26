@@ -32,3 +32,25 @@
 
 - id: str.mode.run_end
   text: { uk: "Кінець забігу" }
+
+# How the ironman run was opened (RunSession).
+
+- id: str.save.new_run
+  text: { uk: "Почато новий забіг." }
+
+- id: str.save.restored_from_backup
+  text: { uk: "Сейв пошкоджено, забіг відновлено з резервної копії." }
+
+- id: str.save.corrupt_new_run
+  text: { uk: "Сейв пошкоджено і відновити не вдалося. Почато новий забіг." }
+
+- id: str.save.incompatible_new_run
+  text: { uk: "Сейв від несумісної версії гри. Почато новий забіг." }
+
+# Godot shell.
+
+- id: str.shell.wait_week
+  text: { uk: "Чекати тиждень" }
+
+- id: str.shell.content_errors
+  text: { uk: "Помилки контенту, гру не запущено:" }
