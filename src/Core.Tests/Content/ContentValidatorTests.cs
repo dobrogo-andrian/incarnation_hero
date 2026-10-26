@@ -20,6 +20,7 @@ public sealed class ContentValidatorTests
               stages: [stage.qi.1]
             - id: stage.qi.1
               name: { uk: "Перший" }
+              progress_required: 1
             """);
 
         Assert.Empty(errors);
@@ -31,13 +32,14 @@ public sealed class ContentValidatorTests
         var errors = Validate("""
             - id: stage.qi.1
               name: { uk: "Перший" }
+              progress_required: 1
             - id: vector.qi
               name: { uk: "Ці" }
               stages: [stage.qi.1, stage.qi.9]
             """);
 
         var error = Assert.Single(errors);
-        Assert.Equal(new ContentSource("a.yaml", 3), new ContentSource(error.File, error.Line));
+        Assert.Equal(new ContentSource("a.yaml", 4), new ContentSource(error.File, error.Line));
         Assert.Contains("'vector.qi'.Stages", error.Message);
         Assert.Contains("'stage.qi.9'", error.Message);
     }
@@ -57,7 +59,7 @@ public sealed class ContentValidatorTests
     [Fact]
     public void MissingUkrainianText_IsReported()
     {
-        var errors = Validate("id: stage.qi.1");
+        var errors = Validate("{ id: stage.qi.1, progress_required: 1 }");
 
         Assert.Contains("'stage.qi.1'.Name has no 'uk' text", Assert.Single(errors).Message);
     }
@@ -112,11 +114,20 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void Stage_NeedsAPositiveScale()
+    {
+        var errors = Validate("""- { id: stage.qi.1, name: { uk: "Перший" }, progress_required: 0 }""");
+
+        Assert.Contains("'stage.qi.1' needs a positive progress_required", Assert.Single(errors).Message);
+    }
+
+    [Fact]
     public void ResourceSource_MustBeStatOrAspect()
     {
         var errors = Validate("""
             - id: stage.qi.1
               name: { uk: "Перший" }
+              progress_required: 1
             - id: resource.r
               name: { uk: "Р" }
               source: stage.qi.1
@@ -161,7 +172,7 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
-    public void MeditationDirection_TargetsAStatOrResource()
+    public void MeditationDirection_TargetsAStatResourceOrVector()
     {
         var errors = Validate("""
             - { id: zone.a, name: { uk: "А" } }
@@ -169,7 +180,7 @@ public sealed class ContentValidatorTests
             - { id: meditation.m, name: { uk: "М" }, rate: 1, target: zone.a }
             """);
 
-        Assert.Contains("target 'zone.a' is neither a stat nor a resource", Assert.Single(errors).Message);
+        Assert.Contains("target 'zone.a' is not a stat, a resource or a cultivation vector", Assert.Single(errors).Message);
     }
 
     [Fact]

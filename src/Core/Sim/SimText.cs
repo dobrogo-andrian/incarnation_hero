@@ -26,6 +26,10 @@ public static class SimText
     private static readonly LocKey ResourceLine = new("str.view.resource");
     private static readonly LocKey ZoneLine = new("str.view.zone");
     private static readonly LocKey PlaceLine = new("str.view.place");
+    private static readonly LocKey BuffLine = new("str.view.buff");
+
+    private static readonly LocKey CombatInsight = new("str.buff.combat_insight");
+    private static readonly LocKey PillEnergy = new("str.buff.pill_energy");
 
     private static readonly LocKey Overworld = new("str.mode.overworld");
     private static readonly LocKey EventDialog = new("str.mode.event_dialog");
@@ -44,6 +48,8 @@ public static class SimText
     private static readonly LocKey Ended = new("str.event.run_ended");
     private static readonly LocKey Entered = new("str.event.zone_entered");
     private static readonly LocKey PlaceLow = new("str.event.place_qi_low");
+    private static readonly LocKey BuffGone = new("str.event.buff_exhausted");
+    private static readonly LocKey ScaleFull = new("str.event.stage_scale_full");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -106,7 +112,7 @@ public static class SimText
 
         foreach (var track in view.Tracks)
         {
-            string vectorId = $"vector.{track.VectorId}";
+            string vectorId = CultivationSystem.VectorDefId(track.VectorId);
             string stageId = db.Get<CultivationVectorDef>(vectorId).Stages[track.StageIndex];
             lines.Add(Track with
             {
@@ -114,10 +120,14 @@ public static class SimText
                 [
                     new("vector", Name(vectorId)),
                     new("stage", Name(stageId)),
-                    new("progress", track.StageProgress),
+                    new("progress", Number(track.StageProgress)),
+                    new("required", Number(track.ProgressRequired)),
                 ],
             });
         }
+
+        foreach (var buff in view.Buffs)
+            lines.Add(BuffLine with { Args = [new("buff", BuffName(buff.Kind)), new("points", Number(buff.Points))] });
         return lines;
     }
 
@@ -130,6 +140,8 @@ public static class SimText
         RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
         ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
         PlaceQiLow p => PlaceLow with { Args = [new("place", Name(p.PlaceId))] },
+        BuffExhausted b => BuffGone with { Args = [new("buff", BuffName(b.Kind))] },
+        StageScaleFull s => ScaleFull with { Args = [new("vector", Name(CultivationSystem.VectorDefId(s.VectorId)))] },
         _ => null,
     };
 
@@ -154,6 +166,13 @@ public static class SimText
         TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
         MeditateActivity m => Meditate with { Args = [new("direction", Name(m.DirectionId)), new("place", Name(m.PlaceId))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
+    };
+
+    private static LocKey BuffName(BuffKind kind) => kind switch
+    {
+        BuffKind.CombatInsight => CombatInsight,
+        BuffKind.PillEnergy => PillEnergy,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 
     private static LocKey CauseName(RunEndCause cause) => cause switch

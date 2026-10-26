@@ -18,7 +18,8 @@ public sealed record PlayerView(
     IReadOnlyList<PlaceView> Places,
     IReadOnlyList<StatView> Stats,
     IReadOnlyList<ResourceView> Resources,
-    IReadOnlyList<TrackView> Tracks)
+    IReadOnlyList<TrackView> Tracks,
+    IReadOnlyList<BuffView> Buffs)
 {
     public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
     {
@@ -42,7 +43,10 @@ public sealed record PlayerView(
             player.Resources
                 .Select(r => new ResourceView(r.ResourceId, r.Current, rules.Explain(player, r.ResourceId)))
                 .ToList(),
-            player.Tracks.Select(t => new TrackView(t.VectorId, t.StageIndex, t.StageProgress)).ToList());
+            player.Tracks
+                .Select(t => new TrackView(t.VectorId, t.StageIndex, t.StageProgress, CultivationSystem.Stage(t, content).ProgressRequired))
+                .ToList(),
+            player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList());
     }
 }
 
@@ -59,4 +63,7 @@ public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> A
 /// <summary>A resource's current amount and its computed maximum.</summary>
 public sealed record ResourceView(string ResourceId, double Current, StatBreakdown Max);
 
-public sealed record TrackView(string VectorId, int StageIndex, int StageProgress);
+/// <summary>A cultivation vector's stage and how full its breakthrough scale is.</summary>
+public sealed record TrackView(string VectorId, int StageIndex, double StageProgress, double ProgressRequired);
+
+public sealed record BuffView(BuffKind Kind, double Points);

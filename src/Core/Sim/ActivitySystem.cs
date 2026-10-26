@@ -1,4 +1,3 @@
-using Core.Content;
 using Core.Loc;
 using Core.State;
 
@@ -14,9 +13,7 @@ public static class ActivitySystem
     public static LocKey? Validate(GameState state, SimContext ctx, Activity activity) => activity switch
     {
         WaitActivity => null,
-        MeditateActivity m when !ctx.Content.TryGet<MeditationDirectionDef>(m.DirectionId, out _) => RejectReasons.UnknownDirection,
-        MeditateActivity m when !ctx.Content.TryGet<PlaceDef>(m.PlaceId, out var place) || place.Zone != state.Player.ZoneId => RejectReasons.PlaceNotHere,
-        MeditateActivity => null,
+        MeditateActivity m => MeditationSystem.Validate(state, ctx, m),
         // Travel lasts as long as its route, so it starts with the Travel command instead.
         _ => RejectReasons.InvalidActivity,
     };

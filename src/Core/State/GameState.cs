@@ -15,6 +15,8 @@ public enum InterruptCategory
 {
     LifeEndApproaching,
     PlaceQiLow,
+    BuffExhausted,
+    StageScaleFull,
 }
 
 public enum RunEndCause
@@ -28,7 +30,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 5;
+    public const int CurrentSchemaVersion = 6;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -75,6 +77,9 @@ public sealed class PlayerState
     public List<Modifier> Modifiers { get; set; } = [];
 
     public List<CultivationTrack> Tracks { get; set; } = [];
+
+    /// <summary>Active cultivation buffs, at most one per kind, in <see cref="BuffKind"/> order.</summary>
+    public List<CultivationBuff> Buffs { get; set; } = [];
 }
 
 /// <summary>The changing part of the region; its fixed shape (zones, routes, places) is content.</summary>
@@ -138,8 +143,26 @@ public sealed class CultivationTrack
 
     /// <summary>Index into the vector's stage list: 0 is the first stage.</summary>
     public int StageIndex { get; set; }
-    public int StageProgress { get; set; }
+    public double StageProgress { get; set; }
 
     /// <summary>Quality rank of the last breakthrough; null until the first one.</summary>
     public int? LastBreakthroughQuality { get; set; }
+}
+
+/// <summary>
+/// Sources of cultivation points that assimilation turns into stage progress (§4.3). Declaration
+/// order is spending order: combat insight first, because it fades (D31).
+/// </summary>
+public enum BuffKind
+{
+    CombatInsight,
+    PillEnergy,
+}
+
+public sealed class CultivationBuff
+{
+    public BuffKind Kind { get; set; }
+
+    /// <summary>Cultivation points left; the buff is gone when they run out.</summary>
+    public double Points { get; set; }
 }

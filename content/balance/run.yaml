@@ -12,3 +12,5 @@ resources: [resource.health, resource.body_energy, resource.qi_pool, resource.co
 start_aspect_profile: aspect_profile.balanced   # until cultivation methods exist (A2)
 start_zone: zone.hub
 meditation_depleted_floor: 0.2   # D30: meditation on an exhausted place still gives 20%
+combat_insight_decay: 0.1        # D31: combat insight loses 10% of its points a week
+combat_insight_min_points: 1     # below this it is gone

@@ -28,6 +28,18 @@ public sealed record LifeEndApproaching(int YearsLeft) : InterruptEvent
     public override InterruptCategory Category => InterruptCategory.LifeEndApproaching;
 }
 
+/// <summary>A cultivation buff ran out: its points were spent or combat insight faded away.</summary>
+public sealed record BuffExhausted(BuffKind Kind) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.BuffExhausted;
+}
+
+/// <summary>The vector's stage scale is full; a breakthrough can be attempted (§4.5).</summary>
+public sealed record StageScaleFull(string VectorId) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.StageScaleFull;
+}
+
 /// <summary>The meditation place's reserve can no longer cover a full week of meditation.</summary>
 public sealed record PlaceQiLow(string PlaceId) : InterruptEvent
 {

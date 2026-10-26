@@ -177,6 +177,7 @@ public class SimulationTests
         Assert.Equal(GameMode.Overworld, view.Mode);
         Assert.Equal(new ActivityView(new WaitActivity(), 3), view.Activity);
         Assert.Null(view.EndCause);
-        Assert.Equal(new TrackView("qi", 0, 0), Assert.Single(view.Tracks));
+        Assert.Equal(new TrackView("qi", 0, 0, 100), Assert.Single(view.Tracks));
+        Assert.Empty(view.Buffs);
     }
 }

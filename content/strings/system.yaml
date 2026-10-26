@@ -28,6 +28,12 @@
 - id: str.reject.place_not_here
   text: { uk: "Цього місця медитації тут немає." }
 
+- id: str.reject.no_cultivation_buff
+  text: { uk: "Немає бафу культивації: засвоювати нічого." }
+
+- id: str.reject.stage_scale_full
+  text: { uk: "Шкала етапу вже заповнена." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -58,7 +64,7 @@
   text: { uk: "Забіг завершено: {cause}" }
 
 - id: str.view.track
-  text: { uk: "{vector}: {stage}, прогрес {progress}" }
+  text: { uk: "{vector}: {stage}, шкала етапу {progress} / {required}" }
 
 - id: str.view.stat
   text: { uk: "{stat}: {value}" }
@@ -77,6 +83,15 @@
 
 - id: str.view.place
   text: { uk: "Місце медитації: {place}, щільність {density}, резерв ці {reserve} / {capacity}" }
+
+- id: str.view.buff
+  text: { uk: "Баф культивації: {buff}, пойнтів {points}" }
+
+- id: str.buff.combat_insight
+  text: { uk: "бойове осяяння" }
+
+- id: str.buff.pill_energy
+  text: { uk: "енергія пігулки" }
 
 - id: str.mode.overworld
   text: { uk: "Світ" }
@@ -121,6 +136,12 @@
 
 - id: str.event.place_qi_low
   text: { uk: "Ці місця майже вичерпано: {place}." }
+
+- id: str.event.buff_exhausted
+  text: { uk: "Баф вичерпано: {buff}." }
+
+- id: str.event.stage_scale_full
+  text: { uk: "Шкала етапу заповнена ({vector}): можна наважитись на прорив." }
 
 # How the ironman run was opened (RunSession).
 

@@ -13,6 +13,8 @@ public static class RejectReasons
     public static readonly LocKey NoRoute = new("str.reject.no_route");
     public static readonly LocKey UnknownDirection = new("str.reject.unknown_direction");
     public static readonly LocKey PlaceNotHere = new("str.reject.place_not_here");
+    public static readonly LocKey NoCultivationBuff = new("str.reject.no_cultivation_buff");
+    public static readonly LocKey StageScaleFull = new("str.reject.stage_scale_full");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

@@ -40,6 +40,7 @@ public static class TimeSystem
         if (state.Mode == GameMode.RunEnd)
             return;
         ModifierSystem.AdvanceWeek(state);
+        CultivationSystem.AdvanceWeek(state, ctx, events);
         ResourceSystem.AdvanceWeek(state, ctx);
         WorldSystem.AdvanceWeek(state, ctx.Content);
 

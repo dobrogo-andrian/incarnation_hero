@@ -58,9 +58,18 @@ public sealed class CultivationVectorDef : ContentDef
 }
 
 /// <summary>One stage of a cultivation vector (<c>stage.qi.1</c>).</summary>
-public sealed class CultivationStageDef : ContentDef
+public sealed class CultivationStageDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
+
+    /// <summary>Stage progress that fills the breakthrough scale (§4.1).</summary>
+    public double ProgressRequired { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (ProgressRequired <= 0)
+            yield return "needs a positive progress_required.";
+    }
 }
 
 /// <summary>Run-wide balance parameters (<c>config.run</c>). Exactly one per content set.</summary>
@@ -103,6 +112,12 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     /// below the draw, efficiency is reserve / draw, but never under this.
     /// </summary>
     public double MeditationDepletedFloor { get; set; }
+
+    /// <summary>Share of combat insight points that fades each week, travel included (§4.3).</summary>
+    public double CombatInsightDecay { get; set; }
+
+    /// <summary>Combat insight below this many points is gone.</summary>
+    public double CombatInsightMinPoints { get; set; }
 
     /// <summary>Where a run starts: the hub settlement (§9).</summary>
     [ContentRef(typeof(ZoneDef))]

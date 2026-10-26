@@ -1,5 +1,6 @@
 # Cultivation vector qi and its stages (tech 2.6). The MVP has 3-4 stages (§4.5).
 # Stage names are placeholders until the GDD names them.
+# progress_required: size of the breakthrough scale, filled only by assimilation (§4.1). Draft numbers.
 
 - id: vector.qi
   name: { uk: "Ці" }
@@ -7,12 +8,16 @@
 
 - id: stage.qi.1
   name: { uk: "Перший етап ці" }
+  progress_required: 100
 
 - id: stage.qi.2
   name: { uk: "Другий етап ці" }
+  progress_required: 200
 
 - id: stage.qi.3
   name: { uk: "Третій етап ці" }
+  progress_required: 400
 
 - id: stage.qi.4
   name: { uk: "Четвертий етап ці" }
+  progress_required: 800
