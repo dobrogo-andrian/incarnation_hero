@@ -14,6 +14,7 @@ public enum GameMode
 public enum InterruptCategory
 {
     LifeEndApproaching,
+    PlaceQiLow,
 }
 
 public enum RunEndCause
@@ -27,7 +28,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }

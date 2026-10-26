@@ -1,0 +1,12 @@
+# Meditation directions (§4.2, D30). Weekly gain = rate × place density × efficiency.
+# Comprehension comes with folios, assimilation with cultivation buffs (both later steps).
+
+- id: meditation.purification
+  name: { uk: "Очищення" }
+  rate: 0.1
+  target: stat.purity          # purity widens the qi pool (resource.qi_pool)
+
+- id: meditation.recovery
+  name: { uk: "Відновлення" }
+  rate: 5
+  target: resource.qi_pool     # on top of the pool's natural regeneration

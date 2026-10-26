@@ -1,5 +1,3 @@
-using Core.Content;
-using Core.Rng;
 using Core.State;
 
 namespace Core.Sim;
@@ -11,13 +9,12 @@ public static class TimeSystem
     /// Advances weeks until the activity ends, an interrupt of a stopping category fires or the
     /// run ends. Non-stopping interrupts are still reported in <paramref name="events"/>.
     /// </summary>
-    public static void RunActivity(GameState state, ContentDb content, RngStreams rng, List<SimEvent> events)
+    public static void RunActivity(GameState state, SimContext ctx, List<SimEvent> events)
     {
-        var config = content.Get<RunConfigDef>(RunConfigDef.RunId);
         while (true)
         {
             int weekStart = events.Count;
-            AdvanceWeek(state, content, config, rng, events);
+            AdvanceWeek(state, ctx, events);
 
             if (state.Mode == GameMode.RunEnd || state.Activity is null)
                 return;
@@ -33,18 +30,19 @@ public static class TimeSystem
     /// One week in the fixed order: world systems, player activity progress, event roll,
     /// interrupt collection. Systems not built yet are simply absent.
     /// </summary>
-    private static void AdvanceWeek(GameState state, ContentDb content, RunConfigDef config, RngStreams rng, List<SimEvent> events)
+    private static void AdvanceWeek(GameState state, SimContext ctx, List<SimEvent> events)
     {
         state.Week++;
         state.Player.AgeWeeks++;
         events.Add(new WeekPassed(state.Week, state.Player.AgeWeeks));
 
-        LifeSystem.AdvanceWeek(state, config, rng, events);
+        LifeSystem.AdvanceWeek(state, ctx.Config, ctx.Rng, events);
         if (state.Mode == GameMode.RunEnd)
             return;
         ModifierSystem.AdvanceWeek(state);
-        WorldSystem.AdvanceWeek(state, content);
+        ResourceSystem.AdvanceWeek(state, ctx);
+        WorldSystem.AdvanceWeek(state, ctx.Content);
 
-        ActivitySystem.AdvanceWeek(state, events);
+        ActivitySystem.AdvanceWeek(state, ctx, events);
     }
 }

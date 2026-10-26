@@ -22,6 +22,12 @@
 - id: str.reject.no_route
   text: { uk: "Туди немає шляху." }
 
+- id: str.reject.unknown_direction
+  text: { uk: "Такого напряму медитації немає." }
+
+- id: str.reject.place_not_here
+  text: { uk: "Цього місця медитації тут немає." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -90,6 +96,9 @@
 - id: str.activity.travel
   text: { uk: "Подорож, мета — {zone}" }
 
+- id: str.activity.meditate
+  text: { uk: "Медитація ({direction}), {place}" }
+
 - id: str.end.old_age
   text: { uk: "смерть від старості" }
 
@@ -109,6 +118,9 @@
 
 - id: str.event.zone_entered
   text: { uk: "Прибуття: {zone}." }
+
+- id: str.event.place_qi_low
+  text: { uk: "Ці місця майже вичерпано: {place}." }
 
 # How the ironman run was opened (RunSession).
 

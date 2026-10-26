@@ -32,6 +32,7 @@ public static class ContentLoader
         ["zone"] = typeof(ZoneDef),
         ["route"] = typeof(RouteDef),
         ["place"] = typeof(PlaceDef),
+        ["meditation"] = typeof(MeditationDirectionDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

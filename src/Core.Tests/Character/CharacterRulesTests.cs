@@ -17,10 +17,10 @@ public sealed class CharacterRulesTests
         var player = NewGame().State.Player;
 
         Assert.Equal(
-            ["stat.might", "stat.endurance", "stat.speed", "stat.meridians", "stat.perception"],
+            ["stat.might", "stat.endurance", "stat.speed", "stat.meridians", "stat.perception", "stat.purity"],
             player.Stats.Select(s => s.StatId));
         Assert.Equal(10, player.Stats[0].Base);
-        Assert.Equal(0, player.Stats[^1].Base);
+        Assert.Equal(0, player.Stats[4].Base);
         Assert.Equal("aspect_profile.balanced", player.AspectProfileId);
         Assert.Equal(
             [("resource.health", 100.0), ("resource.body_energy", 100.0), ("resource.qi_pool", 100.0), ("resource.combat_qi", 50.0)],

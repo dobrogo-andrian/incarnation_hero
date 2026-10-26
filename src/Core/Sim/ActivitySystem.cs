@@ -1,17 +1,27 @@
+using Core.Content;
+using Core.Loc;
 using Core.State;
 
 namespace Core.Sim;
 
-/// <summary>Weekly progress of the player's activity. Each activity kind adds its effect here.</summary>
+/// <summary>
+/// Checks and weekly progress of the player's activity. A new activity kind adds a case to
+/// <see cref="Validate"/> and to <see cref="AdvanceWeek"/>.
+/// </summary>
 public static class ActivitySystem
 {
-    /// <summary>
-    /// Whether the player chooses how long <paramref name="activity"/> lasts. Travel takes as long as
-    /// its route, so it is started with the Travel command instead of StartActivity.
-    /// </summary>
-    public static bool HasPlayerChosenLength(Activity activity) => activity is not TravelActivity;
+    /// <summary>Why <paramref name="activity"/> cannot be started with StartActivity now, or null if it can.</summary>
+    public static LocKey? Validate(GameState state, SimContext ctx, Activity activity) => activity switch
+    {
+        WaitActivity => null,
+        MeditateActivity m when !ctx.Content.TryGet<MeditationDirectionDef>(m.DirectionId, out _) => RejectReasons.UnknownDirection,
+        MeditateActivity m when !ctx.Content.TryGet<PlaceDef>(m.PlaceId, out var place) || place.Zone != state.Player.ZoneId => RejectReasons.PlaceNotHere,
+        MeditateActivity => null,
+        // Travel lasts as long as its route, so it starts with the Travel command instead.
+        _ => RejectReasons.InvalidActivity,
+    };
 
-    public static void AdvanceWeek(GameState state, List<SimEvent> events)
+    public static void AdvanceWeek(GameState state, SimContext ctx, List<SimEvent> events)
     {
         var active = state.Activity!;
         if (active.WeeksLeft is int left)
@@ -20,6 +30,9 @@ public static class ActivitySystem
         switch (active.Activity)
         {
             case WaitActivity:
+                break;
+            case MeditateActivity meditation:
+                MeditationSystem.AdvanceWeek(state, ctx, meditation, events);
                 break;
             case TravelActivity travel:
                 EnterReachedZone(state, travel, travel.TotalWeeks - active.WeeksLeft!.Value, events);

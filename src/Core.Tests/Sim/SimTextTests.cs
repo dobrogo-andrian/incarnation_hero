@@ -25,12 +25,13 @@ public sealed class SimTextTests
                 "Режим: Світ",
                 "Заняття: немає",
                 "Місцевість: Поселення Біля Підніжжя, небезпека 0",
-                "Місце медитації: Тихий двір, щільність 1, резерв ці 20 / 20",
+                "Місце медитації: Тихий двір, щільність 1, резерв ці 8 / 8",
                 "Міць: 10 (Живучість 10, Стійкість 10)",
                 "Витривалість: 10 (Запас 10, Віддача 10)",
                 "Швидкість: 10 (Реакція 10, Верткість 10)",
                 "Сила меридіан: 10 (Ємність 10, Потік 10)",
                 "Сприйняття: 0",
+                "Чистота: 0",
                 "Здоров'я: 100 / 100",
                 "Енергія тіла: 100 / 100",
                 "Пул ці: 100 / 100",
@@ -74,6 +75,9 @@ public sealed class SimTextTests
         Assert.Equal("До очікуваного кінця життя лишилось років: 5.", Loc.Resolve(SimText.Describe(new LifeEndApproaching(5))!));
         Assert.Equal("Забіг завершено: смерть від старості.", Loc.Resolve(SimText.Describe(new RunEnded(RunEndCause.OldAge))!));
         Assert.Equal("Прибуття: Туманні пагорби.", Loc.Resolve(SimText.Describe(new ZoneEntered("zone.misty_hills"))!));
+        Assert.Equal("Ці місця майже вичерпано: Тихий двір.", Loc.Resolve(SimText.Describe(new PlaceQiLow("place.hub.quiet_courtyard"))!));
+        var meditation = new MeditateActivity("meditation.purification", "place.hub.quiet_courtyard");
+        Assert.Equal("Заняття завершено: Медитація (Очищення), Тихий двір.", Loc.Resolve(SimText.Describe(new ActivityFinished(meditation))!));
         var travel = new TravelActivity([new TravelLeg("zone.bamboo_grove", 1)]);
         Assert.Equal("Заняття завершено: Подорож, мета — Бамбуковий гай.", Loc.Resolve(SimText.Describe(new ActivityFinished(travel))!));
     }

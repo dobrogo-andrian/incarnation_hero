@@ -1,11 +1,18 @@
 namespace Core.Content;
 
 /// <summary>A zone of the region (<c>zone.hub</c>, §9). Danger grows away from the hub.</summary>
-public sealed class ZoneDef : ContentDef
+public sealed class ZoneDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
 
     public int Danger { get; set; }
+
+    /// <summary>Meditation needs a place (D30), so every zone offers at least one.</summary>
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (!db.All<PlaceDef>().Any(p => p.Zone == Id))
+            yield return "has no meditation place.";
+    }
 }
 
 /// <summary>A two-way passage between zones that takes <see cref="Weeks"/> to cross (§9).</summary>
@@ -39,7 +46,10 @@ public sealed class PlaceDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ZoneDef))]
     public string Zone { get; set; } = "";
 
-    /// <summary>Qi density: how productive meditation here is while the reserve lasts.</summary>
+    /// <summary>
+    /// Qi density: how productive meditation here is while the reserve lasts. Each week of
+    /// meditation also draws this much from the reserve (D30).
+    /// </summary>
     public double Density { get; set; }
 
     public double Capacity { get; set; }

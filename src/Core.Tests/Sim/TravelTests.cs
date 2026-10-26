@@ -94,13 +94,13 @@ public sealed class TravelTests
     {
         var sim = NewGame();
         var courtyard = sim.State.World.Places.Single(p => p.PlaceId == "place.hub.quiet_courtyard");
-        courtyard.Reserve = 15;   // capacity 20, regen 2 per week
-
-        sim.Execute(TestContent.Wait(2));
-        Assert.Equal(19, courtyard.Reserve);
+        courtyard.Reserve = 7.5;   // capacity 8, regen 0.25 per week
 
         sim.Execute(TestContent.Wait(1));
-        Assert.Equal(20, courtyard.Reserve);
+        Assert.Equal(7.75, courtyard.Reserve);
+
+        sim.Execute(TestContent.Wait(2));
+        Assert.Equal(8, courtyard.Reserve);
     }
 
     [Fact]

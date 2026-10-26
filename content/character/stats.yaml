@@ -48,3 +48,8 @@
 - id: stat.perception
   name: { uk: "Сприйняття" }
   start_value: 0
+
+# Foundation (§4.1): purity grows by purification and widens the qi pool. Knowledge comes with folios.
+- id: stat.purity
+  name: { uk: "Чистота" }
+  start_value: 0

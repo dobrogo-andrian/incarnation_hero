@@ -27,3 +27,9 @@ public sealed record LifeEndApproaching(int YearsLeft) : InterruptEvent
 {
     public override InterruptCategory Category => InterruptCategory.LifeEndApproaching;
 }
+
+/// <summary>The meditation place's reserve can no longer cover a full week of meditation.</summary>
+public sealed record PlaceQiLow(string PlaceId) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.PlaceQiLow;
+}

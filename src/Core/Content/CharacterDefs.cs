@@ -58,6 +58,9 @@ public sealed class ResourceDef : ContentDef, IValidatedDef
 
     public double Coefficient { get; set; }
 
+    /// <summary>How much returns on its own each week, up to the maximum (§13.4 for qi).</summary>
+    public double RegenPerWeek { get; set; }
+
     /// <summary>A stat or aspect the maximum grows with; null for a flat maximum.</summary>
     [ContentRef(typeof(ContentDef))]
     public string? Source { get; set; }

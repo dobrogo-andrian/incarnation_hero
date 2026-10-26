@@ -11,17 +11,17 @@ namespace Core.Tests.Sim;
 public sealed class GoldenTests
 {
     /// <summary>
-    /// Same run as <c>sim run --seed 42 --travel zone.spirit_peak --weeks end</c>, which prints the
-    /// same hash: interrupts are continued until the activity ends.
+    /// Same run as <c>sim run --seed 42 --travel zone.spirit_peak --weeks end --meditate meditation.purification</c>,
+    /// which prints the same hash: interrupts are continued until the activity ends.
     /// </summary>
     [Fact]
-    public void TravelToPeakThenWaitUntilDeath_Seed42()
+    public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "d2e79e6e134ea55844342093d9054acf6004452a5f1b485f87bec1b1814dda3b";
+        const string expectedHash = "de6691647cf2bb77768b131cb32da5bb4d01b8b8e811ed003c2f5bc8019aebea";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
-        RunToEnd(sim, TestContent.Wait(null));
+        RunToEnd(sim, new StartActivity(new MeditateActivity("meditation.purification", "place.spirit_peak.vein"), null));
 
         Assert.Equal(GameMode.RunEnd, sim.State.Mode);
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));

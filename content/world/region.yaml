@@ -1,6 +1,7 @@
 # Hand-made region for stage 1 (§9, D29): a hub and 5 zones. Names and numbers are a draft.
 # Danger grows away from the hub; place quality stays at or below its zone's danger (tech 4.2).
-# Place numbers are placeholders until the meditation step defines how reserve is spent.
+# Meditation draws `density` from a place's reserve each week (D30), so regen stays below density:
+# weak places run dry within weeks, the spirit vein lasts about a year.
 #
 # Routes (weeks): hub–bamboo_grove 1, hub–river_valley 2, bamboo_grove–misty_hills 2,
 # river_valley–misty_hills 2, river_valley–old_battlefield 3, misty_hills–spirit_peak 3,
@@ -71,40 +72,40 @@
   name: { uk: "Тихий двір" }
   zone: zone.hub
   density: 1
-  capacity: 20
-  regen_per_week: 2
+  capacity: 8
+  regen_per_week: 0.25
 
 - id: place.bamboo_grove.clearing
   name: { uk: "Галявина серед бамбуку" }
   zone: zone.bamboo_grove
   density: 1
-  capacity: 30
-  regen_per_week: 2
+  capacity: 10
+  regen_per_week: 0.25
 
 - id: place.river_valley.boulder
   name: { uk: "Валун над водою" }
   zone: zone.river_valley
   density: 1.5
-  capacity: 30
-  regen_per_week: 2
+  capacity: 15
+  regen_per_week: 0.5
 
 - id: place.misty_hills.cave
   name: { uk: "Печера туману" }
   zone: zone.misty_hills
   density: 2
   capacity: 60
-  regen_per_week: 3
+  regen_per_week: 0.5
 
 - id: place.old_battlefield.altar
   name: { uk: "Розбитий вівтар" }
   zone: zone.old_battlefield
   density: 2.5
-  capacity: 60
-  regen_per_week: 3
+  capacity: 70
+  regen_per_week: 0.75
 
 - id: place.spirit_peak.vein
   name: { uk: "Духовна жила" }
   zone: zone.spirit_peak
   density: 4
-  capacity: 150
-  regen_per_week: 4
+  capacity: 200
+  regen_per_week: 1

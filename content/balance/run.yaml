@@ -7,7 +7,8 @@ start_lifespan_years: 60        # §3
 natural_death_window_years: 3   # D21: death possible from 3 years before the expected lifespan
 life_end_warning_years: [5, 1]  # D24
 
-stats: [stat.might, stat.endurance, stat.speed, stat.meridians, stat.perception]
+stats: [stat.might, stat.endurance, stat.speed, stat.meridians, stat.perception, stat.purity]
 resources: [resource.health, resource.body_energy, resource.qi_pool, resource.combat_qi]
 start_aspect_profile: aspect_profile.balanced   # until cultivation methods exist (A2)
 start_zone: zone.hub
+meditation_depleted_floor: 0.2   # D30: meditation on an exhausted place still gives 20%

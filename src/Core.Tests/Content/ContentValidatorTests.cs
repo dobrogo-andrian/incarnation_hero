@@ -130,6 +130,7 @@ public sealed class ContentValidatorTests
     {
         var errors = Validate("""
             - { id: zone.a, name: { uk: "А" } }
+            - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 1, capacity: 1 }
             - { id: route.aa, a: zone.a, b: zone.a, weeks: 0 }
             """);
 
@@ -149,6 +150,26 @@ public sealed class ContentValidatorTests
         Assert.Equal(2, errors.Count);
         Assert.Contains(errors, e => e.Message.Contains("positive density and capacity"));
         Assert.Contains(errors, e => e.Message.Contains("negative regeneration"));
+    }
+
+    [Fact]
+    public void Zone_NeedsAMeditationPlace()
+    {
+        var errors = Validate("""- { id: zone.a, name: { uk: "А" } }""");
+
+        Assert.Contains("'zone.a' has no meditation place", Assert.Single(errors).Message);
+    }
+
+    [Fact]
+    public void MeditationDirection_TargetsAStatOrResource()
+    {
+        var errors = Validate("""
+            - { id: zone.a, name: { uk: "А" } }
+            - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 1, capacity: 1 }
+            - { id: meditation.m, name: { uk: "М" }, rate: 1, target: zone.a }
+            """);
+
+        Assert.Contains("target 'zone.a' is neither a stat nor a resource", Assert.Single(errors).Message);
     }
 
     [Fact]

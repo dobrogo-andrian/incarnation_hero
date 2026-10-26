@@ -98,6 +98,12 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     [ContentRef(typeof(AspectProfileDef))]
     public string StartAspectProfile { get; set; } = "";
 
+    /// <summary>
+    /// Lowest meditation efficiency once a place's reserve cannot cover a week's draw (§4.2, D30):
+    /// below the draw, efficiency is reserve / draw, but never under this.
+    /// </summary>
+    public double MeditationDepletedFloor { get; set; }
+
     /// <summary>Where a run starts: the hub settlement (§9).</summary>
     [ContentRef(typeof(ZoneDef))]
     public string StartZone { get; set; } = "";

@@ -14,24 +14,21 @@ public sealed class Simulation
 {
     public const string QiVectorId = "qi";
 
-    private readonly RngStreams _rng;
+    private readonly SimContext _ctx;
 
     private Simulation(ContentDb content, GameState state, RngStreams rng)
     {
-        Content = content;
         State = state;
-        _rng = rng;
-        Rules = new CharacterRules(content);
-        Map = new WorldMap(content);
+        _ctx = new SimContext(content, rng);
     }
 
-    public ContentDb Content { get; }
+    public ContentDb Content => _ctx.Content;
 
     public GameState State { get; }
 
-    public CharacterRules Rules { get; }
+    public CharacterRules Rules => _ctx.Rules;
 
-    public WorldMap Map { get; }
+    public WorldMap Map => _ctx.Map;
 
     public PlayerView View => PlayerView.From(State, Rules, Content);
 
@@ -76,14 +73,14 @@ public sealed class Simulation
             _ => throw new NotSupportedException($"No handler for {command.GetType().Name}."),
         };
 
-        State.RngStates = _rng.GetStates();
+        State.RngStates = _ctx.Rng.GetStates();
         return outcome;
     }
 
     private CommandOutcome ExecuteStart(StartActivity command)
     {
-        if (!ActivitySystem.HasPlayerChosenLength(command.Activity))
-            return CommandOutcome.Reject(RejectReasons.InvalidActivity);
+        if (ActivitySystem.Validate(State, _ctx, command.Activity) is { } reason)
+            return CommandOutcome.Reject(reason);
         if (command.Weeks <= 0)
             return CommandOutcome.Reject(RejectReasons.InvalidWeeks);
 
@@ -130,7 +127,7 @@ public sealed class Simulation
     private CommandOutcome RunActivity()
     {
         var events = new List<SimEvent>();
-        TimeSystem.RunActivity(State, Content, _rng, events);
+        TimeSystem.RunActivity(State, _ctx, events);
         return CommandOutcome.Accept(events);
     }
 }

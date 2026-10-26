@@ -34,6 +34,7 @@ public static class SimText
 
     private static readonly LocKey Wait = new("str.activity.wait");
     private static readonly LocKey TravelTo = new("str.activity.travel");
+    private static readonly LocKey Meditate = new("str.activity.meditate");
 
     private static readonly LocKey OldAge = new("str.end.old_age");
 
@@ -42,6 +43,7 @@ public static class SimText
     private static readonly LocKey LifeEnd = new("str.event.life_end_approaching");
     private static readonly LocKey Ended = new("str.event.run_ended");
     private static readonly LocKey Entered = new("str.event.zone_entered");
+    private static readonly LocKey PlaceLow = new("str.event.place_qi_low");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -127,6 +129,7 @@ public static class SimText
         LifeEndApproaching l => LifeEnd with { Args = [new("years", l.YearsLeft)] },
         RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
         ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
+        PlaceQiLow p => PlaceLow with { Args = [new("place", Name(p.PlaceId))] },
         _ => null,
     };
 
@@ -149,6 +152,7 @@ public static class SimText
     {
         WaitActivity => Wait,
         TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
+        MeditateActivity m => Meditate with { Args = [new("direction", Name(m.DirectionId)), new("place", Name(m.PlaceId))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
     };
 

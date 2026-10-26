@@ -30,22 +30,27 @@ static int Run(string[] options)
 
     var sim = Simulation.NewGame(db, seed);
     var localizer = Localizer.FromContent(db);
-    var commands = new List<Command>();
-    if (values.TryGetValue("--travel", out string? zone))
-        commands.Add(new Travel(zone));
-    if (weeks != 0)
-        commands.Add(new StartActivity(new WaitActivity(), weeks));
-
-    foreach (var command in commands)
-    {
-        if (!RunToEnd(sim, command, localizer))
-            return 1;
-    }
+    if (values.TryGetValue("--travel", out string? zone) && !RunToEnd(sim, new Travel(zone), localizer))
+        return 1;
+    if (weeks != 0 && !RunToEnd(sim, new StartActivity(WeeksActivity(sim, values.GetValueOrDefault("--meditate")), weeks), localizer))
+        return 1;
 
     foreach (var line in SimText.ViewLines(sim.View, db))
         Console.WriteLine(localizer.Resolve(line));
     Console.WriteLine($"state hash: {SaveSerializer.HashState(sim.State)}");
     return 0;
+}
+
+/// <summary>
+/// What the --weeks are spent on: meditation in <paramref name="direction"/> at the first place of
+/// the current zone, or waiting when no direction is given.
+/// </summary>
+static Activity WeeksActivity(Simulation sim, string? direction)
+{
+    if (direction is null)
+        return new WaitActivity();
+    string place = sim.Content.All<PlaceDef>().First(p => p.Zone == sim.State.Player.ZoneId).Id;
+    return new MeditateActivity(direction, place);
 }
 
 /// <summary>
@@ -124,8 +129,9 @@ static int Usage()
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> [--travel <zoneId>] [--weeks <W|end>] [--content <dir>]
-            Travels first, then waits; content defaults to ./content.
+          sim run --seed <N> [--travel <zoneId>] [--weeks <W|end>] [--meditate <directionId>] [--content <dir>]
+            Travels first, then spends the weeks waiting, or meditating at the zone's first place;
+            content defaults to ./content.
         """);
     return 2;
 }

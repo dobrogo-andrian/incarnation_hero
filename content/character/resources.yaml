@@ -13,7 +13,10 @@
 
 - id: resource.qi_pool
   name: { uk: "Пул ці" }
-  base: 100                     # purity will add to it (§4.2)
+  base: 100
+  source: stat.purity           # purity widens the pool (§4.2)
+  coefficient: 2
+  regen_per_week: 2             # returns on its own (§13.4); recovery meditation adds more
 
 - id: resource.combat_qi
   name: { uk: "Бойова ці" }
