@@ -1,0 +1,13 @@
+# Elements (§6). Sensed without a folio up to config.run.element_basic_max_level.
+
+- id: element.fire
+  name: { uk: "Вогонь" }
+  tags: [element:fire]
+
+- id: element.water
+  name: { uk: "Вода" }
+  tags: [element:water]
+
+- id: element.earth
+  name: { uk: "Земля" }
+  tags: [element:earth]

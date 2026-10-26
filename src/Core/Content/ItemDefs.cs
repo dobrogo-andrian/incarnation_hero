@@ -1,18 +1,22 @@
 namespace Core.Content;
 
-/// <summary>Something the player can carry (<c>item.pill.qi_gathering</c>). For now every item is a pill.</summary>
+/// <summary>Something the player can carry (<c>item.pill.qi_gathering</c>): a pill or a folio.</summary>
 public sealed class ItemDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
 
     public PillDef? Pill { get; set; }
 
+    public FolioDef? Folio { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (Pill is null)
-            yield return "has no effect: only pills exist so far.";
-        else if (Pill.Energy <= 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1)
+        if ((Pill is null) == (Folio is null))
+            yield return "must be exactly one of: pill, folio.";
+        if (Pill is not null && (Pill.Energy <= 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1))
             yield return "pill needs positive energy, non-negative toxicity and a repeat_factor in (0, 1].";
+        if (Folio is not null && (Folio.MaxLevel <= 0 || Folio.Speed <= 0))
+            yield return "folio needs a positive max_level and speed.";
     }
 }
 

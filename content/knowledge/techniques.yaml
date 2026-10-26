@@ -1,0 +1,9 @@
+# Techniques (§6). Only their level exists for now; combat gives them effects later.
+
+- id: tech.spear.piercing_dragon
+  name: { uk: "Пронизливий дракон" }
+  tags: [weapon:spear]
+
+- id: tech.sword.flowing_cut
+  name: { uk: "Плинний розтин" }
+  tags: [weapon:sword]

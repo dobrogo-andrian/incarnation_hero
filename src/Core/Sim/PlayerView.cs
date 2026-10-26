@@ -22,7 +22,9 @@ public sealed record PlayerView(
     IReadOnlyList<BuffView> Buffs,
     int Stones,
     IReadOnlyList<ItemView> Items,
-    IReadOnlyList<ShopOfferView> ShopOffers)
+    IReadOnlyList<ShopOfferView> ShopOffers,
+    Foundation Foundation,
+    IReadOnlyList<KnowledgeView> Knowledge)
 {
     public static PlayerView From(GameState state, CharacterRules rules, ContentDb content)
     {
@@ -56,7 +58,9 @@ public sealed record PlayerView(
                 .ToList(),
             EconomySystem.ShopsHere(player, content)
                 .SelectMany(s => s.Prices.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => new ShopOfferView(s.Id, p.Key, p.Value)))
-                .ToList());
+                .ToList(),
+            CultivationSystem.FoundationOf(player, rules, content.Get<RunConfigDef>(RunConfigDef.RunId)),
+            player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList());
     }
 }
 
@@ -80,6 +84,8 @@ public sealed record BuffView(BuffKind Kind, double Points);
 
 /// <summary>A carried item; for a pill, the energy the next one of its type would give.</summary>
 public sealed record ItemView(string ItemId, int Count, double? NextPillEnergy);
+
+public sealed record KnowledgeView(string KnowledgeId, int Level);
 
 /// <summary>An item for sale in a shop of the player's zone.</summary>
 public sealed record ShopOfferView(string ShopId, string ItemId, int Price);

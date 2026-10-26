@@ -1,5 +1,5 @@
 # Meditation directions (§4.2, D30). Weekly gain = rate × place density × efficiency.
-# Comprehension comes with folios (a later step).
+# side_gains grow a stat by its rate × density × efficiency on top: Perception from any meditation (§2.1).
 
 - id: meditation.purification
   name: { uk: "Очищення" }
@@ -7,13 +7,22 @@
   target: stat.purity          # purity widens the qi pool (resource.qi_pool)
   purges: resource.toxins      # toxins go first: each point of gain flushes purge_ratio toxins
   purge_ratio: 10
+  side_gains: { stat.perception: 0.01 }
 
 - id: meditation.recovery
   name: { uk: "Відновлення" }
   rate: 5
   target: resource.qi_pool     # on top of the pool's natural regeneration
+  side_gains: { stat.perception: 0.01 }
 
 - id: meditation.assimilation
   name: { uk: "Засвоєння" }
   rate: 5
   target: vector.qi            # spends cultivation buff points on the stage scale (§4.3)
+  side_gains: { stat.perception: 0.01 }
+
+- id: meditation.comprehension
+  name: { uk: "Осягнення" }
+  rate: 5
+  studies: true                # the activity names a carried folio or an element to sense (§6)
+  side_gains: { stat.perception: 0.05 }

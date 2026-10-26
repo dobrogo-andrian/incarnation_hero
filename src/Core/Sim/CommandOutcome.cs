@@ -24,6 +24,8 @@ public static class RejectReasons
     public static readonly LocKey TooDangerousHere = new("str.reject.too_dangerous_here");
     public static readonly LocKey QiPoolFull = new("str.reject.qi_pool_full");
     public static readonly LocKey PlaceFull = new("str.reject.place_full");
+    public static readonly LocKey NothingToStudy = new("str.reject.nothing_to_study");
+    public static readonly LocKey StudyCapReached = new("str.reject.study_cap_reached");
 }
 
 /// <summary>Either the command was executed and produced events, or it was rejected with a reason.</summary>

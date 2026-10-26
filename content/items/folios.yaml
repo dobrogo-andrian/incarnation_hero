@@ -1,0 +1,13 @@
+# Folios (§6): one subject each, a level ceiling and a study speed. Not used up by study.
+
+- id: item.folio.piercing_dragon
+  name: { uk: "Фоліант «Пронизливий дракон»" }
+  folio: { subject: tech.spear.piercing_dragon, max_level: 3, speed: 1 }
+
+- id: item.folio.fire
+  name: { uk: "Фоліант стихії вогню" }
+  folio: { subject: element.fire, max_level: 3, speed: 1.2 }
+
+- id: item.folio.azure_breath
+  name: { uk: "Фоліант методу лазурового подиху" }
+  folio: { subject: method.azure_breath, max_level: 5, speed: 0.8 }

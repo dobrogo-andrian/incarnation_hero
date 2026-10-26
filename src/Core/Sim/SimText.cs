@@ -31,6 +31,9 @@ public static class SimText
     private static readonly LocKey ItemLine = new("str.view.item");
     private static readonly LocKey PillLine = new("str.view.pill");
     private static readonly LocKey OfferLine = new("str.view.offer");
+    private static readonly LocKey FoundationLine = new("str.view.foundation");
+    private static readonly LocKey KnowledgeLine = new("str.view.knowledge");
+    private static readonly LocKey MeditateStudy = new("str.activity.meditate_study");
 
     private static readonly LocKey CombatInsight = new("str.buff.combat_insight");
     private static readonly LocKey PillEnergy = new("str.buff.pill_energy");
@@ -55,6 +58,8 @@ public static class SimText
     private static readonly LocKey BuffGone = new("str.event.buff_exhausted");
     private static readonly LocKey ScaleFull = new("str.event.stage_scale_full");
     private static readonly LocKey PillTakenLine = new("str.event.pill_taken");
+    private static readonly LocKey LevelUp = new("str.event.knowledge_level_up");
+    private static readonly LocKey CapReached = new("str.event.study_cap_reached");
 
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
     {
@@ -131,6 +136,14 @@ public static class SimText
             });
         }
 
+        var foundation = view.Foundation;
+        lines.Add(FoundationLine with
+        {
+            Args = [new("total", Number(foundation.Total)), new("knowledge", Number(foundation.Knowledge)), new("purity", Number(foundation.Purity))],
+        });
+        foreach (var knowledge in view.Knowledge)
+            lines.Add(KnowledgeLine with { Args = [new("knowledge", Name(knowledge.KnowledgeId)), new("level", knowledge.Level)] });
+
         foreach (var buff in view.Buffs)
             lines.Add(BuffLine with { Args = [new("buff", BuffName(buff.Kind)), new("points", Number(buff.Points))] });
 
@@ -157,6 +170,8 @@ public static class SimText
         ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
         PlaceQiLow p => PlaceLow with { Args = [new("place", Name(p.PlaceId))] },
         BuffExhausted b => BuffGone with { Args = [new("buff", BuffName(b.Kind))] },
+        KnowledgeLevelUp k => LevelUp with { Args = [new("knowledge", Name(k.KnowledgeId)), new("level", k.Level)] },
+        StudyCapReached c => CapReached with { Args = [new("knowledge", Name(c.KnowledgeId))] },
         PillTaken p => PillTakenLine with { Args = [new("item", Name(p.ItemId)), new("energy", Number(p.Energy))] },
         StageScaleFull s => ScaleFull with { Args = [new("vector", Name(CultivationSystem.VectorDefId(s.VectorId)))] },
         _ => null,
@@ -181,6 +196,10 @@ public static class SimText
     {
         WaitActivity => Wait,
         TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
+        MeditateActivity { SubjectId: { } subject } m => MeditateStudy with
+        {
+            Args = [new("direction", Name(m.DirectionId)), new("subject", Name(subject)), new("place", Name(m.PlaceId))],
+        },
         MeditateActivity m => Meditate with { Args = [new("direction", Name(m.DirectionId)), new("place", Name(m.PlaceId))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
     };

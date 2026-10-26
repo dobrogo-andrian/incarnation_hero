@@ -35,6 +35,9 @@ public static class ContentLoader
         ["meditation"] = typeof(MeditationDirectionDef),
         ["item"] = typeof(ItemDef),
         ["shop"] = typeof(ShopDef),
+        ["tech"] = typeof(KnowledgeDef),
+        ["element"] = typeof(KnowledgeDef),
+        ["method"] = typeof(KnowledgeDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>

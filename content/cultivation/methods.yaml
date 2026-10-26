@@ -1,0 +1,6 @@
+# Cultivation methods (§6): special folios that breakthroughs go through. For now only studied;
+# the active method, its aspect profile and quality ceiling come with breakthroughs.
+
+- id: method.azure_breath
+  name: { uk: "Метод лазурового подиху" }
+  tags: [school:azure_breath]

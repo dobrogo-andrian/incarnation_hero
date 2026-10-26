@@ -61,6 +61,12 @@
 - id: str.reject.place_full
   text: { uk: "Резерв ці місця вже повний." }
 
+- id: str.reject.nothing_to_study
+  text: { uk: "Немає з чого вчитися: потрібен фоліант при собі або стихія для відчуття." }
+
+- id: str.reject.study_cap_reached
+  text: { uk: "З цього джерела глибше не осягнути." }
+
 # PlayerView lines (SimText.ViewLines).
 
 - id: str.view.week
@@ -114,6 +120,12 @@
 - id: str.view.buff
   text: { uk: "Баф культивації: {buff}, пойнтів {points}" }
 
+- id: str.view.foundation
+  text: { uk: "Фундамент: {total} (знання {knowledge}, чистота {purity})" }
+
+- id: str.view.knowledge
+  text: { uk: "Знання: {knowledge}, рівень {level}" }
+
 - id: str.view.stones
   text: { uk: "Духовні камені: {stones}" }
 
@@ -153,6 +165,9 @@
 - id: str.activity.meditate
   text: { uk: "Медитація ({direction}), {place}" }
 
+- id: str.activity.meditate_study
+  text: { uk: "Медитація ({direction}: {subject}), {place}" }
+
 - id: str.end.old_age
   text: { uk: "смерть від старості" }
 
@@ -178,6 +193,12 @@
 
 - id: str.event.buff_exhausted
   text: { uk: "Баф вичерпано: {buff}." }
+
+- id: str.event.knowledge_level_up
+  text: { uk: "Осягнення: {knowledge}, рівень {level}." }
+
+- id: str.event.study_cap_reached
+  text: { uk: "Межа джерела: {knowledge} глибше не осягнути." }
 
 - id: str.event.pill_taken
   text: { uk: "Прийнято пігулку: {item}, енергія {energy}." }

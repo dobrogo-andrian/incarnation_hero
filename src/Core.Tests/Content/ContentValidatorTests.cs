@@ -114,6 +114,14 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void ReferenceInANestedBlock_IsChecked()
+    {
+        var errors = Validate("""- { id: item.f, name: { uk: "Ф" }, folio: { subject: tech.none, max_level: 1 } }""");
+
+        Assert.Contains("'item.f'.Folio.Subject references missing id 'tech.none'", Assert.Single(errors).Message);
+    }
+
+    [Fact]
     public void Stage_NeedsAPositiveScale()
     {
         var errors = Validate("""- { id: stage.qi.1, name: { uk: "Перший" }, progress_required: 0 }""");

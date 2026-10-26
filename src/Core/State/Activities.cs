@@ -15,8 +15,11 @@ public abstract record Activity;
 /// <summary>Let time pass doing nothing in particular.</summary>
 public sealed record WaitActivity : Activity;
 
-/// <summary>Meditation in one direction at a meditation place of the current zone (§4.2).</summary>
-public sealed record MeditateActivity(string DirectionId, string PlaceId) : Activity;
+/// <summary>
+/// Meditation in one direction at a meditation place of the current zone (§4.2). Comprehension
+/// also names what it studies: a carried folio's item ID, or an element to sense without one (§6).
+/// </summary>
+public sealed record MeditateActivity(string DirectionId, string PlaceId, string? SubjectId = null) : Activity;
 
 /// <summary>
 /// Moving along a route found by Core; its length is the sum of the legs, not chosen by the player.

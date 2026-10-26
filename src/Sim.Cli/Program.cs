@@ -37,7 +37,8 @@ static int Run(string[] options)
         if (!RunToEnd(sim, new UsePill(pill), localizer))
             return 1;
     }
-    if (weeks != 0 && !RunToEnd(sim, new StartActivity(WeeksActivity(sim, values.GetValueOrDefault("--meditate")), weeks), localizer))
+    var activity = WeeksActivity(sim, values.GetValueOrDefault("--meditate"), values.GetValueOrDefault("--subject"));
+    if (weeks != 0 && !RunToEnd(sim, new StartActivity(activity, weeks), localizer))
         return 1;
 
     foreach (var line in SimText.ViewLines(sim.View, db))
@@ -48,14 +49,15 @@ static int Run(string[] options)
 
 /// <summary>
 /// What the --weeks are spent on: meditation in <paramref name="direction"/> at the first place of
-/// the current zone, or waiting when no direction is given.
+/// the current zone (studying <paramref name="subject"/> for comprehension), or waiting when no
+/// direction is given.
 /// </summary>
-static Activity WeeksActivity(Simulation sim, string? direction)
+static Activity WeeksActivity(Simulation sim, string? direction, string? subject)
 {
     if (direction is null)
         return new WaitActivity();
     string place = sim.Content.All<PlaceDef>().First(p => p.Zone == sim.State.Player.ZoneId).Id;
-    return new MeditateActivity(direction, place);
+    return new MeditateActivity(direction, place, subject);
 }
 
 /// <summary>
@@ -134,7 +136,7 @@ static int Usage()
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId>] [--content <dir>]
+          sim run --seed <N> [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId> [--subject <folio or element>]] [--content <dir>]
             Travels first, takes the pills in order, then spends the weeks waiting, or meditating at
             the zone's first place; content defaults to ./content.
         """);

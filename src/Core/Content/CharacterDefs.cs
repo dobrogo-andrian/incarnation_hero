@@ -7,6 +7,12 @@ public sealed class StatDef : ContentDef
 
     public double StartValue { get; set; }
 
+    /// <summary>
+    /// When set, every gain shrinks as the stat grows: gain × 1 / (1 + value / scale). Perception
+    /// grows this way (§2.1).
+    /// </summary>
+    public double? DiminishScale { get; set; }
+
     [ContentRef(typeof(AspectDef))]
     public List<string> Aspects { get; set; } = [];
 }

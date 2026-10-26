@@ -4,3 +4,8 @@
   name: { uk: "Аптека хабу" }
   zone: zone.hub
   prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30 }
+
+- id: shop.hub.library
+  name: { uk: "Книгарня хабу" }
+  zone: zone.hub
+  prices: { item.folio.piercing_dragon: 20, item.folio.fire: 20, item.folio.azure_breath: 40 }

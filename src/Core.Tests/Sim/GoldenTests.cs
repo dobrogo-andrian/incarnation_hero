@@ -17,7 +17,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "9232dd9c825d8f1b77e104ee9698bba540f4b4d897fd6a2efc26105ea8a1f4c5";
+        const string expectedHash = "4a562200022daeb94454ab203ec073b6d52f68837b84151f91a58da9175410cc";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -34,7 +34,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakTakeTwoPillsThenAssimilateUntilDeath_Seed42()
     {
-        const string expectedHash = "de14f2ab82c12a74979e1484b850fb9f3dc074515f72bbe3ad822d07d266972c";
+        const string expectedHash = "3a7cf0985cd3e894e200c0a52ea3246f4eb0d9f66794144f2d1aa64da112112a";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));

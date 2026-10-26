@@ -17,6 +17,7 @@ public enum InterruptCategory
     PlaceQiLow,
     BuffExhausted,
     StageScaleFull,
+    StudyCapReached,
 }
 
 public enum RunEndCause
@@ -30,7 +31,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 7;
+    public const int CurrentSchemaVersion = 8;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -89,6 +90,19 @@ public sealed class PlayerState
 
     /// <summary>How many pills of each type were taken this run; each repeat gives less energy. In item ID order.</summary>
     public List<ItemCount> PillsTaken { get; set; } = [];
+
+    /// <summary>Techniques, elements and methods studied at least a little, in knowledge ID order.</summary>
+    public List<KnowledgeLevel> Knowledge { get; set; } = [];
+}
+
+/// <summary>How far one piece of knowledge has been comprehended (§6).</summary>
+public sealed class KnowledgeLevel
+{
+    public string KnowledgeId { get; set; } = "";
+    public int Level { get; set; }
+
+    /// <summary>Comprehension points towards the next level.</summary>
+    public double Progress { get; set; }
 }
 
 /// <summary>A number of items of one type.</summary>

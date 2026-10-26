@@ -48,6 +48,7 @@
 - id: stat.perception
   name: { uk: "Сприйняття" }
   start_value: 0
+  diminish_scale: 10            # gains shrink as it grows: × 1 / (1 + value / 10) (§2.1)
 
 # Foundation (§4.1): purity grows by purification and widens the qi pool. Knowledge comes with folios.
 - id: stat.purity

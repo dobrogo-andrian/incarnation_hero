@@ -15,3 +15,10 @@ start_zone: zone.hub
 meditation_depleted_floor: 0.2   # D30: meditation on an exhausted place still gives 20%
 combat_insight_decay: 0.1        # D31: combat insight loses 10% of its points a week
 combat_insight_min_points: 1     # below this it is gone
+
+# Knowledge and foundation (§4.1, §6, D34). Draft numbers.
+knowledge_level_points: [20, 40, 80, 160, 320]   # comprehension points per level; 5 levels at most
+element_basic_max_level: 1       # elements sensed without a folio stop here
+foundation_per_knowledge_level: 10
+foundation_per_purity: 1
+purity_stat: stat.purity

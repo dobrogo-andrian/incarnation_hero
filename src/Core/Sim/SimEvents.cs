@@ -43,6 +43,15 @@ public sealed record StageScaleFull(string VectorId) : InterruptEvent
     public override InterruptCategory Category => InterruptCategory.StageScaleFull;
 }
 
+/// <summary>Comprehension reached a new level of a technique, element or method.</summary>
+public sealed record KnowledgeLevelUp(string KnowledgeId, int Level) : SimEvent;
+
+/// <summary>Study reached the ceiling of its folio (or of basic element sensing); a better source is needed.</summary>
+public sealed record StudyCapReached(string KnowledgeId) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.StudyCapReached;
+}
+
 /// <summary>The meditation place's reserve can no longer cover a full week of meditation.</summary>
 public sealed record PlaceQiLow(string PlaceId) : InterruptEvent
 {

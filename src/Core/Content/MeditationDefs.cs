@@ -4,7 +4,8 @@ namespace Core.Content;
 /// A meditation direction (<c>meditation.purification</c>, §4.2). Each week it adds
 /// <see cref="Rate"/> × place density × efficiency to <see cref="Target"/>: a stat's base value,
 /// a resource's current amount, or a cultivation vector's stage scale, which is assimilation and
-/// spends cultivation buffs (§4.3). Comprehension adds its own handling with folios.
+/// spends cultivation buffs (§4.3). A direction that <see cref="Studies"/> has no fixed target: it
+/// raises the knowledge the activity names (comprehension, §6).
 /// </summary>
 public sealed class MeditationDirectionDef : ContentDef, IValidatedDef
 {
@@ -13,7 +14,13 @@ public sealed class MeditationDirectionDef : ContentDef, IValidatedDef
     public double Rate { get; set; }
 
     [ContentRef(typeof(ContentDef))]
-    public string Target { get; set; } = "";
+    public string? Target { get; set; }
+
+    public bool Studies { get; set; }
+
+    /// <summary>Stats that grow on the side, by rate × place density × efficiency: Perception from any meditation (§2.1).</summary>
+    [ContentRef(typeof(StatDef))]
+    public Dictionary<string, double> SideGains { get; set; } = [];
 
     /// <summary>
     /// A resource the gain drains first, <see cref="PurgeRatio"/> units per unit of gain; only what is
@@ -26,7 +33,9 @@ public sealed class MeditationDirectionDef : ContentDef, IValidatedDef
 
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (db.Contains(Target) && !db.TryGet<StatDef>(Target, out _) && !db.TryGet<ResourceDef>(Target, out _)
+        if ((Target is null) != Studies)
+            yield return "needs either a target or studies: true.";
+        if (Target is not null && db.Contains(Target) && !db.TryGet<StatDef>(Target, out _) && !db.TryGet<ResourceDef>(Target, out _)
             && !db.TryGet<CultivationVectorDef>(Target, out _))
             yield return $"target '{Target}' is not a stat, a resource or a cultivation vector.";
         if (Rate <= 0)

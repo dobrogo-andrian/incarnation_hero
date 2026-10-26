@@ -1,3 +1,4 @@
+using Core.Character;
 using Core.Content;
 using Core.Loc;
 using Core.State;
@@ -15,6 +16,14 @@ public static class CultivationSystem
 
     public static CultivationStageDef Stage(CultivationTrack track, ContentDb db) =>
         db.Get<CultivationStageDef>(db.Get<CultivationVectorDef>(VectorDefId(track.VectorId)).Stages[track.StageIndex]);
+
+    /// <summary>
+    /// The foundation a breakthrough is measured against (§4.1, §4.5): knowledge levels and purity,
+    /// each weighted by <c>config.run</c>.
+    /// </summary>
+    public static Foundation FoundationOf(PlayerState player, CharacterRules rules, RunConfigDef config) => new(
+        StateNumbers.Round(player.Knowledge.Sum(k => k.Level) * config.FoundationPerKnowledgeLevel),
+        StateNumbers.Round(rules.Value(player, config.PurityStat) * config.FoundationPerPurity));
 
     /// <summary>A new combat insight does not add to an older one: the stronger of the two remains.</summary>
     public static void GrantCombatInsight(PlayerState player, double points)
@@ -102,4 +111,10 @@ public static class CultivationSystem
         player.Buffs.Remove(buff);
         events.Add(new BuffExhausted(buff.Kind));
     }
+}
+
+/// <summary>The two parts of the foundation (§4.1); breakthroughs compare <see cref="Total"/> with a stage's threshold.</summary>
+public sealed record Foundation(double Knowledge, double Purity)
+{
+    public double Total => Knowledge + Purity;
 }

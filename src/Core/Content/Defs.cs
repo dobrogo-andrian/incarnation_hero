@@ -123,12 +123,32 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ResourceDef))]
     public string ToxinsResource { get; set; } = "";
 
+    /// <summary>
+    /// Comprehension points to go from each level to the next: the first entry reaches level 1. Its
+    /// length is the highest level anything can reach.
+    /// </summary>
+    public List<double> KnowledgeLevelPoints { get; set; } = [];
+
+    /// <summary>How far an element can be sensed without its folio (§6).</summary>
+    public int ElementBasicMaxLevel { get; set; }
+
+    /// <summary>Foundation = Σ knowledge levels × this + purity × <see cref="FoundationPerPurity"/> (§4.1).</summary>
+    public double FoundationPerKnowledgeLevel { get; set; }
+
+    public double FoundationPerPurity { get; set; }
+
+    /// <summary>The purity stat counted in the foundation.</summary>
+    [ContentRef(typeof(StatDef))]
+    public string PurityStat { get; set; } = "";
+
     /// <summary>Where a run starts: the hub settlement (§9).</summary>
     [ContentRef(typeof(ZoneDef))]
     public string StartZone { get; set; } = "";
 
     public IEnumerable<string> Validate(ContentDb db)
     {
+        if (KnowledgeLevelPoints.Count == 0 || KnowledgeLevelPoints.Any(p => p <= 0))
+            yield return "knowledge_level_points needs at least one positive entry.";
         if (!db.Contains(StartZone))
             yield break;
 
