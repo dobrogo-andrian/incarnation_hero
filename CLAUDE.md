@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Stage 0 has started: the projects are scaffolded, but there is no game code yet. Design docs are Markdown in `docs/` (Ukrainian), one file per section. Start from the index `docs/README.md` and read only the files you need.
+Wuxia/xianxia turn-based roguelike (working title "incarnation_hero"). Solo developer, target is a public Steam demo. Stage 0 is in progress (see `docs/progress.md` for what is done). Design docs are Markdown in `docs/` (Ukrainian), one file per section. Start from the index `docs/README.md` and read only the files you need.
 
+- `docs/progress.md`: **read this first every session.** Current stage, the next step, the stage checklist, gotchas from earlier sessions and a short session log. Items marked done there are trusted: don't re-verify earlier stages unless something is broken. Update it at the end of every session, in the same commit as the work.
 - `docs/gdd/`: game design document (GDD), the source of truth for gameplay rules. Section refs like "§4.5" point here (`grep "§4.5" docs/gdd`).
 - `docs/tech/`: technical design (stack, architecture, roadmap, risks). Tech sections have no `§` and are cited as "tech 2.8". Decisions D* and working assumptions A* are in `docs/tech/decisions.md`; open questions Q* are in `docs/tech/open-questions.md`.
 - `.claude/agents/game-designer.md`: design-partner subagent for GDD sessions.

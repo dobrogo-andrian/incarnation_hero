@@ -3,6 +3,8 @@
 Джерело правди — Markdown у цій теці. Читай лише потрібні файли.
 Позначення: `§N` — розділ GDD (`docs/gdd/`); у техдоку розділи без `§` («tech 2.8»). D/A — `tech/decisions.md`, Q — `tech/open-questions.md`, R — `tech/10-risks.md`.
 
+Поточний стан робіт, наступний крок і контекст між сесіями: [progress.md](progress.md).
+
 ## GDD — WUXIA ROGUELIKE, дизайн-документ MVP (`gdd/`)
 
 | Файл | Зміст |
