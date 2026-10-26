@@ -55,7 +55,7 @@
 - **Назви етапів ці — заглушки** («Перший етап ці»…): GDD §4 їх не називає. Замінити, коли автор дасть назви.
 - **`/content` лежить поза `game/`**: для експорту Godot його доведеться пакувати (етап 5). У dev-збірці читаємо з `../content`.
 - **`StageIndex` — 0-базний індекс у `stages` вектора** (0 = «Перший етап ці»). GDD не каже, чи 12-річний персонаж уже на першому етапі чи «до» нього; це тимчасове рішення, легко змінити. Підняти з автором.
-- **Godot**: `C:	ools\Godot_v4.7.2-stable_mono_win64\..._console.exe --headless --path game --quit-after 30` — швидка перевірка, що сцена стартує. Сейв гри — `%APPDATA%\Godotpp_userdata\incarnation_heroun.json`. У `game/incarnation_hero.csproj` увімкнено `ImplicitUsings` і `Nullable`, як в інших проєктах. Сид нового забігу береться в оболонці з `RandomNumberGenerator` (Core годинник і ОС не читає).
+- **Godot**: `C:\tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe --headless --path game --quit-after 30` — швидка перевірка, що сцена стартує. Сейв гри — `%APPDATA%\Godot\app_userdata\incarnation_hero\run.json`. У `game/incarnation_hero.csproj` увімкнено `ImplicitUsings` і `Nullable`, як в інших проєктах. Сид нового забігу береться в оболонці з `RandomNumberGenerator` (Core годинник і ОС не читає).
 - **Атомарний сейв** зроблено через `File.Replace` (temp → slot, попередній файл стає `.bak`). Бекап використовується лише тоді, коли не зійшлася контрольна сума основного файлу.
 
 ## Відкриті питання, що стосуються поточного етапу
