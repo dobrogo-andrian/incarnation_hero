@@ -1,3 +1,4 @@
+using Core.Combat;
 using Core.Content;
 using Core.Loc;
 using Core.Rng;
@@ -10,13 +11,20 @@ namespace Core.Tests.Sim;
 public sealed class EventTests
 {
     private static readonly ContentDb Content = TestContent.WithExtra("""
+        - id: enemy.test.weak
+          name: { uk: "Слабкий" }
+          stats: { stat.might: 0.1 }
+          weapon_damage: 0.1
+        - id: enemy.test.wall
+          name: { uk: "Непробивний" }
+          stats: { stat.might: 100000 }
+          weapon_damage: 0.1
         - id: grp.test.weak
           name: { uk: "Слабкі" }
-          power: 0.0001
+          members: [ { enemy: enemy.test.weak } ]
         - id: grp.test.strong
           name: { uk: "Сильні" }
-          power: 1000000
-          loss_injuries: { injury.body: 10 }
+          members: [ { enemy: enemy.test.wall } ]
         - id: evt.test.trial
           contexts: [rest]
           weight: 1
@@ -147,18 +155,17 @@ public sealed class EventTests
     }
 
     [Fact]
-    public void Combat_GoesToWinOrLoss_AndLossLeavesTheGroupsInjuries()
+    public void Combat_GoesToWinOrLoss()
     {
         var won = Open();
         var wonEvents = won.Execute(new ChooseEventOption(Weak)).Events;
         Assert.Equal("won", won.State.Event!.NodeId);
-        Assert.Contains(new CombatResolved("grp.test.weak", true), wonEvents);
+        Assert.Equal(CombatEnd.Won, wonEvents.OfType<CombatResolved>().Single().End);
 
         var lost = Open();
         var lostEvents = lost.Execute(new ChooseEventOption(Strong)).Events;
         Assert.Equal("lost", lost.State.Event!.NodeId);
-        Assert.Contains(new CombatResolved("grp.test.strong", false), lostEvents);
-        Assert.Equal(10, InjurySystem.Value(lost.State.Player, "injury.body"));
+        Assert.Equal(CombatEnd.Fled, lostEvents.OfType<CombatResolved>().Single().End);
     }
 
     [Fact]

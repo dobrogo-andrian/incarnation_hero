@@ -1,3 +1,4 @@
+using Core.Combat;
 using Core.Content;
 using Core.Loc;
 using Core.State;
@@ -82,7 +83,13 @@ public static class SimText
     private static readonly LocKey ReputationChangedLine = new("str.event.reputation_changed");
     private static readonly LocKey RevealedLine = new("str.event.revealed");
     private static readonly LocKey CombatWon = new("str.event.combat_won");
-    private static readonly LocKey CombatLost = new("str.event.combat_lost");
+    private static readonly LocKey CombatFled = new("str.event.combat_fled");
+    private static readonly LocKey CombatDied = new("str.event.combat_died");
+    private static readonly LocKey CombatDeath = new("str.end.combat_death");
+    private static readonly LocKey OptionCombat = new("str.dialog.option_combat");
+    private static readonly LocKey StageLower = new("str.combat.stage_lower");
+    private static readonly LocKey StageEqual = new("str.combat.stage_equal");
+    private static readonly LocKey StageHigher = new("str.combat.stage_higher");
 
     private static readonly LocKey ReputationLine = new("str.view.reputation");
     private static readonly LocKey RumorLine = new("str.view.rumor");
@@ -244,6 +251,8 @@ public static class SimText
                 text = OptionRequires with { Args = [new("option", text), new("requires", o.Unmet.Select(Requirement).ToList())] };
             else if (o.Success is { } chance)
                 text = OptionChance with { Args = [new("option", text), new("low", Number(chance.Low * 100)), new("high", Number(chance.High * 100))] };
+            else if (o.Combat is { } combat)
+                text = OptionCombat with { Args = [new("option", text), new("foes", combat.Foes), new("stage", StageRelationName(combat.Stage))] };
             return (o.Index, text, o.Available);
         }).ToList();
     }
@@ -301,7 +310,10 @@ public static class SimText
         ReputationChanged r => ReputationChangedLine with { Args = [new("sect", Name(r.SectId)), new("amount", Signed(r.Amount))] },
         Revealed r => RevealedLine with { Args = [new("place", Name(r.Id))] },
         RumorHeard r => Heard with { Args = [new("rumor", Name(r.RumorId))] },
-        CombatResolved c => (c.Won ? CombatWon : CombatLost) with { Args = [new("group", Name(c.GroupId))] },
+        CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, _ => CombatDied }) with
+        {
+            Args = [new("group", Name(c.GroupId)), new("rounds", c.Rounds), new("health", Number(c.HealthLost)), new("qi", Number(c.QiSpent))],
+        },
         _ => null,
     };
 
@@ -373,7 +385,16 @@ public static class SimText
     {
         RunEndCause.OldAge => OldAge,
         RunEndCause.BreakthroughDeath => BreakthroughDeath,
+        RunEndCause.CombatDeath => CombatDeath,
         _ => throw new ArgumentOutOfRangeException(nameof(cause), cause, null),
+    };
+
+    private static LocKey StageRelationName(StageRelation relation) => relation switch
+    {
+        StageRelation.Lower => StageLower,
+        StageRelation.Equal => StageEqual,
+        StageRelation.Higher => StageHigher,
+        _ => throw new ArgumentOutOfRangeException(nameof(relation), relation, null),
     };
 
     private static LocKey ModeName(GameMode mode) => mode switch

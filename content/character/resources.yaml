@@ -24,6 +24,7 @@
   name: { uk: "Бойова ці" }
   source: aspect.meridians.capacity
   coefficient: 5
+  regen_per_week: 25            # the qi shield gathers again between fights; in a fight it refills from the pool (D42)
 
 - id: resource.toxins
   name: { uk: "Токсини" }

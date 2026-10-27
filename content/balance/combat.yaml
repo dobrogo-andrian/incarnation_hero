@@ -1,6 +1,35 @@
-# Fights (tech 4.1). Until the formula resolver, only the stand-in's numbers (D38):
-# chance to win = player power / (player power + group power).
+# The stage 1 formula resolver (tech 4.1, D42): abstract rounds of shield → health → injuries.
+# Draft numbers until Sim.Cli reports. The player starts with 100 health, a 50 qi shield that
+# refills 5 a round from a 100 qi pool, and hits for 10.
 
 id: config.combat
-stub_power_stats: [stat.might, stat.endurance, stat.speed, stat.meridians]   # 40 at the start
-stub_power_per_stage: 20
+weapon_damage: 10                 # the base weapon, until weapons are items
+technique_bonus_per_level: 0.15   # best technique level: damage × (1 + level × 0.15)
+qi_density_per_stage: 0.3         # damage × (1 + qi stage × 0.3)
+damage_spread: 0.2                # each hit is damage × 0.8–1.2
+
+health_resource: resource.health
+shield_resource: resource.combat_qi
+qi_pool_resource: resource.qi_pool
+flow_aspect: aspect.meridians.flow
+refill_per_flow: 0.5              # shield refill a round = flow × 0.5
+reaction_aspect: aspect.speed.reaction
+agility_aspect: aspect.speed.agility
+resilience_aspect: aspect.might.resilience
+
+body_injury: injury.body
+injury_per_resilience: 1          # injury points = damage to health / resilience
+shield_break_injury: injury.internal
+shield_break_chance: 0.5          # a hit that breaks the shield may hurt the meridians (§7.4)
+shield_break_amount: 3
+
+flee_health_share: 0.3            # below 30% health the player tries to escape (§7.6)
+flee_chance_base: 0.5
+flee_chance_per_point: 0.03       # per point of agility over the fastest enemy's reaction
+flee_chance_min: 0.15
+flee_chance_max: 0.9
+max_rounds: 30                    # still undecided: the player withdraws
+
+insight_per_difficulty: 25        # an even fight gives 25 points of combat insight
+insight_max: 60
+insight_fled_share: 0.4

@@ -26,6 +26,7 @@ public enum RunEndCause
 {
     OldAge,
     BreakthroughDeath,
+    CombatDeath,
 }
 
 /// <summary>
@@ -34,7 +35,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 12;
+    public const int CurrentSchemaVersion = 13;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -71,7 +72,18 @@ public sealed class GameState
     public RunEndCause? EndCause { get; set; }
 }
 
-public sealed class PlayerState
+/// <summary>
+/// What <c>CharacterRules</c> computes values from: the player, or an enemy's snapshot in a fight,
+/// so both follow the same stat → aspect → resource chain.
+/// </summary>
+public interface ICharacter
+{
+    List<StatValue> Stats { get; }
+    string AspectProfileId { get; }
+    List<Modifier> Modifiers { get; }
+}
+
+public sealed class PlayerState : ICharacter
 {
     public int AgeWeeks { get; set; }
 

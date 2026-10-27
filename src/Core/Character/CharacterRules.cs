@@ -51,9 +51,9 @@ public sealed class CharacterRules
         player.Resources = Resources.Select(r => new ResourceValue { ResourceId = r.Id, Current = r.StartEmpty ? 0 : Value(player, r.Id) }).ToList();
     }
 
-    public double Value(PlayerState player, string id) => Explain(player, id).Value;
+    public double Value(ICharacter character, string id) => Explain(character, id).Value;
 
-    public StatBreakdown Explain(PlayerState player, string id) => ApplyModifiers(id, BaseOf(player, id), player.Modifiers);
+    public StatBreakdown Explain(ICharacter character, string id) => ApplyModifiers(id, BaseOf(character, id), character.Modifiers);
 
     /// <summary>
     /// The modifier rule: (base + ΣAdd) × (1 + ΣMul), then the lowest Cap; an Override replaces the
@@ -79,19 +79,19 @@ public sealed class CharacterRules
         return new StatBreakdown(id, baseValue, own.Select(m => new ModifierPart(m.SourceId, m.Op, m.Value)).ToList(), value);
     }
 
-    private double BaseOf(PlayerState player, string id)
+    private double BaseOf(ICharacter character, string id)
     {
         if (_db.TryGet<StatDef>(id, out _))
-            return player.Stats.First(s => s.StatId == id).Base;
+            return character.Stats.First(s => s.StatId == id).Base;
 
         if (_statOfAspect.TryGetValue(id, out var stat))
         {
-            double share = _db.Get<AspectProfileDef>(player.AspectProfileId).Shares[id];
-            return Value(player, stat.Id) * stat.Aspects.Count * share;
+            double share = _db.Get<AspectProfileDef>(character.AspectProfileId).Shares[id];
+            return Value(character, stat.Id) * stat.Aspects.Count * share;
         }
 
         if (_db.TryGet<ResourceDef>(id, out var resource))
-            return resource.Base + (resource.Source is { } source ? resource.Coefficient * Value(player, source) : 0);
+            return resource.Base + (resource.Source is { } source ? resource.Coefficient * Value(character, source) : 0);
 
         throw new KeyNotFoundException($"'{id}' is not a stat, aspect or resource of the character.");
     }

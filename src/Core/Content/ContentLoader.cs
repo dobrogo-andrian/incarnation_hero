@@ -44,6 +44,7 @@ public static class ContentLoader
         ["evt"] = typeof(EventDef),
         ["sect"] = typeof(SectDef),
         ["grp"] = typeof(EnemyGroupDef),
+        ["enemy"] = typeof(EnemyDef),
         ["rumor"] = typeof(RumorDef),
         ["source"] = typeof(RumorSourceDef),
     };

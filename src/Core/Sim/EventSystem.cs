@@ -98,7 +98,7 @@ public static class EventSystem
         return CommandOutcome.Accept(events);
     }
 
-    /// <summary>The current node with each option's availability and, where it has one, the chance of success as the player sees it.</summary>
+    /// <summary>The current node with each option's availability and, where it has one, the chance of success as the player sees it or the fight ahead.</summary>
     public static EventView? View(GameState state, SimContext ctx)
     {
         if (state.Event is not { } active)
@@ -107,7 +107,9 @@ public static class EventSystem
         var options = node.Options.Select((option, i) =>
         {
             var unmet = option.Conditions.Where(c => !Holds(c, state, ctx)).ToList();
-            return new EventOptionView(i, unmet.Count == 0, unmet, unmet.Count == 0 ? SuccessChance(option, state, ctx, active, i) : null);
+            var combat = option.Effects.Select(e => e.StartCombat).OfType<CombatEffectDef>().FirstOrDefault();
+            return new EventOptionView(i, unmet.Count == 0, unmet, unmet.Count == 0 ? SuccessChance(option, state, ctx, active, i) : null,
+                combat is null ? null : CombatSystem.Preview(state.Player, ctx, combat.Group));
         });
         return new EventView(active.EventId, active.NodeId, options.ToList());
     }
@@ -205,7 +207,7 @@ public static class EventSystem
                     RumorSystem.Hear(state, ctx, ctx.Content.Get<RumorDef>(rumor.Id), rumor.Source, events);
                     break;
                 case { StartCombat: { } combat }:
-                    return CombatSystem.Fight(player, ctx, combat.Group, events) ? combat.Win : combat.Loss;
+                    return CombatSystem.Fight(state, ctx, combat.Group, events) ? combat.Win : combat.Loss;
                 default:
                     throw new InvalidOperationException("Effect with no field set.");
             }
@@ -277,6 +279,6 @@ public sealed record EventView(string EventId, string NodeId, IReadOnlyList<Even
 
 /// <summary>
 /// One option: unavailable ones list the conditions the player does not meet; available ones with
-/// a chance of success show it as an observed range.
+/// a chance of success show it as an observed range. An option that starts a fight shows what is known of the enemies.
 /// </summary>
-public sealed record EventOptionView(int Index, bool Available, IReadOnlyList<EventConditionDef> Unmet, ObservedRange? Success);
+public sealed record EventOptionView(int Index, bool Available, IReadOnlyList<EventConditionDef> Unmet, ObservedRange? Success, CombatPreview? Combat);

@@ -1,0 +1,35 @@
+# Enemies (D42): character snapshots computed by the same rules as the player (§2). Stats not
+# listed are 0, so a beast without meridians has no qi shield. Draft numbers.
+# A start-of-run player has 10 in every body stat: 100 health, a 50 qi shield, 10 damage.
+
+- id: enemy.human.bandit
+  name: { uk: "Розбійник" }
+  stage: 0
+  stats: { stat.might: 6, stat.endurance: 6, stat.speed: 8 }
+  weapon_damage: 7
+
+- id: enemy.beast.grey_wolf
+  name: { uk: "Сірий вовк" }
+  stage: 0
+  stats: { stat.might: 4, stat.endurance: 8, stat.speed: 13 }
+  weapon_damage: 6
+
+- id: enemy.beast.river_serpent
+  name: { uk: "Річковий змій" }
+  stage: 1
+  stats: { stat.might: 16, stat.endurance: 10, stat.speed: 8, stat.meridians: 4 }
+  weapon_damage: 10
+
+- id: enemy.undead.battlefield_ghost
+  name: { uk: "Неспокійний дух" }
+  stage: 1
+  stats: { stat.might: 6, stat.speed: 10, stat.meridians: 6 }
+  weapon_damage: 6
+  injury: injury.internal         # the cold of the dead reaches the meridians
+
+- id: enemy.undead.tomb_guardian
+  name: { uk: "Вартовий гробниці" }
+  stage: 2
+  stats: { stat.might: 14, stat.speed: 6, stat.meridians: 8 }
+  weapon_damage: 12
+  injury: injury.internal

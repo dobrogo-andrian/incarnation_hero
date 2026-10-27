@@ -222,6 +222,9 @@
 - id: str.end.breakthrough_death
   text: { uk: "загибель під час прориву" }
 
+- id: str.end.combat_death
+  text: { uk: "загибель у бою" }
+
 # Event lines (SimText.Describe).
 
 - id: str.event.activity_finished
@@ -329,10 +332,25 @@
   text: { uk: "Відкрито нове місце: {place}." }
 
 - id: str.event.combat_won
-  text: { uk: "Бій виграно: {group}." }
+  text: { uk: "Бій виграно: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
 
-- id: str.event.combat_lost
-  text: { uk: "Бій програно: {group}." }
+- id: str.event.combat_fled
+  text: { uk: "Ви відступили з бою: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
+
+- id: str.event.combat_died
+  text: { uk: "Загибель у бою: {group}." }
+
+- id: str.dialog.option_combat
+  text: { uk: "{option} (супротивників: {foes}; етап: {stage})" }
+
+- id: str.combat.stage_lower
+  text: { uk: "нижчий за ваш" }
+
+- id: str.combat.stage_equal
+  text: { uk: "як у вас" }
+
+- id: str.combat.stage_higher
+  text: { uk: "вищий за ваш" }
 
 - id: str.view.reputation
   text: { uk: "Репутація ({sect}): {value}" }

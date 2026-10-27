@@ -361,25 +361,6 @@ public sealed class SectDef : ContentDef
     public LocalizedText Name { get; set; } = new();
 }
 
-/// <summary>Enemies an event can make the player fight (<c>grp.*</c>).</summary>
-public sealed class EnemyGroupDef : ContentDef, IValidatedDef
-{
-    public LocalizedText Name { get; set; } = new();
-
-    /// <summary>Strength in the stage 1 stand-in resolver (D38).</summary>
-    public double Power { get; set; }
-
-    /// <summary>Injuries a lost fight leaves.</summary>
-    [ContentRef(typeof(InjuryDef))]
-    public Dictionary<string, double> LossInjuries { get; set; } = [];
-
-    public IEnumerable<string> Validate(ContentDb db)
-    {
-        if (Power <= 0)
-            yield return "needs a positive power.";
-    }
-}
-
 /// <summary>Weekly event rolls (<c>config.events</c>, D38).</summary>
 public sealed class EventsConfigDef : ContentDef, IValidatedDef
 {
@@ -411,16 +392,4 @@ public sealed class EventsConfigDef : ContentDef, IValidatedDef
         if (ChanceRangeStep <= 0)
             yield return "chance_range_step must be positive.";
     }
-}
-
-/// <summary>Fights (<c>config.combat</c>). Until the formula resolver, only the stand-in's numbers (D38).</summary>
-public sealed class CombatConfigDef : ContentDef
-{
-    public const string CombatId = "config.combat";
-
-    /// <summary>The player's power is the sum of these stats' values plus a bonus per qi stage.</summary>
-    [ContentRef(typeof(StatDef))]
-    public List<string> StubPowerStats { get; set; } = [];
-
-    public double StubPowerPerStage { get; set; }
 }

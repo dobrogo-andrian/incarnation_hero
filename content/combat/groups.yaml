@@ -1,27 +1,26 @@
-# Enemy groups events can start fights with (tech 4.1). Power feeds the stage 1 stand-in (D38);
-# the player starts at 40. Losing leaves the injuries listed.
+# Enemy groups events can start fights with (tech 4.1, D42): who fights, and the loot of a won
+# fight (stones in a range, items each with its own chance). Treasures of a place stay in the event.
 
 - id: grp.bandits.road
   name: { uk: "Дорожні розбійники" }
-  power: 30
-  loss_injuries: { injury.body: 15 }
+  members: [ { enemy: enemy.human.bandit, count: 2 } ]
+  loot: { stones_min: 8, stones_max: 16 }
 
 - id: grp.beast.grey_wolves
   name: { uk: "Зграя сірих вовків" }
-  power: 35
-  loss_injuries: { injury.body: 20 }
+  members: [ { enemy: enemy.beast.grey_wolf, count: 3 } ]
+  loot: { stones_min: 4, stones_max: 10 }       # pelts sold in the settlement
 
 - id: grp.undead.battlefield_ghosts
   name: { uk: "Неспокійні духи поля бою" }
-  power: 60
-  loss_injuries: { injury.internal: 15 }
+  members: [ { enemy: enemy.undead.battlefield_ghost, count: 2 } ]
+  loot: { stones_min: 6, stones_max: 14 }       # fragments of old weapons
 
 - id: grp.beast.river_serpent
   name: { uk: "Річковий змій" }
-  power: 45
-  loss_injuries: { injury.body: 20 }
+  members: [ { enemy: enemy.beast.river_serpent } ]
+  loot: { stones_min: 12, stones_max: 24 }      # scales
 
 - id: grp.undead.tomb_guardian
   name: { uk: "Вартовий гробниці" }
-  power: 90
-  loss_injuries: { injury.body: 10, injury.internal: 20 }
+  members: [ { enemy: enemy.undead.tomb_guardian } ]
