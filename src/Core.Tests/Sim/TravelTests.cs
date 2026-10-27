@@ -114,4 +114,21 @@ public sealed class TravelTests
         Assert.Equal(new ZoneView("zone.misty_hills", 2), view.Zone);
         Assert.Equal([new PlaceView("place.misty_hills.cave", 2, 60, 60)], view.Places);
     }
+
+    [Fact]
+    public void PlayerView_RegionListsKnownZones_WithTheWeeksTravelWouldTake()
+    {
+        var sim = NewGame();
+
+        var region = sim.View.Region.ToDictionary(z => z.ZoneId, z => z.TravelWeeks);
+
+        Assert.DoesNotContain("zone.ancient_tomb", region.Keys);
+        Assert.Null(region["zone.hub"]);
+        Assert.Equal(6, region["zone.spirit_peak"]);
+        Assert.Equal(5, region["zone.old_battlefield"]);
+
+        WorldSystem.Reveal(sim.State.World, "zone.ancient_tomb");
+
+        Assert.Equal(7, sim.View.Region.Single(z => z.ZoneId == "zone.ancient_tomb").TravelWeeks);
+    }
 }

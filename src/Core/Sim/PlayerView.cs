@@ -16,6 +16,7 @@ public sealed record PlayerView(
     RunEndCause? EndCause,
     ZoneView Zone,
     IReadOnlyList<PlaceView> Places,
+    IReadOnlyList<RegionZoneView> Region,
     IReadOnlyList<StatView> Stats,
     IReadOnlyList<ResourceView> Resources,
     IReadOnlyList<InjuryView> Injuries,
@@ -49,6 +50,10 @@ public sealed record PlayerView(
                 .Where(p => WorldSystem.IsPlaceHere(state, content, p.Def.Id))
                 .Select(p => new PlaceView(p.State.PlaceId, p.Def.Density, p.State.Reserve, p.Def.Capacity))
                 .ToList(),
+            content.All<ZoneDef>()
+                .Where(z => WorldSystem.IsKnown(state.World, content, z.Id))
+                .Select(z => new RegionZoneView(z.Id, z.Danger, z.Id == player.ZoneId ? null : WorldSystem.RouteTo(state, ctx, z.Id)?.Sum(l => l.Weeks)))
+                .ToList(),
             rules.Stats
                 .Select(s => new StatView(rules.Explain(player, s.Id), s.Aspects.Select(a => rules.Explain(player, a)).ToList()))
                 .ToList(),
@@ -77,6 +82,9 @@ public sealed record PlayerView(
 public sealed record ActivityView(Activity Activity, int? WeeksLeft);
 
 public sealed record ZoneView(string ZoneId, int Danger);
+
+/// <summary>A zone the player knows, for the region map; <see cref="TravelWeeks"/> is null for the zone the player is in or one with no known route.</summary>
+public sealed record RegionZoneView(string ZoneId, int Danger, int? TravelWeeks);
 
 /// <summary>A meditation place in the player's zone; being there, the player sees its reserve.</summary>
 public sealed record PlaceView(string PlaceId, double Density, double Reserve, double Capacity);

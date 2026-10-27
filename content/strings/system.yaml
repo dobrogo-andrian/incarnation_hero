@@ -153,6 +153,15 @@
 - id: str.view.zone
   text: { uk: "Місцевість: {zone}, небезпека {danger}" }
 
+- id: str.view.zone_here
+  text: { uk: "Небезпека: {danger}. Ви тут." }
+
+- id: str.view.zone_route
+  text: { uk: "Небезпека: {danger}. Тижнів у дорозі: {weeks}" }
+
+- id: str.view.zone_no_route
+  text: { uk: "Небезпека: {danger}. Відомого шляху немає." }
+
 - id: str.view.place
   text: { uk: "Місце медитації: {place}, щільність {density}, резерв ці {reserve} / {capacity}" }
 
@@ -299,6 +308,53 @@
 
 - id: str.shell.content_errors
   text: { uk: "Помилки контенту, гру не запущено:" }
+
+# Stage 1 playtest UI (D44).
+
+- id: str.ui.tab_character
+  text: { uk: "Персонаж" }
+
+- id: str.ui.tab_cultivation
+  text: { uk: "Прорив" }
+
+- id: str.ui.tab_items
+  text: { uk: "Речі" }
+
+- id: str.ui.tab_rumors
+  text: { uk: "Чутки" }
+
+- id: str.ui.continue
+  text: { uk: "Продовжити" }
+
+- id: str.ui.cancel
+  text: { uk: "Скасувати" }
+
+- id: str.ui.travel
+  text: { uk: "Вирушити" }
+
+- id: str.ui.enter_settlement
+  text: { uk: "Увійти до поселення" }
+
+- id: str.ui.region
+  text: { uk: "Регіон" }
+
+- id: str.ui.exit
+  text: { uk: "Вихід у регіон" }
+
+- id: str.ui.inquire
+  text: { uk: "Чайна" }
+
+- id: str.ui.inquire_hint
+  text: { uk: "Тут можна розпитувати людей про чутки." }
+
+- id: str.ui.select_point
+  text: { uk: "Оберіть точку на карті." }
+
+- id: str.ui.route_weeks
+  text: { uk: "Тижнів: {weeks}" }
+
+- id: str.ui.journal_line
+  text: { uk: "Тиждень {week}. {text}" }
 
 # Events (D38)
 - id: str.reject.invalid_option

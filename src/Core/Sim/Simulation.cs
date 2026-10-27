@@ -101,7 +101,7 @@ public sealed class Simulation
             return CommandOutcome.Reject(RejectReasons.UnknownZone);
         if (command.ZoneId == State.Player.ZoneId)
             return CommandOutcome.Reject(RejectReasons.AlreadyThere);
-        if (Map.FindRoute(State.Player.ZoneId, command.ZoneId, zone => WorldSystem.IsKnown(State.World, Content, zone)) is not { } legs)
+        if (WorldSystem.RouteTo(State, _ctx, command.ZoneId) is not { } legs)
             return CommandOutcome.Reject(RejectReasons.NoRoute);
 
         var travel = new TravelActivity(legs);

@@ -29,6 +29,13 @@ public static class WorldSystem
         return !hidden || world.Revealed.BinarySearch(id, StringComparer.Ordinal) >= 0;
     }
 
+    /// <summary>
+    /// The journey from the player's zone to <paramref name="zoneId"/> through known zones only, or
+    /// null if there is none. Travel and the region map both ask here.
+    /// </summary>
+    public static IReadOnlyList<TravelLeg>? RouteTo(GameState state, SimContext ctx, string zoneId) =>
+        ctx.Map.FindRoute(state.Player.ZoneId, zoneId, zone => IsKnown(state.World, ctx.Content, zone));
+
     /// <summary>A known meditation place of the player's zone.</summary>
     public static bool IsPlaceHere(GameState state, ContentDb db, string placeId) =>
         db.TryGet<PlaceDef>(placeId, out var place) && place.Zone == state.Player.ZoneId && IsKnown(state.World, db, placeId);

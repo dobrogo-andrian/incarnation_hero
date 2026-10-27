@@ -27,6 +27,9 @@ public static class SimText
     private static readonly LocKey ResourceLine = new("str.view.resource");
     private static readonly LocKey InjuryLine = new("str.view.injury");
     private static readonly LocKey ZoneLine = new("str.view.zone");
+    private static readonly LocKey ZoneHere = new("str.view.zone_here");
+    private static readonly LocKey ZoneRoute = new("str.view.zone_route");
+    private static readonly LocKey ZoneNoRoute = new("str.view.zone_no_route");
     private static readonly LocKey PlaceLine = new("str.view.place");
     private static readonly LocKey BuffLine = new("str.view.buff");
     private static readonly LocKey StonesLine = new("str.view.stones");
@@ -107,35 +110,68 @@ public static class SimText
     private static readonly LocKey StageName = new("str.need.stage");
     private static readonly LocKey AgeName = new("str.need.age_years");
 
-    public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db)
+    /// <summary>The whole PlayerView as lines, section by section, as Sim.Cli prints it.</summary>
+    public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db) =>
+    [
+        .. TimeLines(view, db),
+        ModeLine with { Args = [new("mode", ModeName(view.Mode))] },
+        StateText(view),
+        ZoneText(view),
+        .. PlaceLines(view),
+        .. CharacterLines(view),
+        .. CultivationLines(view, db),
+        .. ItemLines(view),
+        .. SocialLines(view),
+    ];
+
+    /// <summary>Week, age and lifespan.</summary>
+    public static IReadOnlyList<LocKey> TimeLines(PlayerView view, ContentDb db)
     {
         int weeksPerYear = db.Get<RunConfigDef>(RunConfigDef.RunId).WeeksPerYear;
-        var lines = new List<LocKey>
-        {
+        return
+        [
             Week with { Args = [new("week", view.Week)] },
             Age with { Args = [new("age", Years(view.AgeWeeks, weeksPerYear))] },
             Lifespan with { Args = [new("lifespan", Years(view.LifespanWeeks, weeksPerYear))] },
-            ModeLine with { Args = [new("mode", ModeName(view.Mode))] },
-            view.EndCause is { } cause
-                ? RunEndLine with { Args = [new("cause", CauseName(cause))] }
-                : ActivityText(view.Activity),
-            ZoneLine with { Args = [new("zone", Name(view.Zone.ZoneId)), new("danger", view.Zone.Danger)] },
-        };
+        ];
+    }
 
-        foreach (var place in view.Places)
-        {
-            lines.Add(PlaceLine with
-            {
-                Args =
-                [
-                    new("place", Name(place.PlaceId)),
-                    new("density", Number(place.Density)),
-                    new("reserve", Number(place.Reserve)),
-                    new("capacity", Number(place.Capacity)),
-                ],
-            });
-        }
+    /// <summary>The current activity, or how the run ended.</summary>
+    public static LocKey StateText(PlayerView view) =>
+        view.EndCause is { } cause ? RunEndLine with { Args = [new("cause", CauseName(cause))] } : ActivityText(view.Activity);
 
+    public static LocKey ZoneText(PlayerView view) =>
+        ZoneLine with { Args = [new("zone", Name(view.Zone.ZoneId)), new("danger", view.Zone.Danger)] };
+
+    /// <summary>The known meditation places of the current zone with their reserves.</summary>
+    public static IReadOnlyList<LocKey> PlaceLines(PlayerView view) => view.Places.Select(PlaceText).ToList();
+
+    public static LocKey PlaceText(PlaceView place) => PlaceLine with
+    {
+        Args =
+        [
+            new("place", Name(place.PlaceId)),
+            new("density", Number(place.Density)),
+            new("reserve", Number(place.Reserve)),
+            new("capacity", Number(place.Capacity)),
+        ],
+    };
+
+    /// <summary>A zone on the region map: its danger and the weeks to get there.</summary>
+    public static LocKey RegionZoneText(RegionZoneView zone, PlayerView view)
+    {
+        var danger = new LocArg("danger", zone.Danger);
+        if (zone.ZoneId == view.Zone.ZoneId)
+            return ZoneHere with { Args = [danger] };
+        return zone.TravelWeeks is int weeks
+            ? ZoneRoute with { Args = [danger, new("weeks", weeks)] }
+            : ZoneNoRoute with { Args = [danger] };
+    }
+
+    /// <summary>Stats with their aspects, resources and injuries.</summary>
+    public static IReadOnlyList<LocKey> CharacterLines(PlayerView view)
+    {
+        var lines = new List<LocKey>();
         foreach (var stat in view.Stats)
         {
             var name = new LocArg("stat", Name(stat.Stat.Id));
@@ -167,21 +203,16 @@ public static class SimText
         }
         foreach (var injury in view.Injuries)
             lines.Add(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] });
+        return lines;
+    }
 
+    /// <summary>Stage scales with the breakthrough forecast, method, foundation, knowledge and buffs.</summary>
+    public static IReadOnlyList<LocKey> CultivationLines(PlayerView view, ContentDb db)
+    {
+        var lines = new List<LocKey>();
         foreach (var track in view.Tracks)
         {
-            string vectorId = CultivationSystem.VectorDefId(track.VectorId);
-            string stageId = db.Get<CultivationVectorDef>(vectorId).Stages[track.StageIndex];
-            lines.Add(Track with
-            {
-                Args =
-                [
-                    new("vector", Name(vectorId)),
-                    new("stage", Name(stageId)),
-                    new("progress", Number(track.StageProgress)),
-                    new("required", Number(track.ProgressRequired)),
-                ],
-            });
+            lines.Add(TrackText(track, db));
             if (track.LastBreakthroughQuality is int rank)
                 lines.Add(LastQualityLine with { Args = [new("rank", Name(db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId).Ranks[rank]))] });
             if (track.Forecast is { } forecast)
@@ -199,8 +230,30 @@ public static class SimText
 
         foreach (var buff in view.Buffs)
             lines.Add(BuffLine with { Args = [new("buff", BuffName(buff.Kind)), new("points", Number(buff.Points))] });
+        return lines;
+    }
 
-        lines.Add(StonesLine with { Args = [new("stones", view.Stones)] });
+    /// <summary>A vector's stage and how full its scale is.</summary>
+    public static LocKey TrackText(TrackView track, ContentDb db)
+    {
+        string vectorId = CultivationSystem.VectorDefId(track.VectorId);
+        string stageId = db.Get<CultivationVectorDef>(vectorId).Stages[track.StageIndex];
+        return Track with
+        {
+            Args =
+            [
+                new("vector", Name(vectorId)),
+                new("stage", Name(stageId)),
+                new("progress", Number(track.StageProgress)),
+                new("required", Number(track.ProgressRequired)),
+            ],
+        };
+    }
+
+    /// <summary>Stones, carried items and the offers of shops here.</summary>
+    public static IReadOnlyList<LocKey> ItemLines(PlayerView view)
+    {
+        var lines = new List<LocKey> { StonesText(view) };
         foreach (var item in view.Items)
         {
             LocArg[] args = [new("item", Name(item.ItemId)), new("count", item.Count)];
@@ -208,8 +261,19 @@ public static class SimText
                 ? PillLine with { Args = [.. args, new("energy", Number(energy))] }
                 : ItemLine with { Args = args });
         }
-        foreach (var offer in view.ShopOffers)
-            lines.Add(OfferLine with { Args = [new("shop", Name(offer.ShopId)), new("item", Name(offer.ItemId)), new("price", offer.Price)] });
+        lines.AddRange(view.ShopOffers.Select(OfferText));
+        return lines;
+    }
+
+    public static LocKey StonesText(PlayerView view) => StonesLine with { Args = [new("stones", view.Stones)] };
+
+    public static LocKey OfferText(ShopOfferView offer) =>
+        OfferLine with { Args = [new("shop", Name(offer.ShopId)), new("item", Name(offer.ItemId)), new("price", offer.Price)] };
+
+    /// <summary>Sect reputation and the rumors the player has heard.</summary>
+    public static IReadOnlyList<LocKey> SocialLines(PlayerView view)
+    {
+        var lines = new List<LocKey>();
         foreach (var reputation in view.Reputation)
             lines.Add(ReputationLine with { Args = [new("sect", Name(reputation.SectId)), new("value", reputation.Value)] });
         foreach (var rumor in view.Rumors)
@@ -230,6 +294,9 @@ public static class SimText
         }
         return lines;
     }
+
+    /// <summary>The localized name of a content object, for UI labels.</summary>
+    public static LocKey Name(string contentId) => new(LocTable.ContentKey(contentId, "name"));
 
     /// <summary>The open event node's text; the current zone is available to it as <c>{zone}</c>.</summary>
     public static LocKey EventText(EventView view, PlayerView player) =>
@@ -340,8 +407,6 @@ public static class SimText
             ],
         };
     }
-
-    private static LocKey Name(string contentId) => new(LocTable.ContentKey(contentId, "name"));
 
     /// <summary>Computed values are shown to one decimal place.</summary>
     private static double Number(double value) => Math.Round(value, 1);
