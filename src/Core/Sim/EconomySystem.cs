@@ -34,7 +34,7 @@ public static class EconomySystem
 
         player.Stones -= price;
         ItemSystem.Change(player.Items, itemId, 1);
-        return CommandOutcome.Accept([]);
+        return CommandOutcome.Accept([new StonesChanged(-price), new ItemsChanged(itemId, 1)]);
     }
 
     /// <summary>Refills the qi pool with up to <paramref name="stones"/> stones; not in dangerous zones (§13.4).</summary>
@@ -53,7 +53,7 @@ public static class EconomySystem
         int used = StonesFor(missing, ctx.Economy.QiPerStone, stones);
         player.Stones -= used;
         ResourceSystem.Restore(player, ctx, poolId, used * ctx.Economy.QiPerStone);
-        return CommandOutcome.Accept([]);
+        return CommandOutcome.Accept([new StonesChanged(-used)]);
     }
 
     /// <summary>Refills a meditation place of the current zone with up to <paramref name="stones"/> stones, never past its capacity.</summary>
@@ -74,7 +74,7 @@ public static class EconomySystem
         int used = StonesFor(room, ctx.Economy.PlaceReservePerStone, stones);
         player.Stones -= used;
         place.Reserve = StateNumbers.Round(Math.Min(def.Capacity, place.Reserve + used * ctx.Economy.PlaceReservePerStone));
-        return CommandOutcome.Accept([]);
+        return CommandOutcome.Accept([new StonesChanged(-used)]);
     }
 
     private static LocKey? CannotSpend(PlayerState player, int stones) =>

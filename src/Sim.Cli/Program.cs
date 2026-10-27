@@ -3,10 +3,13 @@ using Core.Loc;
 using Core.Save;
 using Core.Sim;
 using Core.State;
+using Sim.Cli.Bots;
+using Sim.Cli.Runs;
 
 return args switch
 {
     ["validate", string contentDir] => Validate(contentDir),
+    ["run", .. var options] when options.Contains("--bot") => RunBots(options),
     ["run", .. var options] => Run(options),
     _ => Usage(),
 };
@@ -47,6 +50,45 @@ static int Run(string[] options)
     foreach (var line in SimText.ViewLines(sim.View, db))
         Console.WriteLine(localizer.Resolve(line));
     Console.WriteLine($"state hash: {SaveSerializer.HashState(sim.State)}");
+    return 0;
+}
+
+/// <summary>
+/// Plays --runs runs with --bot from --seed-from on and writes one summary line each to --out
+/// (or stdout). --trace plays one seed alone and writes its commands and events to --trace-out.
+/// </summary>
+static int RunBots(string[] options)
+{
+    if (!TryParseOptions(options, out var values)
+        || values.GetValueOrDefault("--bot") is not { } bot || !BotRegistry.Exists(bot)
+        || !int.TryParse(values.GetValueOrDefault("--runs", "1"), out int runs) || runs < 1
+        || !ulong.TryParse(values.GetValueOrDefault("--seed-from", "1"), out ulong seedFrom))
+        return Usage();
+
+    var db = LoadContent(values.GetValueOrDefault("--content", "content"));
+    if (db is null)
+        return 1;
+
+    if (values.TryGetValue("--trace", out string? traceText))
+    {
+        if (!ulong.TryParse(traceText, out ulong traceSeed))
+            return Usage();
+        string tracePath = values.GetValueOrDefault("--trace-out", $"trace-{bot}-{traceSeed}.jsonl");
+        using var trace = new StreamWriter(tracePath);
+        var (summary, sim) = BotRunner.Play(db, bot, traceSeed, trace);
+        Console.WriteLine(BotRunner.ToJsonLine(summary));
+        Console.Error.WriteLine($"Trace written to {tracePath}.");
+        Console.Error.WriteLine($"state hash: {SaveSerializer.HashState(sim.State)}");
+        return 0;
+    }
+
+    var clock = System.Diagnostics.Stopwatch.StartNew();
+    var summaries = BotRunner.PlayMany(db, bot, seedFrom, runs);
+    using var file = values.TryGetValue("--out", out string? outPath) ? new StreamWriter(outPath) : null;
+    var output = file ?? Console.Out;
+    foreach (var summary in summaries)
+        output.WriteLine(BotRunner.ToJsonLine(summary));
+    Console.Error.WriteLine($"{runs} runs of {bot} in {clock.Elapsed.TotalSeconds:F1} s.");
     return 0;
 }
 
@@ -152,6 +194,13 @@ static int Usage()
             Asks around the starting settlement for rumors first, travels, takes the pills in order,
             then spends the weeks waiting, or meditating at the zone's first place; in events and
             rumors met on arrival, takes the first available choice. Content defaults to ./content.
+          sim run --bot <cautious|fighter|random> [--runs <N>] [--seed-from <N>] [--out <file.jsonl>] [--content <dir>]
+            Plays N whole runs (default 1) with the bot from seed --seed-from (default 1) on, in
+            parallel, and writes one JSON summary line per run, in seed order, to the file or stdout.
+          sim run --bot <name> --trace <seed> [--trace-out <file.jsonl>] [--content <dir>]
+            Plays one run and writes every command with its events, one JSON line each, to the
+            trace file (default trace-<bot>-<seed>.jsonl); the summary goes to stdout, the final
+            state hash to stderr.
         """);
     return 2;
 }

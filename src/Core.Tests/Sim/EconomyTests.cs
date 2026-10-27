@@ -20,7 +20,9 @@ public sealed class EconomyTests
     {
         var sim = NewGame();
 
-        Assert.True(sim.Execute(new Buy("item.pill.spirit_dew")).Accepted);
+        var outcome = sim.Execute(new Buy("item.pill.spirit_dew"));
+        Assert.True(outcome.Accepted);
+        Assert.Equal([new StonesChanged(-30), new ItemsChanged("item.pill.spirit_dew", 1)], outcome.Events);
         Assert.Equal(0, sim.State.Player.Stones);
         Assert.Equal(1, ItemSystem.Count(sim.State.Player.Items, "item.pill.spirit_dew"));
 
@@ -43,7 +45,7 @@ public sealed class EconomyTests
         var sim = NewGame();
         QiPool(sim).Current = 75;
 
-        Assert.True(sim.Execute(new RestoreQiWithStones(10)).Accepted);
+        Assert.Equal([new StonesChanged(-3)], sim.Execute(new RestoreQiWithStones(10)).Events);
 
         Assert.Equal(100, QiPool(sim).Current);
         Assert.Equal(27, sim.State.Player.Stones);   // 25 missing: 3 stones
@@ -78,7 +80,7 @@ public sealed class EconomyTests
         var sim = NewGame();
         Place(sim, Courtyard).Reserve = 1;
 
-        Assert.True(sim.Execute(new RefillPlaceWithStones(Courtyard, 5)).Accepted);
+        Assert.Equal([new StonesChanged(-2)], sim.Execute(new RefillPlaceWithStones(Courtyard, 5)).Events);
 
         Assert.Equal(8, Place(sim, Courtyard).Reserve);   // capacity 8: 7 missing takes 2 stones
         Assert.Equal(28, sim.State.Player.Stones);

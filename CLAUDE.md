@@ -51,6 +51,7 @@ dotnet run --project src/Sim.Cli -- <args>
 /src/Core            game rules, state, systems, RNG, content loading
 /src/Core.Tests      xUnit
 /src/Sim.Cli         headless bot runs and metrics export (JSONL/CSV); commands and bots: tech 6.1
+/src/Sim.Cli.Tests   xUnit for bots, bot runs and bot golden tests
 /src/Tools.Validate  (planned) content validator CLI, may become a Sim.Cli subcommand
 /game                Godot project: UI, combat scene, input, audio only
 /content             YAML content and balance; folder layout: tech 3.2
