@@ -11,10 +11,14 @@ namespace Core.State;
 [JsonDerivedType(typeof(TravelActivity), "travel")]
 [JsonDerivedType(typeof(MeditateActivity), "meditate")]
 [JsonDerivedType(typeof(BreakthroughActivity), "breakthrough")]
+[JsonDerivedType(typeof(InquireActivity), "inquire")]
 public abstract record Activity;
 
 /// <summary>Let time pass doing nothing in particular.</summary>
 public sealed record WaitActivity : Activity;
+
+/// <summary>Asking around a settlement for rumors: likelier and from better sources than just being there (D41).</summary>
+public sealed record InquireActivity : Activity;
 
 /// <summary>
 /// Meditation in one direction at a meditation place of the current zone (§4.2). Comprehension

@@ -20,6 +20,7 @@ public sealed class SimContext
         Breakthrough = content.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId);
         Events = content.Get<EventsConfigDef>(EventsConfigDef.EventsId);
         Combat = content.Get<CombatConfigDef>(CombatConfigDef.CombatId);
+        Rumors = content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId);
         Rules = new CharacterRules(content);
         Map = new WorldMap(content);
     }
@@ -31,6 +32,7 @@ public sealed class SimContext
     public BreakthroughConfigDef Breakthrough { get; }
     public EventsConfigDef Events { get; }
     public CombatConfigDef Combat { get; }
+    public RumorsConfigDef Rumors { get; }
     public CharacterRules Rules { get; }
     public WorldMap Map { get; }
 }

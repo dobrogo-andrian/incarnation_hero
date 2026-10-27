@@ -8,7 +8,7 @@ public class SimulationTests
 {
     private static readonly int WeeksPerYear = TestContent.Config.WeeksPerYear;
 
-    private static Simulation NewGame(ulong seed = 1) => Simulation.NewGame(TestContent.Repo, seed);
+    private static Simulation NewGame(ulong seed = 1) => Simulation.NewGame(TestContent.Calm, seed);
 
     /// <summary>A new game moved to <paramref name="weeksBefore"/> weeks before the 5-year life-end warning.</summary>
     private static Simulation NearFiveYearWarning(int weeksBefore)

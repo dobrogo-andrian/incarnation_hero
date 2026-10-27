@@ -19,6 +19,7 @@ public enum InterruptCategory
     StageScaleFull,
     StudyCapReached,
     InjuryHealed,
+    RumorHeard,
 }
 
 public enum RunEndCause
@@ -33,7 +34,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 11;
+    public const int CurrentSchemaVersion = 12;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -56,6 +57,12 @@ public sealed class GameState
 
     /// <summary>Every event shown this run, in event ID order: for once-per-run, cooldowns and the repeat penalty (D38).</summary>
     public List<EventRecord> EventHistory { get; set; } = [];
+
+    /// <summary>Rumors being followed, in the order they were heard (D41).</summary>
+    public List<Rumor> Rumors { get; set; } = [];
+
+    /// <summary>When each rumor template was last heard, in rumor ID order: for its cooldown.</summary>
+    public List<RumorRecord> RumorHistory { get; set; } = [];
 
     /// <summary>Interrupt categories that stop a running activity. Others are reported and time goes on.</summary>
     public List<InterruptCategory> StoppingInterrupts { get; set; } = [.. Enum.GetValues<InterruptCategory>()];
@@ -136,6 +143,32 @@ public sealed class EventRecord
     public string EventId { get; set; } = "";
     public int Count { get; set; }
     public int LastWeek { get; set; }
+}
+
+/// <summary>
+/// A rumor heard and not yet met (D41). The player sees its claim, source and window, never
+/// <see cref="TrueNode"/> or <see cref="Taken"/>.
+/// </summary>
+public sealed class Rumor
+{
+    public string RumorId { get; set; } = "";
+    public string SourceId { get; set; } = "";
+    public int HeardWeek { get; set; }
+
+    /// <summary>Last week in which arriving still finds it.</summary>
+    public int LastWeek { get; set; }
+
+    /// <summary>The node of the rumor's dialog that is really there.</summary>
+    public string TrueNode { get; set; } = "";
+
+    /// <summary>Rivals got there first; arriving finds only their traces.</summary>
+    public bool Taken { get; set; }
+}
+
+public sealed class RumorRecord
+{
+    public string RumorId { get; set; } = "";
+    public int LastHeardWeek { get; set; }
 }
 
 /// <summary>How far one piece of knowledge has been comprehended (§6).</summary>

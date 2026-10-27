@@ -1,0 +1,13 @@
+# Where rumors come from (D41): reliability is the chance that the claim is the truth.
+
+- id: source.tea_house_gossip
+  name: { uk: "плітки в чайній" }
+  reliability: 0.35
+
+- id: source.travelling_merchant
+  name: { uk: "мандрівний торговець" }
+  reliability: 0.6
+
+- id: source.sect_disciple
+  name: { uk: "учень секти" }
+  reliability: 0.8

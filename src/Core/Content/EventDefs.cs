@@ -1,10 +1,19 @@
 namespace Core.Content;
 
 /// <summary>
+/// Content whose dialog can be open in <c>GameState.Event</c>: an event, or a rumor met on arrival.
+/// Both share the node shape, the dialog flow in <c>EventSystem</c> and the text keys under their ID.
+/// </summary>
+public interface IDialogDef
+{
+    Dictionary<string, EventNodeDef> Nodes { get; }
+}
+
+/// <summary>
 /// An event (§10, tech 4.3, D38): a small dialog of nodes with options, rolled weekly in the
 /// contexts it lists when its conditions hold. The dialog starts at the node <see cref="StartNode"/>.
 /// </summary>
-public sealed class EventDef : ContentDef, IValidatedDef
+public sealed class EventDef : ContentDef, IDialogDef, IValidatedDef
 {
     public const string StartNode = "start";
 
@@ -30,36 +39,47 @@ public sealed class EventDef : ContentDef, IValidatedDef
             yield return $"needs contexts out of: {string.Join(", ", EventContexts.All)}.";
         if (Weight <= 0 || CooldownWeeks < 0)
             yield return "needs a positive weight and a cooldown of zero or more.";
-        if (!Nodes.ContainsKey(StartNode))
-        {
-            yield return $"needs a '{StartNode}' node.";
-            yield break;
-        }
+        foreach (string message in DialogNodes.Problems(Nodes, [StartNode]))
+            yield return message;
+    }
+}
 
-        foreach (var (nodeId, node) in Nodes.OrderBy(n => n.Key, StringComparer.Ordinal))
+/// <summary>Checks shared by every dialog: options lead to existing nodes and every node can be reached.</summary>
+internal static class DialogNodes
+{
+    /// <param name="entries">Nodes a dialog can open at.</param>
+    public static IEnumerable<string> Problems(Dictionary<string, EventNodeDef> nodes, IReadOnlyList<string> entries)
+    {
+        var missing = entries.Where(e => !nodes.ContainsKey(e)).Distinct().ToList();
+        foreach (string entry in missing)
+            yield return $"needs a '{entry}' node.";
+        if (missing.Count > 0)
+            yield break;
+
+        foreach (var (nodeId, node) in nodes.OrderBy(n => n.Key, StringComparer.Ordinal))
         {
             for (int i = 0; i < node.Options.Count; i++)
             {
-                foreach (string message in node.Options[i].Problems(Nodes))
+                foreach (string message in node.Options[i].Problems(nodes))
                     yield return $"node '{nodeId}' option {i}: {message}";
             }
         }
 
-        var unreachable = Nodes.Keys.Except(Reachable()).Order(StringComparer.Ordinal).ToList();
+        var unreachable = nodes.Keys.Except(Reachable(nodes, entries)).Order(StringComparer.Ordinal).ToList();
         if (unreachable.Count > 0)
-            yield return $"nodes unreachable from '{StartNode}': {string.Join(", ", unreachable)}.";
+            yield return $"nodes unreachable from {string.Join(", ", entries.Select(e => $"'{e}'"))}: {string.Join(", ", unreachable)}.";
     }
 
-    /// <summary>Node IDs the dialog can get to from the start node.</summary>
-    private HashSet<string> Reachable()
+    /// <summary>Node IDs the dialog can get to from its entry nodes.</summary>
+    private static HashSet<string> Reachable(Dictionary<string, EventNodeDef> nodes, IReadOnlyList<string> entries)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal) { StartNode };
-        var queue = new Queue<string>([StartNode]);
+        var seen = new HashSet<string>(entries, StringComparer.Ordinal);
+        var queue = new Queue<string>(entries);
         while (queue.TryDequeue(out var id))
         {
-            foreach (string next in Nodes[id].Options.SelectMany(o => o.NextNodes()))
+            foreach (string next in nodes[id].Options.SelectMany(o => o.NextNodes()))
             {
-                if (Nodes.ContainsKey(next) && seen.Add(next))
+                if (nodes.ContainsKey(next) && seen.Add(next))
                     queue.Enqueue(next);
             }
         }
@@ -253,6 +273,9 @@ public sealed class EventEffectDef : IValidatedDef
     /// <summary>A fight; it decides the next node, so it is the last effect of its list.</summary>
     public CombatEffectDef? StartCombat { get; set; }
 
+    /// <summary>The player hears a rumor from a source (D41); nothing if it is already being followed.</summary>
+    public AddRumorEffectDef? AddRumor { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (OneOf.Count(this) != 1)
@@ -293,6 +316,15 @@ public sealed class IdAmount
 {
     public string Id { get; set; } = "";
     public double Amount { get; set; }
+}
+
+public sealed class AddRumorEffectDef
+{
+    [ContentRef(typeof(RumorDef))]
+    public string Id { get; set; } = "";
+
+    [ContentRef(typeof(RumorSourceDef))]
+    public string Source { get; set; } = "";
 }
 
 /// <summary>A fight with an enemy group; the dialog goes on at <see cref="Win"/> or <see cref="Loss"/>.</summary>

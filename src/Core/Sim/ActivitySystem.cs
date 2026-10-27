@@ -1,3 +1,4 @@
+using Core.Content;
 using Core.Loc;
 using Core.State;
 
@@ -14,6 +15,7 @@ public static class ActivitySystem
     {
         WaitActivity => null,
         MeditateActivity m => MeditationSystem.Validate(state, ctx, m),
+        InquireActivity => ctx.Content.Get<ZoneDef>(state.Player.ZoneId).Settlement ? null : RejectReasons.NotInSettlement,
         // Travel and breakthroughs last as long as their route or stage, so they have their own commands.
         _ => RejectReasons.InvalidActivity,
     };
@@ -28,6 +30,9 @@ public static class ActivitySystem
         {
             case WaitActivity:
                 InjurySystem.Rest(state.Player, ctx, events);
+                break;
+            case InquireActivity:
+                // Its weeks bring rumors in the rumor phase (RumorSystem.OriginOf).
                 break;
             case MeditateActivity meditation:
                 MeditationSystem.AdvanceWeek(state, ctx, meditation, events);

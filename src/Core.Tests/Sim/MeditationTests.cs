@@ -6,14 +6,14 @@ namespace Core.Tests.Sim;
 public sealed class MeditationTests
 {
     /// <summary>A hub place with round numbers: draws 2 a week, holds 5, never refills.</summary>
-    private static readonly Core.Content.ContentDb Content = TestContent.WithExtra("""
+    private static readonly Core.Content.ContentDb Content = TestContent.Quiet(TestContent.WithExtra("""
         id: place.hub.test
         name: { uk: "Тест" }
         zone: zone.hub
         density: 2
         capacity: 5
         regen_per_week: 0
-        """);
+        """));
 
     private static Simulation NewGame()
     {

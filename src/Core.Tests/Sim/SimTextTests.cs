@@ -6,15 +6,15 @@ namespace Core.Tests.Sim;
 
 public sealed class SimTextTests
 {
-    private static readonly Localizer Loc = Localizer.FromContent(TestContent.Repo);
+    private static readonly Localizer Loc = Localizer.FromContent(TestContent.Calm);
 
     private static IEnumerable<string> ViewText(Simulation sim) =>
-        SimText.ViewLines(sim.View, TestContent.Repo).Select(Loc.Resolve);
+        SimText.ViewLines(sim.View, TestContent.Calm).Select(Loc.Resolve);
 
     [Fact]
     public void ViewLines_ResolveToUkrainianText()
     {
-        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
         sim.Execute(TestContent.Wait(10));
 
         Assert.Equal(
@@ -60,7 +60,7 @@ public sealed class SimTextTests
     [Fact]
     public void ViewLines_RoundComputedValuesToOneDecimal()
     {
-        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
         ModifierSystem.Apply(sim.State.Player, new Modifier { TargetId = "stat.speed", Op = ModifierOp.Mul, Value = 0.123, SourceId = "s" });
 
         Assert.Contains("Швидкість: 11.2 (Реакція 11.2, Верткість 11.2)", ViewText(sim));
@@ -69,7 +69,7 @@ public sealed class SimTextTests
     [Fact]
     public void ViewLines_ShowActivityOrRunEnd()
     {
-        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
 
         sim.State.Activity = new ActiveActivity { Activity = new WaitActivity(), WeeksLeft = 4 };
         Assert.Contains("Заняття: Відпочинок, лишилось тижнів: 4", ViewText(sim));
@@ -110,7 +110,7 @@ public sealed class SimTextTests
     [Fact]
     public void ViewLines_ShowTheBreakthroughForecastOnceTheScaleIsFull()
     {
-        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
         sim.State.Player.Tracks.Single().StageProgress = 100;
 
         // Foundation 0 of 40: the deficit is total. Quality 30 at age 12 + 4 weeks of seclusion: age −0.1.

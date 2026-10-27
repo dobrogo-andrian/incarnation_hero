@@ -1,0 +1,118 @@
+# Rumor templates (§10, D41). Arriving in the zone opens the node that is really there:
+# `truth` when the claim holds, otherwise one of `falsehoods`; `taken` when rivals came first.
+
+- id: rumor.bamboo_grove.spirit_herb
+  name: { uk: "Духовна трава" }
+  text: { uk: "Кажуть, у Бамбуковому гаю дозріла духовна трава: хто встигне першим, той збере жменю, з якої виходить добра пігулка. Щоправда, біля неї бачили вовчі сліди." }
+  zone: zone.bamboo_grove
+  window_weeks: { min: 12, max: 20 }
+  appeal: 1
+  weight: 10
+  cooldown_weeks: 104
+  truth: herb
+  falsehoods: { weeds: 2, wolves: 1 }
+  nodes:
+    herb:
+      text: { uk: "Серед бамбука м'яко світиться кущик трави з росою, що не висихає навіть опівдні. Чутка не збрехала." }
+      options:
+        - text: { uk: "Зібрати й одразу ковтнути росу" }
+          effects: [ { pill_energy: 40 } ]
+        - text: { uk: "Зібрати обережно, щоб продати аптекарям" }
+          effects: [ { stones: 20 } ]
+    weeds:
+      text: { uk: "Трава справді є, але звичайна: трохи ці в ній ледь жевріє. Хтось дуже прикрасив розповідь." }
+      options:
+        - text: { uk: "Взяти, що є" }
+          effects: [ { pill_energy: 8 } ]
+    wolves:
+      text: { uk: "Трави немає, зате є вовче лігво. Сірі тіні вже оточують вас." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.beast.grey_wolves, win: wolves_won, loss: wolves_lost } } ]
+    wolves_won:
+      text: { uk: "Зграя розбігається. У лігві знаходите кістки невдахи, що прийшов сюди до вас, і його гаманець." }
+      options:
+        - text: { uk: "Забрати гаманець" }
+          effects: [ { stones: 10 }, { combat_insight: 15 } ]
+    wolves_lost:
+      text: { uk: "Ви ледве відбиваєтеся й шкутильгаєте геть із гаю." }
+    taken:
+      text: { uk: "На місці лише витоптана земля і зрізані стебла. Хтось устиг раніше." }
+
+- id: rumor.misty_hills.fallen_cultivator
+  name: { uk: "Останки культиватора" }
+  text: { uk: "Шепочуть, що в Туманних пагорбах загинув мандрівний культиватор, і його торба досі лежить серед скель. Кажуть, у ній був фоліант про вогонь." }
+  zone: zone.misty_hills
+  window_weeks: { min: 16, max: 30 }
+  appeal: 2
+  weight: 8
+  cooldown_weeks: 156
+  truth: satchel
+  falsehoods: { stones_only: 2, ambush: 1 }
+  nodes:
+    satchel:
+      text: { uk: "Під навислою скелею — висохле тіло в подертому халаті. У торбі камені й обгорілий з країв фоліант." }
+      options:
+        - text: { uk: "Поховати його й забрати торбу" }
+          effects: [ { item: { id: item.folio.fire, amount: 1 } }, { stones: 15 } ]
+    stones_only:
+      text: { uk: "Тіло знаходиться, але фоліанта при ньому немає. Лише кілька каменів у гаманці." }
+      options:
+        - text: { uk: "Забрати камені" }
+          effects: [ { stones: 12 } ]
+    ambush:
+      text: { uk: "Ніякого тіла немає. Зате з-за скель виходять розбійники: чутку, схоже, пустили вони самі." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.bandits.road, win: ambush_won, loss: ambush_lost } } ]
+        - text: { uk: "Відкупитися 15 каменями" }
+          conditions: [ { stones: { min: 15 } } ]
+          effects: [ { stones: -15 } ]
+    ambush_won:
+      text: { uk: "Розбійники розбігаються, кинувши здобич попередніх легковірних." }
+      options:
+        - text: { uk: "Забрати здобич" }
+          effects: [ { stones: 20 }, { combat_insight: 20 } ]
+    ambush_lost:
+      text: { uk: "Вас обчищають і лишають серед туману." }
+      options:
+        - text: { uk: "Підвестися" }
+          effects: [ { stones: -10 } ]
+    taken:
+      text: { uk: "Під скелею свіжий горбик землі й ні сліду торби. Хтось поховав мерця і забрав його речі." }
+
+- id: rumor.old_battlefield.war_relic
+  name: { uk: "Реліквія старого поля бою" }
+  text: { uk: "Учні сект переказують: ночами над старим полем бою спалахують вогники, і там, де вони сходяться, закопано спис полководця, що пам'ятає його техніку. Але й мертві там неспокійні." }
+  zone: zone.old_battlefield
+  window_weeks: { min: 20, max: 40 }
+  appeal: 3
+  weight: 5
+  cooldown_weeks: 208
+  truth: spear
+  falsehoods: { rust: 2, ghosts: 2 }
+  nodes:
+    spear:
+      text: { uk: "Опівночі вогники кружляють над пагорбом. Під дерном — спис, і щойно ви торкаєтеся держака, у пам'яті спалахують рухи давнього майстра." }
+      options:
+        - text: { uk: "Повторювати рухи до світанку" }
+          effects: [ { time: 1 }, { knowledge: { id: tech.spear.piercing_dragon, amount: 40 } }, { combat_insight: 30 } ]
+    rust:
+      text: { uk: "Ви знаходите спис, але це просто іржаве залізо. Хіба що постояти на місці давньої битви корисно." }
+      options:
+        - text: { uk: "Помедитувати серед кісток" }
+          effects: [ { combat_insight: 10 } ]
+    ghosts:
+      text: { uk: "Вогники сходяться — і стають постатями в обладунках. Мертві не віддають свого." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.undead.battlefield_ghosts, win: ghosts_won, loss: ghosts_lost } } ]
+    ghosts_won:
+      text: { uk: "Примари розсипаються попелом. Холод бою ще довго дзвенить у меридіанах." }
+      options:
+        - text: { uk: "Перевести подих" }
+          effects: [ { combat_insight: 35 } ]
+    ghosts_lost:
+      text: { uk: "Крижаний дотик примар проникає до самих меридіан. Ви тікаєте до світанку." }
+    taken:
+      text: { uk: "Пагорб розкопано, а вогники більше не з'являються. Хтось уже забрав те, що тут було." }

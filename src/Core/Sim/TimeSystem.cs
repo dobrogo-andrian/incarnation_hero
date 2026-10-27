@@ -40,8 +40,9 @@ public static class TimeSystem
     }
 
     /// <summary>
-    /// One week in the fixed order: world systems, player activity progress, event roll,
-    /// interrupt collection. Systems not built yet are simply absent.
+    /// One week in the fixed order: world systems, player activity progress, rumors heard, then a
+    /// rumor met in its zone or else the event roll, interrupt collection. Systems not built yet
+    /// are simply absent.
     /// </summary>
     private static void AdvanceWeek(GameState state, SimContext ctx, List<SimEvent> events)
     {
@@ -50,13 +51,16 @@ public static class TimeSystem
 
         // The week's context is what the player did during it, before a journey's arrival or an activity's end.
         string? context = EventSystem.ContextOf(state, ctx.Content);
+        var activity = state.Activity!.Activity;
         ActivitySystem.AdvanceWeek(state, ctx, events);
         if (state.Mode == GameMode.RunEnd)
             return;
-        EventSystem.RollWeek(state, ctx, context, events);
+        RumorSystem.RollWeek(state, ctx, RumorSystem.OriginOf(context, activity, ctx), events);
+        if (!RumorSystem.TryMeet(state, ctx, activity, events))
+            EventSystem.RollWeek(state, ctx, context, events);
     }
 
-    /// <summary>The week's world phase: age, natural death, modifiers, buffs, injuries, resources, places. False if the run ended.</summary>
+    /// <summary>The week's world phase: age, natural death, modifiers, buffs, injuries, resources, places, rumors. False if the run ended.</summary>
     private static bool AdvanceWorld(GameState state, SimContext ctx, List<SimEvent> events)
     {
         state.Week++;
@@ -71,6 +75,7 @@ public static class TimeSystem
         InjurySystem.AdvanceWeek(state, ctx, events);
         ResourceSystem.AdvanceWeek(state, ctx);
         WorldSystem.AdvanceWeek(state, ctx.Content);
+        RumorSystem.AdvanceWeek(state, ctx);
         return true;
     }
 }

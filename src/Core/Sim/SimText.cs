@@ -85,6 +85,9 @@ public static class SimText
     private static readonly LocKey CombatLost = new("str.event.combat_lost");
 
     private static readonly LocKey ReputationLine = new("str.view.reputation");
+    private static readonly LocKey RumorLine = new("str.view.rumor");
+    private static readonly LocKey Inquire = new("str.activity.inquire");
+    private static readonly LocKey Heard = new("str.event.rumor_heard");
     private static readonly LocKey Continue = new("str.dialog.continue");
     private static readonly LocKey OptionRequires = new("str.dialog.option_requires");
     private static readonly LocKey OptionChance = new("str.dialog.option_chance");
@@ -202,6 +205,22 @@ public static class SimText
             lines.Add(OfferLine with { Args = [new("shop", Name(offer.ShopId)), new("item", Name(offer.ItemId)), new("price", offer.Price)] });
         foreach (var reputation in view.Reputation)
             lines.Add(ReputationLine with { Args = [new("sect", Name(reputation.SectId)), new("value", reputation.Value)] });
+        foreach (var rumor in view.Rumors)
+        {
+            lines.Add(RumorLine with
+            {
+                Args =
+                [
+                    new("rumor", Name(rumor.RumorId)),
+                    new("zone", Name(rumor.ZoneId)),
+                    new("weeks", rumor.WeeksLeft),
+                    new("source", Name(rumor.SourceId)),
+                    new("low", Number(rumor.Reliability.Low * 100)),
+                    new("high", Number(rumor.Reliability.High * 100)),
+                ],
+            });
+            lines.Add(new LocKey(LocTable.ContentKey(rumor.RumorId, "text")));
+        }
         return lines;
     }
 
@@ -281,6 +300,7 @@ public static class SimText
         BuffGained b => BuffGainedLine with { Args = [new("buff", BuffName(b.Kind)), new("points", Number(b.Points))] },
         ReputationChanged r => ReputationChangedLine with { Args = [new("sect", Name(r.SectId)), new("amount", Signed(r.Amount))] },
         Revealed r => RevealedLine with { Args = [new("place", Name(r.Id))] },
+        RumorHeard r => Heard with { Args = [new("rumor", Name(r.RumorId))] },
         CombatResolved c => (c.Won ? CombatWon : CombatLost) with { Args = [new("group", Name(c.GroupId))] },
         _ => null,
     };
@@ -331,6 +351,7 @@ public static class SimText
     private static LocKey ActivityName(Activity activity) => activity switch
     {
         WaitActivity => Wait,
+        InquireActivity => Inquire,
         TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
         MeditateActivity { SubjectId: { } subject } m => MeditateStudy with
         {

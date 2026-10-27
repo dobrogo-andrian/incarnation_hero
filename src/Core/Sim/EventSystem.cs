@@ -35,14 +35,13 @@ public static class EventSystem
         var candidates = Eligible(state, ctx, context).Select(e => (Def: e, Weight: WeightOf(state, ctx, e))).ToList();
         if (candidates.Count == 0)
             return;
-        Start(state, PickWeighted(candidates, rng), events);
+        Start(state, rng.PickWeighted(candidates), events);
     }
 
     /// <summary>Opens <paramref name="def"/> at its start node and records that it was shown.</summary>
     public static void Start(GameState state, EventDef def, List<SimEvent> events)
     {
-        state.Mode = GameMode.EventDialog;
-        state.Event = new ActiveEvent { EventId = def.Id, NodeId = EventDef.StartNode, StartedWeek = state.Week };
+        Open(state, def.Id, EventDef.StartNode, events);
         if (History(state, def.Id) is not { } record)
         {
             record = new EventRecord { EventId = def.Id };
@@ -51,7 +50,14 @@ public static class EventSystem
         }
         record.Count++;
         record.LastWeek = state.Week;
-        events.Add(new EventStarted(def.Id));
+    }
+
+    /// <summary>Opens the dialog of an event or rumor (<see cref="IDialogDef"/>) at <paramref name="nodeId"/>.</summary>
+    public static void Open(GameState state, string dialogId, string nodeId, List<SimEvent> events)
+    {
+        state.Mode = GameMode.EventDialog;
+        state.Event = new ActiveEvent { EventId = dialogId, NodeId = nodeId, StartedWeek = state.Week };
+        events.Add(new EventStarted(dialogId));
     }
 
     /// <summary>
@@ -61,7 +67,7 @@ public static class EventSystem
     public static CommandOutcome Choose(GameState state, SimContext ctx, int index)
     {
         var active = state.Event!;
-        var node = ctx.Content.Get<EventDef>(active.EventId).Nodes[active.NodeId];
+        var node = NodeOf(ctx, active);
         var events = new List<SimEvent>();
         if (node.Options.Count == 0)
         {
@@ -79,7 +85,7 @@ public static class EventSystem
         string? next = Apply(option.Effects, state, ctx, events) ?? option.Next;
         if (option.Outcomes.Count > 0 && state.Mode != GameMode.RunEnd)
         {
-            var outcome = PickWeighted(option.Outcomes.Select(o => (o, OutcomeWeight(o, state.Player, ctx))).ToList(), ctx.Rng[RngStream.Events]);
+            var outcome = ctx.Rng[RngStream.Events].PickWeighted(option.Outcomes.Select(o => (o, OutcomeWeight(o, state.Player, ctx))).ToList());
             next = Apply(outcome.Effects, state, ctx, events) ?? outcome.Next;
         }
 
@@ -97,7 +103,7 @@ public static class EventSystem
     {
         if (state.Event is not { } active)
             return null;
-        var node = ctx.Content.Get<EventDef>(active.EventId).Nodes[active.NodeId];
+        var node = NodeOf(ctx, active);
         var options = node.Options.Select((option, i) =>
         {
             var unmet = option.Conditions.Where(c => !Holds(c, state, ctx)).ToList();
@@ -195,6 +201,9 @@ public static class EventSystem
                     if (WorldSystem.Reveal(state.World, id))
                         events.Add(new Revealed(id));
                     break;
+                case { AddRumor: { } rumor }:
+                    RumorSystem.Hear(state, ctx, ctx.Content.Get<RumorDef>(rumor.Id), rumor.Source, events);
+                    break;
                 case { StartCombat: { } combat }:
                     return CombatSystem.Fight(player, ctx, combat.Group, events) ? combat.Win : combat.Loss;
                 default:
@@ -243,17 +252,8 @@ public static class EventSystem
         return Observation.Chance(truth, state.Player, ctx, StableHash.Of(state.Seed, active.EventId, active.NodeId, index, active.StartedWeek));
     }
 
-    private static T PickWeighted<T>(List<(T Item, double Weight)> items, Xoshiro256StarStar rng)
-    {
-        double roll = rng.NextDouble() * items.Sum(i => i.Weight);
-        foreach (var (item, weight) in items)
-        {
-            if (roll < weight)
-                return item;
-            roll -= weight;
-        }
-        return items.Last(i => i.Weight > 0).Item;
-    }
+    private static EventNodeDef NodeOf(SimContext ctx, ActiveEvent active) =>
+        ((IDialogDef)ctx.Content.Get<ContentDef>(active.EventId)).Nodes[active.NodeId];
 
     private static EventRecord? History(GameState state, string eventId) =>
         state.EventHistory.Find(r => r.EventId == eventId);

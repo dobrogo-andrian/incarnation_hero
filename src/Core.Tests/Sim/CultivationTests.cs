@@ -6,14 +6,14 @@ namespace Core.Tests.Sim;
 public sealed class CultivationTests
 {
     /// <summary>A hub place that never runs dry: assimilation turns rate 5 × density 2 = 10 points a week.</summary>
-    private static readonly Core.Content.ContentDb Content = TestContent.WithExtra("""
+    private static readonly Core.Content.ContentDb Content = TestContent.Quiet(TestContent.WithExtra("""
         id: place.hub.test
         name: { uk: "Тест" }
         zone: zone.hub
         density: 2
         capacity: 1000
         regen_per_week: 0
-        """);
+        """));
 
     private static readonly StartActivity Assimilate = new(new MeditateActivity("meditation.assimilation", "place.hub.test"), null);
 

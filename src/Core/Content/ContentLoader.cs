@@ -44,6 +44,8 @@ public static class ContentLoader
         ["evt"] = typeof(EventDef),
         ["sect"] = typeof(SectDef),
         ["grp"] = typeof(EnemyGroupDef),
+        ["rumor"] = typeof(RumorDef),
+        ["source"] = typeof(RumorSourceDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>
@@ -53,6 +55,7 @@ public static class ContentLoader
         [BreakthroughConfigDef.BreakthroughId] = typeof(BreakthroughConfigDef),
         [EventsConfigDef.EventsId] = typeof(EventsConfigDef),
         [CombatConfigDef.CombatId] = typeof(CombatConfigDef),
+        [RumorsConfigDef.RumorsId] = typeof(RumorsConfigDef),
     };
 
     private static readonly IDeserializer Strict = new DeserializerBuilder()

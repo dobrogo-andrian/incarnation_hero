@@ -1,0 +1,11 @@
+# Rumors (§10, tech 4.3, D41). Draft numbers until Sim.Cli reports.
+
+id: config.rumors
+settlement:                     # any week in a settlement
+  week_chance: 0.03
+  sources: { source.tea_house_gossip: 3, source.travelling_merchant: 1 }
+inquiry:                        # a week of asking around, instead of the line above
+  week_chance: 0.2
+  sources: { source.tea_house_gossip: 1, source.travelling_merchant: 2, source.sect_disciple: 2 }
+max_active: 4                   # a settlement brings no more while this many are followed
+intercept_per_appeal: 0.01      # rivals take a rumor of appeal 2 with 2% a week (A4)

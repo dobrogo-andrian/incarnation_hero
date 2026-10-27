@@ -11,6 +11,7 @@ public static class RejectReasons
     public static readonly LocKey UnknownZone = new("str.reject.unknown_zone");
     public static readonly LocKey AlreadyThere = new("str.reject.already_there");
     public static readonly LocKey NoRoute = new("str.reject.no_route");
+    public static readonly LocKey NotInSettlement = new("str.reject.not_in_settlement");
     public static readonly LocKey UnknownDirection = new("str.reject.unknown_direction");
     public static readonly LocKey PlaceNotHere = new("str.reject.place_not_here");
     public static readonly LocKey NoCultivationBuff = new("str.reject.no_cultivation_buff");

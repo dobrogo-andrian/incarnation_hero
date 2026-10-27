@@ -25,6 +25,9 @@
 - id: str.reject.unknown_direction
   text: { uk: "Такого напряму медитації немає." }
 
+- id: str.reject.not_in_settlement
+  text: { uk: "Це можна робити лише в поселенні." }
+
 - id: str.reject.place_not_here
   text: { uk: "Цього місця медитації тут немає." }
 
@@ -207,6 +210,9 @@
 - id: str.activity.meditate_study
   text: { uk: "Медитація ({direction}: {subject}), {place}" }
 
+- id: str.activity.inquire
+  text: { uk: "Розпитування про чутки" }
+
 - id: str.activity.breakthrough
   text: { uk: "Усамітнення для прориву, {place}" }
 
@@ -330,6 +336,12 @@
 
 - id: str.view.reputation
   text: { uk: "Репутація ({sect}): {value}" }
+
+- id: str.view.rumor
+  text: { uk: "Чутка «{rumor}»: {zone}, тижнів лишилося: {weeks}; джерело — {source}, надійність {low}–{high}%" }
+
+- id: str.event.rumor_heard
+  text: { uk: "Нова чутка: «{rumor}»." }
 
 - id: str.dialog.continue
   text: { uk: "Далі" }

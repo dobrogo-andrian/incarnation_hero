@@ -98,4 +98,10 @@ public sealed record ReputationChanged(string SectId, int Amount) : SimEvent;
 /// <summary>A hidden zone or meditation place became known (D40).</summary>
 public sealed record Revealed(string Id) : SimEvent;
 
+/// <summary>The player heard a rumor (D41); it is now among the rumors being followed.</summary>
+public sealed record RumorHeard(string RumorId) : InterruptEvent
+{
+    public override InterruptCategory Category => InterruptCategory.RumorHeard;
+}
+
 public sealed record CombatResolved(string GroupId, bool Won) : SimEvent;

@@ -28,6 +28,7 @@ public sealed record PlayerView(
     IReadOnlyList<KnowledgeView> Knowledge,
     string? ActiveMethodId,
     IReadOnlyList<ReputationView> Reputation,
+    IReadOnlyList<RumorView> Rumors,
     EventView? Event)
 {
     public static PlayerView From(GameState state, SimContext ctx)
@@ -68,6 +69,7 @@ public sealed record PlayerView(
             player.Knowledge.Select(k => new KnowledgeView(k.KnowledgeId, k.Level)).ToList(),
             player.ActiveMethodId,
             content.All<SectDef>().Select(s => new ReputationView(s.Id, EventSystem.ReputationOf(player, s.Id))).ToList(),
+            RumorSystem.View(state, ctx),
             EventSystem.View(state, ctx));
     }
 }
