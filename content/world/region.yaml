@@ -7,6 +7,9 @@
 # river_valley–misty_hills 2, river_valley–old_battlefield 3, misty_hills–spirit_peak 3,
 # old_battlefield–spirit_peak 2; hidden: old_battlefield–ancient_tomb 2.
 #
+# Map points (D44) are percent of the map screen: `map` on a zone is its region map point; the hub
+# also has a local map, where its places and shops carry their own `map` point.
+#
 # Hidden zones and places (D40) are unknown until an event reveals them: the tomb, the spring
 # in the grove and the hermit's grotto in the hills.
 
@@ -14,31 +17,39 @@
   name: { uk: "Поселення Біля Підніжжя" }
   danger: 0
   settlement: true
+  map: { x: 50, y: 88 }
+  local_map: { inquire: { x: 30, y: 62 }, exit: { x: 50, y: 92 } }
 
 - id: zone.bamboo_grove
   name: { uk: "Бамбуковий гай" }
   danger: 1
+  map: { x: 24, y: 66 }
 
 - id: zone.river_valley
   name: { uk: "Річкова долина" }
   danger: 1
+  map: { x: 74, y: 70 }
 
 - id: zone.misty_hills
   name: { uk: "Туманні пагорби" }
   danger: 2
+  map: { x: 36, y: 40 }
 
 - id: zone.old_battlefield
   name: { uk: "Старе поле битви" }
   danger: 2
+  map: { x: 80, y: 40 }
 
 - id: zone.spirit_peak
   name: { uk: "Пік духовної жили" }
   danger: 3
+  map: { x: 56, y: 12 }
 
 - id: zone.ancient_tomb
   name: { uk: "Гробниця Забутого Майстра" }
   danger: 3
   hidden: true
+  map: { x: 90, y: 14 }
 
 - id: route.hub.bamboo_grove
   a: zone.hub
@@ -85,6 +96,7 @@
 - id: place.hub.quiet_courtyard
   name: { uk: "Тихий двір" }
   zone: zone.hub
+  map: { x: 50, y: 22 }
   density: 1
   capacity: 8
   regen_per_week: 0.25

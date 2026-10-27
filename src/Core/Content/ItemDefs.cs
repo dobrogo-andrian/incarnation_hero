@@ -53,6 +53,9 @@ public sealed class ShopDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ItemDef))]
     public Dictionary<string, int> Prices { get; set; } = [];
 
+    /// <summary>Its point on the settlement's local map (D44).</summary>
+    public MapPoint? Map { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (Prices.Values.Any(p => p <= 0))

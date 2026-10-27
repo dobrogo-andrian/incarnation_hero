@@ -29,12 +29,13 @@ public sealed class GoldenTests
 
     /// <summary>
     /// Same run as <c>sim run --seed 42 --travel zone.spirit_peak --pills item.pill.qi_gathering,item.pill.qi_gathering
-    /// --weeks end --meditate meditation.assimilation</c>: pills with diminishing energy feed the stage scale.
+    /// --weeks end --meditate meditation.assimilation</c>: pills with diminishing energy feed the stage scale,
+    /// and the assimilation ends itself once the pill energy is spent (D44).
     /// </summary>
     [Fact]
-    public void TravelToPeakTakeTwoPillsThenAssimilateUntilDeath_Seed42()
+    public void TravelToPeakTakeTwoPillsThenAssimilateUntilSpent_Seed42()
     {
-        const string expectedHash = "99132398f416f3af31330c253cf0f02df26a62e58badc78a29cc0bf405bf37e7";
+        const string expectedHash = "11a09c95fe6a923a7a67d98180683e57a18efa8dd1e2f111517d4adafc055cae";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -75,9 +76,10 @@ public sealed class GoldenTests
                 break;
             next = TestContent.Proceed(sim.View);
         }
+        // A full scale ends the assimilation itself (D44); only an open event is left to close.
         while (sim.State.Event is not null)
             sim.Execute(TestContent.Proceed(sim.View));
-        Assert.True(sim.Execute(new CancelActivity()).Accepted);
+        Assert.Null(sim.State.Activity);
         RunToEnd(sim, new StartActivity(purify, 15));
         var forecast = sim.View.Tracks.Single().Forecast!;
         RunToEnd(sim, new AttemptBreakthrough("qi", "place.spirit_peak.vein"));

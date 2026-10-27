@@ -103,6 +103,20 @@ public sealed class InjuryTests
     }
 
     [Fact]
+    public void HealingMeditation_EndsItself_OnceNothingIsLeftToHeal()
+    {
+        var sim = NewGame();
+        Inflict(sim, Internal, 3);
+
+        var outcome = sim.Execute(new StartActivity(new MeditateActivity("meditation.healing", Courtyard), null));
+
+        // 2.2 a week heals 3 points in the second week.
+        Assert.Equal(2, sim.State.Week);
+        Assert.Null(sim.State.Activity);
+        Assert.Contains(outcome.Events, e => e is ActivityFinished);
+    }
+
+    [Fact]
     public void HealingPill_HealsAtOnceWithToxins_AndIsRefusedWithNothingToHeal()
     {
         var sim = NewGame();

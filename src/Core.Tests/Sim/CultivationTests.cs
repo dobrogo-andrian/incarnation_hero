@@ -83,7 +83,7 @@ public sealed class CultivationTests
     }
 
     [Fact]
-    public void FullScale_StopsAssimilation_KeepsTheRestOfTheBuff_AndRejectsMore()
+    public void FullScale_EndsAssimilation_KeepsTheRestOfTheBuff_AndRejectsMore()
     {
         var sim = NewGame(stopOnInterrupts: true);
         Qi(sim).StageProgress = 95;
@@ -91,7 +91,9 @@ public sealed class CultivationTests
 
         var outcome = sim.Execute(Assimilate);
 
-        Assert.Equal(new StageScaleFull("qi"), outcome.Events[^1]);
+        Assert.Contains(new StageScaleFull("qi"), outcome.Events);
+        Assert.IsType<ActivityFinished>(outcome.Events[^1]);
+        Assert.Null(sim.State.Activity);
         Assert.Equal(100, Qi(sim).StageProgress);
         Assert.Equal(45, Points(sim, BuffKind.PillEnergy));
         Assert.Equal(RejectReasons.StageScaleFull, sim.Execute(Assimilate).RejectReason);

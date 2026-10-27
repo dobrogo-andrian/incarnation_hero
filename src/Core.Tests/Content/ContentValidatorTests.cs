@@ -148,7 +148,7 @@ public sealed class ContentValidatorTests
     public void Route_MustJoinTwoZonesAndTakeTime()
     {
         var errors = Validate("""
-            - { id: zone.a, name: { uk: "А" } }
+            - { id: zone.a, name: { uk: "А" }, map: { x: 0, y: 0 } }
             - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 1, capacity: 1 }
             - { id: route.aa, a: zone.a, b: zone.a, weeks: 0 }
             """);
@@ -162,7 +162,7 @@ public sealed class ContentValidatorTests
     public void Place_NeedsPositiveNumbers()
     {
         var errors = Validate("""
-            - { id: zone.a, name: { uk: "А" } }
+            - { id: zone.a, name: { uk: "А" }, map: { x: 0, y: 0 } }
             - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 0, capacity: 10, regen_per_week: -1 }
             """);
 
@@ -174,16 +174,34 @@ public sealed class ContentValidatorTests
     [Fact]
     public void Zone_NeedsAMeditationPlace()
     {
-        var errors = Validate("""- { id: zone.a, name: { uk: "А" } }""");
+        var errors = Validate("""- { id: zone.a, name: { uk: "А" }, map: { x: 0, y: 0 } }""");
 
         Assert.Contains("'zone.a' has no meditation place", Assert.Single(errors).Message);
+    }
+
+    [Fact]
+    public void Zones_NeedRegionMapPoints_AndASettlementALocalMapForEverythingInIt()
+    {
+        var errors = Validate("""
+            - { id: zone.wild, name: { uk: "Д" } }
+            - { id: place.wild, name: { uk: "Д" }, zone: zone.wild, density: 1, capacity: 1 }
+            - { id: zone.town, name: { uk: "М" }, settlement: true, map: { x: 50, y: 120 }, local_map: { exit: { x: 1, y: 1 } } }
+            - { id: place.town, name: { uk: "М" }, zone: zone.town, density: 1, capacity: 1 }
+            - { id: shop.town, name: { uk: "К" }, zone: zone.town, map: { x: 1, y: 1 } }
+            """);
+
+        Assert.Equal(4, errors.Count);
+        Assert.Contains(errors, e => e.Message.Contains("'zone.wild' needs a point on the region map"));
+        Assert.Contains(errors, e => e.Message.Contains("map point must lie within 0..100"));
+        Assert.Contains(errors, e => e.Message.Contains("'zone.town' is a settlement, so it needs a local_map with inquire and exit points"));
+        Assert.Contains(errors, e => e.Message.Contains("'zone.town' is a settlement, so 'place.town' needs a point on its local map"));
     }
 
     [Fact]
     public void MeditationDirection_TargetsAStatResourceVectorOrInjury()
     {
         var errors = Validate("""
-            - { id: zone.a, name: { uk: "А" } }
+            - { id: zone.a, name: { uk: "А" }, map: { x: 0, y: 0 } }
             - { id: place.p, name: { uk: "П" }, zone: zone.a, density: 1, capacity: 1 }
             - { id: meditation.m, name: { uk: "М" }, rate: 1, target: zone.a }
             """);
@@ -209,7 +227,7 @@ public sealed class ContentValidatorTests
     public void EveryZone_MustBeReachableFromTheStartZone()
     {
         var errors = Validate("""
-            - { id: zone.a, name: { uk: "А" } }
+            - { id: zone.a, name: { uk: "А" }, map: { x: 0, y: 0 } }
             - { id: zone.b, name: { uk: "Б" } }
             - { id: zone.c, name: { uk: "В" } }
             - { id: route.ab, a: zone.a, b: zone.b, weeks: 1 }

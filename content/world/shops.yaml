@@ -3,10 +3,12 @@
 - id: shop.hub.apothecary
   name: { uk: "Аптека хабу" }
   zone: zone.hub
+  map: { x: 74, y: 48 }
   prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30, item.pill.foundation_building: 80,
             item.pill.bone_mending: 15, item.pill.meridian_soothing: 25 }
 
 - id: shop.hub.library
   name: { uk: "Книгарня хабу" }
   zone: zone.hub
+  map: { x: 24, y: 34 }
   prices: { item.folio.piercing_dragon: 20, item.folio.fire: 20, item.folio.azure_breath: 40 }

@@ -46,6 +46,9 @@ public sealed class KnowledgeTests
         Assert.Equal(0, Knowledge(sim, "element.fire")!.Progress);
         Assert.Single(outcome.Events, e => e is StudyCapReached);
         Assert.Contains(new KnowledgeLevelUp("element.fire", 1), outcome.Events);
+        // At the ceiling the study ends itself instead of idling through the remaining weeks (D44).
+        Assert.True(sim.State.Week < 5);
+        Assert.Null(sim.State.Activity);
         Assert.Equal(RejectReasons.StudyCapReached, sim.Execute(Study("element.fire", 1)).RejectReason);
     }
 

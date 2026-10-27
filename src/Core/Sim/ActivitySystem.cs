@@ -48,12 +48,20 @@ public static class ActivitySystem
                 throw new NotSupportedException($"No progress handler for {active.Activity.GetType().Name}.");
         }
 
-        if (active.WeeksLeft == 0 && state.Mode != GameMode.RunEnd)
+        if ((active.WeeksLeft == 0 || IsSpent(state, ctx, active.Activity)) && state.Mode != GameMode.RunEnd)
         {
             state.Activity = null;
             events.Add(new ActivityFinished(active.Activity));
         }
     }
+
+    /// <summary>
+    /// An activity the player could not start now has nothing left to do (assimilation without a
+    /// buff or with a full scale, healing with nothing to heal, study at its ceiling), so it ends
+    /// instead of idling on (D44). Travel and breakthroughs run their fixed length.
+    /// </summary>
+    private static bool IsSpent(GameState state, SimContext ctx, Activity activity) =>
+        activity is not (TravelActivity or BreakthroughActivity) && Validate(state, ctx, activity) is not null;
 
     private static void EnterReachedZone(GameState state, TravelActivity travel, int weeksTravelled, List<SimEvent> events)
     {
