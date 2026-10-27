@@ -21,7 +21,7 @@ public partial class BreakthroughTab : VBoxContainer, IViewPart
             child.QueueFree();
         bool free = view.Mode == GameMode.Overworld;
 
-        AddChild(Text(ui.Lines(SimText.CultivationLines(view, ui.Db))));
+        AddChild(Explained(ui, SimText.CultivationLines(view, ui.Db)));
         AddMethodPicker(ui, view, free);
         foreach (var track in view.Tracks.Where(t => t.Forecast is not null))
             AddBreakthrough(ui, view, track, free);

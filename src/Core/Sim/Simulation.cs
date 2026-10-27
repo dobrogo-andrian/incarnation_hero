@@ -79,6 +79,8 @@ public sealed class Simulation
             _ => throw new NotSupportedException($"No handler for {command.GetType().Name}."),
         };
 
+        if (outcome.Accepted)
+            RunStatsSystem.Record(State, outcome.Events);
         State.RngStates = _ctx.Rng.GetStates();
         return outcome;
     }

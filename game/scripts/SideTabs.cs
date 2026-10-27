@@ -22,7 +22,7 @@ public partial class SideTabs : TabContainer
         Add(ui, "str.ui.tab_character", new TextTab { Lines = (_, view) => SimText.CharacterLines(view) });
         Add(ui, "str.ui.tab_cultivation", new BreakthroughTab());
         Add(ui, "str.ui.tab_items", new ItemsTab());
-        Add(ui, "str.ui.tab_rumors", new TextTab { Lines = (_, view) => SimText.SocialLines(view) });
+        Add(ui, "str.ui.tab_rumors", new TextTab { Lines = (_, view) => SimText.SocialLines(view).Select(ExplainedLine.Plain) });
     }
 
     public void Refresh(UiContext ui, PlayerView view)

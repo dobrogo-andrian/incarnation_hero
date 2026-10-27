@@ -148,21 +148,11 @@ public sealed class RunRecorder
     /// <summary>What the weeks of <paramref name="command"/> are spent on; meditation is keyed by its direction.</summary>
     public static string? ActivityKey(Command command, PlayerView before) => command switch
     {
-        StartActivity start => ActivityKey(start.Activity),
+        StartActivity start => RunStatsSystem.ActivityKey(start.Activity),
         Travel => "travel",
         AttemptBreakthrough => "breakthrough",
         ChooseEventOption => "event",
         _ => null,
-    };
-
-    private static string ActivityKey(Activity activity) => activity switch
-    {
-        MeditateActivity m => m.DirectionId,
-        WaitActivity => "wait",
-        InquireActivity => "inquire",
-        TravelActivity => "travel",
-        BreakthroughActivity => "breakthrough",
-        _ => activity.GetType().Name,
     };
 
     /// <summary>Rest, or meditation aimed at an injury scale.</summary>

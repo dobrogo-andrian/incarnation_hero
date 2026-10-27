@@ -35,7 +35,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 13;
+    public const int CurrentSchemaVersion = 14;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -50,7 +50,7 @@ public sealed class GameState
     public PlayerState Player { get; set; } = new();
     public WorldState World { get; set; } = new();
 
-    /// <summary>The activity in progress; it stays here when an interrupt stops time.</summary>
+    /// <summary>The activity being run by the current command; an interrupt or event ends it (D45), so between commands it is empty.</summary>
     public ActiveActivity? Activity { get; set; }
 
     /// <summary>The event dialog in progress (<see cref="GameMode.EventDialog"/>).</summary>
@@ -70,6 +70,53 @@ public sealed class GameState
 
     /// <summary>Set when the run is over (<see cref="GameMode.RunEnd"/>).</summary>
     public RunEndCause? EndCause { get; set; }
+
+    /// <summary>Tallies for the run's summary (D47); the rules never read them.</summary>
+    public RunStats Stats { get; set; } = new();
+}
+
+/// <summary>What the run-end summary shows (D47), kept as the run goes.</summary>
+public sealed class RunStats
+{
+    /// <summary>Weeks spent on each activity, by <c>RunStatsSystem.ActivityKey</c>, in key order.</summary>
+    public List<WeekTally> ActivityWeeks { get; set; } = [];
+
+    /// <summary>Every breakthrough attempt in order.</summary>
+    public List<BreakthroughRecord> Breakthroughs { get; set; } = [];
+
+    public int CombatsWon { get; set; }
+
+    public int CombatsFled { get; set; }
+
+    public int CombatsDied { get; set; }
+
+    public int PillsTaken { get; set; }
+
+    public int StonesEarned { get; set; }
+
+    public int StonesSpent { get; set; }
+
+    /// <summary>Event and rumor dialogs opened.</summary>
+    public int Dialogs { get; set; }
+
+    public int RumorsHeard { get; set; }
+}
+
+public sealed class WeekTally
+{
+    public string Key { get; set; } = "";
+
+    public int Weeks { get; set; }
+}
+
+/// <summary>A breakthrough attempt: the rank reached, or the failure zone it fell into.</summary>
+public sealed class BreakthroughRecord
+{
+    public int AgeWeeks { get; set; }
+
+    public string? RankId { get; set; }
+
+    public string? FailureZoneId { get; set; }
 }
 
 /// <summary>

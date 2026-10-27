@@ -15,6 +15,30 @@ public static class Widgets
 
     public static Label Text(string text) => new() { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart };
 
+    /// <summary>
+    /// Lines whose numbers explain themselves on hover (D44): a line with an explanation is tinted
+    /// and shows it as its tooltip.
+    /// </summary>
+    public static VBoxContainer Explained(UiContext ui, IEnumerable<Core.Sim.ExplainedLine> lines)
+    {
+        var box = new VBoxContainer();
+        foreach (var line in lines)
+        {
+            var label = Text(ui.Text(line.Text));
+            if (line.Why.Count > 0)
+            {
+                label.TooltipText = ui.Lines(line.Why);
+                label.MouseFilter = Control.MouseFilterEnum.Pass;
+                label.MouseDefaultCursorShape = Control.CursorShape.Help;
+                label.AddThemeColorOverride("font_color", ExplainedColor);
+            }
+            box.AddChild(label);
+        }
+        return box;
+    }
+
+    private static readonly Color ExplainedColor = new(0.95f, 0.85f, 0.6f);
+
     public static Button Button(string text, Action pressed, bool enabled = true)
     {
         var button = new Button { Text = text, Disabled = !enabled };

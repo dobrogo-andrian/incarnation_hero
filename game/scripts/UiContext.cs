@@ -10,6 +10,8 @@ public sealed record UiContext(ContentDb Db, Localizer Loc, Action<Command> Send
 {
     public Choices Choices { get; } = new();
 
+    public UiSettings Settings { get; } = UiSettings.Load();
+
     public string Text(LocKey key) => Loc.Resolve(key);
 
     public string Text(string key) => Loc.Resolve(new LocKey(key));

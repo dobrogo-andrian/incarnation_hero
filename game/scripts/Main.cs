@@ -8,8 +8,14 @@ using Godot;
 /// The stage 1 playtest screen (D44): a slim status bar on top; side tabs on the left; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
-/// player steps into one. All rules, saving included, stay in Core; this node loads content, owns
-/// the run session, sends commands and redraws every part from the new PlayerView.
+/// player steps into one; the run's summary in the centre once it is over. All rules, saving
+/// included, stay in Core; this node loads content, owns the run session, sends commands and
+/// redraws every part from the new PlayerView.
+/// <para>
+/// Core runs a command's weeks at once and saves before anything is shown (commit-before-reveal);
+/// the screen then plays them back at the player's speed (D47): the time in the status bar and the
+/// journal follow week by week while the rest waits, and input is blocked until the last week or a skip.
+/// </para>
 /// </summary>
 public partial class Main : Control
 {
@@ -27,6 +33,14 @@ public partial class Main : Control
     private readonly Label _mapTitle = new();
     private readonly MapView _map = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly LocationView _location = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
+    private readonly RunSummary _summary = new();
+    private readonly Control _blocker = new() { MouseFilter = MouseFilterEnum.Stop, Visible = false };
+
+    /// <summary>Events of the last command not yet shown; empty when nothing is being played back.</summary>
+    private readonly Queue<SimEvent> _playback = new();
+    private PlayerView _shownView = null!;
+    private int _shownWeek;
+    private double _clock;
 
     /// <summary>The zone the screen was last set up for: arriving somewhere resets the map level and the picked point.</summary>
     private string? _shownZone;
@@ -58,7 +72,7 @@ public partial class Main : Control
 
     private void BuildLayout()
     {
-        _status.Setup(_ui, OnNewRunPressed);
+        _status.Setup(_ui, FinishPlayback);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
         _map.ExitPressed += () => { _regionMap = true; Pick(null); };
@@ -69,6 +83,7 @@ public partial class Main : Control
 
         var center = new VBoxContainer { CustomMinimumSize = new Vector2(520, 0) };
         center.AddThemeConstantOverride("separation", 12);
+        center.AddChild(_summary);
         center.AddChild(_panel);
         center.AddChild(_dialog);
         center.AddChild(new HSeparator());
@@ -85,10 +100,15 @@ public partial class Main : Control
         columns.AddChild(center);
         columns.AddChild(right);
 
+        // The blocker lies over the columns while weeks are played back; the status bar stays live for "skip".
+        var stack = new MarginContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        stack.AddChild(columns);
+        stack.AddChild(_blocker);
+
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 12);
         column.AddChild(_status);
-        column.AddChild(columns);
+        column.AddChild(stack);
 
         var margin = new MarginContainer();
         margin.SetAnchorsPreset(LayoutPreset.FullRect);
@@ -108,25 +128,72 @@ public partial class Main : Control
     private MapTarget? HomeTarget(PlayerView view) =>
         _ui.Db.Get<ZoneDef>(view.Zone.ZoneId).Settlement ? null : new ZoneTarget(view.Zone.ZoneId);
 
-    /// <summary>Executes a command and logs what happened: the rejection reason, or each notable event with its week.</summary>
+    /// <summary>Executes a command; logs the rejection reason, or plays its events back week by week.</summary>
     private void Send(Command command)
     {
+        var before = _session.Sim.View;
         var outcome = _session.Execute(command);
         if (outcome.RejectReason is { } reason)
         {
             _journal.Add(_ui.Text(reason));
+            Refresh();
+            return;
         }
+
+        (_shownView, _shownWeek, _clock) = (before, before.Week, 0);
+        foreach (var e in outcome.Events)
+            _playback.Enqueue(e);
+        if (double.IsPositiveInfinity(_ui.Settings.WeeksPerSecond) || !outcome.Events.OfType<WeekPassed>().Any())
+            FinishPlayback();
         else
+            ShowPlayback();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_playback.Count == 0)
+            return;
+        _clock += delta * _ui.Settings.WeeksPerSecond;
+        while (_clock >= 1 && _playback.Count > 0)
         {
-            int week = _session.Sim.View.Week - outcome.Events.OfType<WeekPassed>().Count();
-            foreach (var e in outcome.Events)
-            {
-                if (e is WeekPassed passed)
-                    week = passed.Week;
-                else if (SimText.Describe(e) is { } text)
-                    _journal.Add(_ui.Text(JournalLine with { Args = [new("week", week), new("text", text)] }));
-            }
+            if (Reveal(_playback.Dequeue()))
+                _clock -= 1;
         }
+        // A week's own events follow its WeekPassed: show them with their week, not with the next one.
+        while (_playback.TryPeek(out var next) && next is not WeekPassed)
+            Reveal(_playback.Dequeue());
+        if (_playback.Count == 0)
+            FinishPlayback();
+        else
+            ShowPlayback();
+    }
+
+    /// <summary>Shows one event: a week moves the clock on, a notable event goes to the journal. True for a week.</summary>
+    private bool Reveal(SimEvent e)
+    {
+        if (e is WeekPassed passed)
+        {
+            _shownWeek = passed.Week;
+            _shownView = _shownView with { Week = passed.Week, AgeWeeks = passed.AgeWeeks };
+            return true;
+        }
+        if (SimText.Describe(e) is { } text)
+            _journal.Add(_ui.Text(JournalLine with { Args = [new("week", _shownWeek), new("text", text)] }));
+        return false;
+    }
+
+    private void ShowPlayback()
+    {
+        _blocker.Visible = true;
+        _status.Refresh(_shownView, playing: true);
+    }
+
+    /// <summary>Shows whatever is left of the playback at once and redraws the screen from the new view.</summary>
+    private void FinishPlayback()
+    {
+        while (_playback.Count > 0)
+            Reveal(_playback.Dequeue());
+        _blocker.Visible = false;
         Refresh();
     }
 
@@ -163,10 +230,11 @@ public partial class Main : Control
             _map.ShowLocal(_ui, view);
         _mapTitle.Text = _regionMap && !inside ? _ui.Text("str.ui.region") : _ui.Name(zoneId);
 
-        _panel.Visible = view.Event is null;
+        _summary.Refresh(_ui, view, OnNewRunPressed);
+        _panel.Visible = view.Event is null && view.EndCause is null;
         _panel.Refresh(_ui, view, _target);
         _dialog.Refresh(_ui, view);
-        _status.Refresh(_ui, view);
+        _status.Refresh(view, playing: false);
         _tabs.Refresh(_ui, view);
     }
 

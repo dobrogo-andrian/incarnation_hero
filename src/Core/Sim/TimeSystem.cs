@@ -79,6 +79,7 @@ public static class TimeSystem
         state.Week++;
         state.Player.AgeWeeks++;
         events.Add(new WeekPassed(state.Week, state.Player.AgeWeeks));
+        RunStatsSystem.AddWeek(state.Stats, state.Activity?.Activity);
 
         LifeSystem.AdvanceWeek(state, ctx.Config, ctx.Rng, events);
         if (state.Mode == GameMode.RunEnd)

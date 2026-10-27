@@ -1,16 +1,15 @@
-using Core.Loc;
 using Core.Sim;
 using Godot;
 
-/// <summary>A tab that is just text: one SimText section.</summary>
-public partial class TextTab : Label, IViewPart
+/// <summary>A tab that is just text: one SimText section, with tooltips where a number is explained.</summary>
+public partial class TextTab : MarginContainer, IViewPart
 {
-    public Func<UiContext, PlayerView, IReadOnlyList<LocKey>> Lines { get; init; } = (_, _) => [];
+    public Func<UiContext, PlayerView, IEnumerable<ExplainedLine>> Lines { get; init; } = (_, _) => [];
 
-    public TextTab()
+    public void Refresh(UiContext ui, PlayerView view)
     {
-        AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        foreach (var child in GetChildren())
+            child.QueueFree();
+        AddChild(Widgets.Explained(ui, Lines(ui, view)));
     }
-
-    public void Refresh(UiContext ui, PlayerView view) => Text = ui.Lines(Lines(ui, view));
 }

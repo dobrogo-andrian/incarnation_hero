@@ -6,6 +6,7 @@ namespace Core.Sim;
 
 /// <summary>
 /// Everything the UI may read. Built from the true state, but only exposes what the player knows.
+/// <see cref="RunStats"/> is the run's own record (D47), shared, not copied: read it, never change it.
 /// </summary>
 public sealed record PlayerView(
     int Week,
@@ -29,7 +30,9 @@ public sealed record PlayerView(
     string? ActiveMethodId,
     IReadOnlyList<ReputationView> Reputation,
     IReadOnlyList<RumorView> Rumors,
-    EventView? Event)
+    EventView? Event,
+    IReadOnlyList<InterruptCategory> StoppingInterrupts,
+    RunStats RunStats)
 {
     public static PlayerView From(GameState state, SimContext ctx)
     {
@@ -73,7 +76,9 @@ public sealed record PlayerView(
             player.ActiveMethodId,
             content.All<SectDef>().Select(s => new ReputationView(s.Id, EventSystem.ReputationOf(player, s.Id))).ToList(),
             RumorSystem.View(state, ctx),
-            EventSystem.View(state, ctx));
+            EventSystem.View(state, ctx),
+            state.StoppingInterrupts.ToList(),
+            state.Stats);
     }
 }
 

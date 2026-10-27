@@ -112,7 +112,106 @@
   text: { uk: "Якість останнього прориву: {rank}" }
 
 - id: str.view.breakthrough_forecast
-  text: { uk: "Прогноз прориву: поріг {threshold}, фундамент {foundation}, шанс провалу {chance}% ({zone}); якість {quality} — {rank} (база {base}, чистота +{purity}, токсини −{toxins}, травми −{injuries}, вік −{age}, відкладання −{delay}, стеля {ceiling})" }
+  text: { uk: "Прогноз прориву: шанс провалу {chance}% ({zone}); якість {quality} — {rank}" }
+
+- id: str.view.why_item
+  text: { uk: "    · {text}" }
+
+- id: str.why.base
+  text: { uk: "{name}: основа {value}" }
+
+- id: str.why.add
+  text: { uk: "{value} — {source}" }
+
+- id: str.why.mul
+  text: { uk: "{value}% — {source}" }
+
+- id: str.why.cap
+  text: { uk: "не більше {value} — {source}" }
+
+- id: str.why.override
+  text: { uk: "рівно {value} — {source}" }
+
+- id: str.why.threshold
+  text: { uk: "Поріг {threshold}, фундамент {foundation}: нестача фундаменту — шанс провалу" }
+
+- id: str.why.quality_base
+  text: { uk: "Якість: база {value}" }
+
+- id: str.why.purity
+  text: { uk: "Чистота: +{value}" }
+
+- id: str.why.toxins
+  text: { uk: "Токсини: −{value}" }
+
+- id: str.why.injuries
+  text: { uk: "Травми: −{value}" }
+
+- id: str.why.age
+  text: { uk: "Вік: −{value}" }
+
+- id: str.why.delay
+  text: { uk: "Відкладання прориву: −{value}" }
+
+- id: str.why.ceiling
+  text: { uk: "Стеля якості етапу: {value}" }
+
+- id: str.summary.weeks
+  text: { uk: "{activity} — тижнів: {weeks} ({share}%)" }
+
+- id: str.summary.wait
+  text: { uk: "Відпочинок" }
+
+- id: str.summary.inquire
+  text: { uk: "Розпитування" }
+
+- id: str.summary.travel
+  text: { uk: "Подорожі" }
+
+- id: str.summary.event
+  text: { uk: "Події" }
+
+- id: str.summary.breakthrough_seclusion
+  text: { uk: "Усамітнення прориву" }
+
+- id: str.summary.breakthrough
+  text: { uk: "Прорив у віці {age}: {rank}" }
+
+- id: str.summary.breakthrough_failed
+  text: { uk: "Прорив у віці {age} провалено: {zone}" }
+
+- id: str.summary.combats
+  text: { uk: "Бої: перемог {won}, втеч {fled}" }
+
+- id: str.summary.pills
+  text: { uk: "Пігулок прийнято: {pills}" }
+
+- id: str.summary.stones
+  text: { uk: "Каменів духу здобуто: {earned}, витрачено: {spent}" }
+
+- id: str.summary.dialogs
+  text: { uk: "Подій: {dialogs}, чуток почуто: {rumors}" }
+
+- id: str.interrupt.life_end_approaching
+  text: { uk: "Наближення кінця життя" }
+
+- id: str.interrupt.place_qi_low
+  text: { uk: "Ці місця на мінімумі" }
+
+- id: str.interrupt.buff_exhausted
+  text: { uk: "Баф вичерпано" }
+
+- id: str.interrupt.stage_scale_full
+  text: { uk: "Шкала етапу заповнена" }
+
+- id: str.interrupt.study_cap_reached
+  text: { uk: "Осягнення дійшло стелі" }
+
+- id: str.interrupt.injury_healed
+  text: { uk: "Травма загоїлась" }
+
+- id: str.interrupt.rumor_heard
+  text: { uk: "Нова чутка" }
 
 - id: str.view.no_deficit
   text: { uk: "фундаменту досить" }
@@ -311,12 +410,6 @@
 - id: str.ui.tab_rumors
   text: { uk: "Чутки" }
 
-- id: str.ui.continue
-  text: { uk: "Продовжити" }
-
-- id: str.ui.cancel
-  text: { uk: "Скасувати" }
-
 - id: str.ui.travel
   text: { uk: "Вирушити" }
 
@@ -331,6 +424,24 @@
 
 - id: str.ui.to_map
   text: { uk: "На карту" }
+
+- id: str.ui.interrupts
+  text: { uk: "Переривання" }
+
+- id: str.ui.interrupts_title
+  text: { uk: "Що зупиняє заняття" }
+
+- id: str.ui.speed
+  text: { uk: "Тижнів за секунду: {weeks}" }
+
+- id: str.ui.speed_instant
+  text: { uk: "Плин часу: миттєво" }
+
+- id: str.ui.skip
+  text: { uk: "Пропустити" }
+
+- id: str.ui.summary_title
+  text: { uk: "Підсумок забігу" }
 
 - id: str.ui.inquire
   text: { uk: "Чайна" }

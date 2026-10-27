@@ -108,9 +108,65 @@ public sealed class SimTextTests
         sim.State.Player.Tracks.Single().StageProgress = 100;
 
         // Foundation 0 of 40: the deficit is total. Quality 30 at age 12 + 4 weeks of seclusion: age −0.1.
-        Assert.Contains(
-            "Прогноз прориву: поріг 40, фундамент 0, шанс провалу 95% (червона зона); якість 29.9 — Звичайний "
-            + "(база 30, чистота +0, токсини −0, травми −0, вік −0.1, відкладання −0, стеля 45)",
-            ViewText(sim));
+        var text = ViewText(sim).ToList();
+        int at = text.IndexOf("Прогноз прориву: шанс провалу 95% (червона зона); якість 29.9 — Звичайний");
+        Assert.True(at >= 0);
+        Assert.Equal(
+            [
+                "    · Поріг 40, фундамент 0: нестача фундаменту — шанс провалу",
+                "    · Якість: база 30",
+                "    · Чистота: +0",
+                "    · Токсини: −0",
+                "    · Травми: −0",
+                "    · Вік: −0.1",
+                "    · Відкладання прориву: −0",
+                "    · Стеля якості етапу: 45",
+            ],
+            text.Skip(at + 1).Take(8));
+    }
+
+    [Fact]
+    public void BreakdownLines_ExplainModifiedValuesBySource_AndNothingOtherwise()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        ModifierSystem.Apply(sim.State.Player, new Modifier { TargetId = "stat.speed", Op = ModifierOp.Mul, Value = -0.1, SourceId = "injury.body" });
+        ModifierSystem.Apply(sim.State.Player, new Modifier { TargetId = "stat.speed", Op = ModifierOp.Add, Value = 2, SourceId = "injury.internal" });
+        var speed = sim.View.Stats.Single(s => s.Stat.Id == "stat.speed").Stat;
+        var might = sim.View.Stats.Single(s => s.Stat.Id == "stat.might").Stat;
+
+        Assert.Equal(
+            ["Швидкість: основа 10", "-10% — Тілесні травми", "+2 — Внутрішні травми"],
+            SimText.BreakdownLines(speed).Select(Loc.Resolve));
+        Assert.Empty(SimText.BreakdownLines(might));
+    }
+
+    [Fact]
+    public void SummaryLines_ShowTheRunRecord_OnlyOnceTheRunIsOver()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        sim.Execute(TestContent.Wait(3));
+        sim.Execute(new UsePill("item.pill.qi_gathering"));
+        Assert.Empty(SimText.SummaryLines(sim.View, TestContent.Calm));
+
+        sim.State.Mode = GameMode.RunEnd;
+        sim.State.EndCause = RunEndCause.OldAge;
+        sim.State.Stats.Breakthroughs.Add(new BreakthroughRecord { AgeWeeks = 52 * 20 + 3, RankId = "rank.common" });
+        Assert.Equal(
+            [
+                "Відпочинок — тижнів: 3 (100%)",
+                "Прорив у віці 20 р. 3 тиж.: Звичайний",
+                "Бої: перемог 0, втеч 0",
+                "Пігулок прийнято: 1",
+                "Каменів духу здобуто: 0, витрачено: 0",
+                "Подій: 0, чуток почуто: 0",
+            ],
+            SimText.SummaryLines(sim.View, TestContent.Calm).Select(Loc.Resolve));
+    }
+
+    [Fact]
+    public void InterruptName_ResolvesForEveryCategory()
+    {
+        foreach (var category in Enum.GetValues<InterruptCategory>())
+            Assert.DoesNotContain("str.", Loc.Resolve(SimText.InterruptName(category)));
     }
 }

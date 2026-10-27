@@ -1,3 +1,4 @@
+using Core.Character;
 using Core.Combat;
 using Core.Content;
 using Core.Loc;
@@ -9,6 +10,15 @@ namespace Core.Sim;
 /// Turns the PlayerView and SimEvents into localization keys. Shared by Sim.Cli and the Godot
 /// shell so both say the same thing; each resolves the keys with its Localizer.
 /// </summary>
+/// <summary>
+/// A line of the view with what explains its number, for "where does this come from" tooltips
+/// (D44); <see cref="Why"/> is empty when there is nothing to explain.
+/// </summary>
+public sealed record ExplainedLine(LocKey Text, IReadOnlyList<LocKey> Why)
+{
+    public static ExplainedLine Plain(LocKey text) => new(text, []);
+}
+
 public static class SimText
 {
     private static readonly LocKey Week = new("str.view.week");
@@ -107,16 +117,40 @@ public static class SimText
     private static readonly LocKey StageName = new("str.need.stage");
     private static readonly LocKey AgeName = new("str.need.age_years");
 
-    /// <summary>The whole PlayerView as lines, section by section, as Sim.Cli prints it.</summary>
+    private static readonly LocKey WhyItem = new("str.view.why_item");
+    private static readonly LocKey WhyBase = new("str.why.base");
+    private static readonly LocKey WhyAdd = new("str.why.add");
+    private static readonly LocKey WhyMul = new("str.why.mul");
+    private static readonly LocKey WhyCap = new("str.why.cap");
+    private static readonly LocKey WhyOverride = new("str.why.override");
+    private static readonly LocKey WhyThreshold = new("str.why.threshold");
+    private static readonly LocKey WhyQualityBase = new("str.why.quality_base");
+    private static readonly LocKey WhyPurity = new("str.why.purity");
+    private static readonly LocKey WhyToxins = new("str.why.toxins");
+    private static readonly LocKey WhyInjuries = new("str.why.injuries");
+    private static readonly LocKey WhyAge = new("str.why.age");
+    private static readonly LocKey WhyDelay = new("str.why.delay");
+    private static readonly LocKey WhyCeiling = new("str.why.ceiling");
+
+    private static readonly LocKey SummaryWeeks = new("str.summary.weeks");
+    private static readonly LocKey SummaryBreakthrough = new("str.summary.breakthrough");
+    private static readonly LocKey SummaryBreakthroughFailed = new("str.summary.breakthrough_failed");
+    private static readonly LocKey SummaryCombats = new("str.summary.combats");
+    private static readonly LocKey SummaryPills = new("str.summary.pills");
+    private static readonly LocKey SummaryStones = new("str.summary.stones");
+    private static readonly LocKey SummaryDialogs = new("str.summary.dialogs");
+
+    /// <summary>The whole PlayerView as lines, section by section, as Sim.Cli prints it; explanations follow their line indented.</summary>
     public static IReadOnlyList<LocKey> ViewLines(PlayerView view, ContentDb db) =>
     [
         .. TimeLines(view, db),
         ModeLine with { Args = [new("mode", ModeName(view.Mode))] },
         .. EndLines(view),
+        .. SummaryLines(view, db),
         ZoneText(view),
         .. PlaceLines(view),
-        .. CharacterLines(view),
-        .. CultivationLines(view, db),
+        .. Flatten(CharacterLines(view)),
+        .. Flatten(CultivationLines(view, db)),
         .. ItemLines(view),
         .. view.ShopOffers.Select(OfferText),
         .. SocialLines(view),
@@ -166,15 +200,15 @@ public static class SimText
             : ZoneNoRoute with { Args = [danger] };
     }
 
-    /// <summary>Stats with their aspects, resources and injuries.</summary>
-    public static IReadOnlyList<LocKey> CharacterLines(PlayerView view)
+    /// <summary>Stats with their aspects, resources and injuries; a stat or resource changed by modifiers explains where its number comes from.</summary>
+    public static IReadOnlyList<ExplainedLine> CharacterLines(PlayerView view)
     {
-        var lines = new List<LocKey>();
+        var lines = new List<ExplainedLine>();
         foreach (var stat in view.Stats)
         {
             var name = new LocArg("stat", Name(stat.Stat.Id));
             var value = new LocArg("value", Number(stat.Stat.Value));
-            lines.Add(stat.Aspects.Count == 0
+            var text = stat.Aspects.Count == 0
                 ? StatLine with { Args = [name, value] }
                 : BodyStatLine with
                 {
@@ -184,12 +218,13 @@ public static class SimText
                         value,
                         new("aspects", stat.Aspects.Select(a => AspectPart with { Args = [new("aspect", Name(a.Id)), new("value", Number(a.Value))] }).ToList()),
                     ],
-                });
+                };
+            lines.Add(new(text, [.. BreakdownLines(stat.Stat), .. stat.Aspects.SelectMany(BreakdownLines)]));
         }
 
         foreach (var resource in view.Resources)
         {
-            lines.Add(ResourceLine with
+            var text = ResourceLine with
             {
                 Args =
                 [
@@ -197,24 +232,50 @@ public static class SimText
                     new("current", Number(resource.Current)),
                     new("max", Number(resource.Max.Value)),
                 ],
-            });
+            };
+            lines.Add(new(text, BreakdownLines(resource.Max)));
         }
         foreach (var injury in view.Injuries)
-            lines.Add(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] });
+            lines.Add(ExplainedLine.Plain(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] }));
         return lines;
     }
 
-    /// <summary>Stage scales with the breakthrough forecast, method, foundation, knowledge and buffs.</summary>
-    public static IReadOnlyList<LocKey> CultivationLines(PlayerView view, ContentDb db)
+    /// <summary>
+    /// Where a computed value comes from: its base, then each modifier with its source. Nothing when
+    /// no modifier touches it, since the value is then just its base.
+    /// </summary>
+    public static IReadOnlyList<LocKey> BreakdownLines(StatBreakdown breakdown)
+    {
+        if (breakdown.Modifiers.Count == 0)
+            return [];
+        var lines = new List<LocKey> { WhyBase with { Args = [new("name", Name(breakdown.Id)), new("value", Number(breakdown.Base))] } };
+        foreach (var part in breakdown.Modifiers)
+        {
+            var source = new LocArg("source", Name(part.SourceId));
+            lines.Add(part.Op switch
+            {
+                ModifierOp.Add => WhyAdd with { Args = [new("value", Signed(part.Value)), source] },
+                ModifierOp.Mul => WhyMul with { Args = [new("value", Signed(part.Value * 100)), source] },
+                ModifierOp.Cap => WhyCap with { Args = [new("value", Number(part.Value)), source] },
+                ModifierOp.Override => WhyOverride with { Args = [new("value", Number(part.Value)), source] },
+                _ => throw new ArgumentOutOfRangeException(nameof(breakdown), part.Op, null),
+            });
+        }
+        return lines;
+    }
+
+    /// <summary>Stage scales with the breakthrough forecast (explained), method, foundation, knowledge and buffs.</summary>
+    public static IReadOnlyList<ExplainedLine> CultivationLines(PlayerView view, ContentDb db)
     {
         var lines = new List<LocKey>();
+        var result = new List<ExplainedLine>();
         foreach (var track in view.Tracks)
         {
-            lines.Add(TrackText(track, db));
+            result.Add(ExplainedLine.Plain(TrackText(track, db)));
             if (track.LastBreakthroughQuality is int rank)
-                lines.Add(LastQualityLine with { Args = [new("rank", Name(db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId).Ranks[rank]))] });
+                result.Add(ExplainedLine.Plain(LastQualityLine with { Args = [new("rank", Name(db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId).Ranks[rank]))] }));
             if (track.Forecast is { } forecast)
-                lines.Add(ForecastText(forecast));
+                result.Add(ForecastText(forecast));
         }
         lines.Add(view.ActiveMethodId is { } method ? MethodLine with { Args = [new("method", Name(method))] } : NoMethodLine);
 
@@ -228,8 +289,41 @@ public static class SimText
 
         foreach (var buff in view.Buffs)
             lines.Add(BuffLine with { Args = [new("buff", BuffName(buff.Kind)), new("points", Number(buff.Points))] });
+        return [.. result, .. lines.Select(ExplainedLine.Plain)];
+    }
+
+    /// <summary>The run's record once it is over (D47): weeks by activity, breakthroughs, fights, pills, stones and dialogs.</summary>
+    public static IReadOnlyList<LocKey> SummaryLines(PlayerView view, ContentDb db)
+    {
+        if (view.EndCause is null)
+            return [];
+        var stats = view.RunStats;
+        int weeksPerYear = db.Get<RunConfigDef>(RunConfigDef.RunId).WeeksPerYear;
+        int total = Math.Max(1, stats.ActivityWeeks.Sum(t => t.Weeks));
+        var lines = new List<LocKey>();
+        foreach (var tally in stats.ActivityWeeks.OrderByDescending(t => t.Weeks).ThenBy(t => t.Key, StringComparer.Ordinal))
+        {
+            lines.Add(SummaryWeeks with
+            {
+                Args = [new("activity", ActivityKeyName(tally.Key)), new("weeks", tally.Weeks), new("share", Number(100.0 * tally.Weeks / total))],
+            });
+        }
+        foreach (var b in stats.Breakthroughs)
+        {
+            var age = new LocArg("age", Years(b.AgeWeeks, weeksPerYear));
+            lines.Add(b.RankId is { } rank
+                ? SummaryBreakthrough with { Args = [age, new("rank", Name(rank))] }
+                : SummaryBreakthroughFailed with { Args = [age, new("zone", Name(b.FailureZoneId!))] });
+        }
+        lines.Add(SummaryCombats with { Args = [new("won", stats.CombatsWon), new("fled", stats.CombatsFled)] });
+        lines.Add(SummaryPills with { Args = [new("pills", stats.PillsTaken)] });
+        lines.Add(SummaryStones with { Args = [new("earned", stats.StonesEarned), new("spent", stats.StonesSpent)] });
+        lines.Add(SummaryDialogs with { Args = [new("dialogs", stats.Dialogs), new("rumors", stats.RumorsHeard)] });
         return lines;
     }
+
+    /// <summary>The player-facing name of an interrupt category, for the interrupt settings.</summary>
+    public static LocKey InterruptName(InterruptCategory category) => new($"str.interrupt.{SnakeCase(category.ToString())}");
 
     /// <summary>A vector's stage and how full its scale is.</summary>
     public static LocKey TrackText(TrackView track, ContentDb db)
@@ -382,29 +476,51 @@ public static class SimText
         _ => null,
     };
 
-    private static LocKey ForecastText(BreakthroughEstimate forecast)
+    /// <summary>The forecast's chance and rank, explained by the threshold against the foundation and each part of the quality.</summary>
+    private static ExplainedLine ForecastText(BreakthroughEstimate forecast)
     {
         var q = forecast.Quality;
-        return ForecastLine with
+        var text = ForecastLine with
         {
             Args =
             [
-                new("threshold", Number(forecast.Threshold)),
-                new("foundation", Number(forecast.Foundation)),
                 new("chance", Number(forecast.FailureChance * 100)),
                 new("zone", forecast.FailureZoneId is { } zone ? Name(zone) : NoDeficit),
                 new("rank", Name(forecast.RankId)),
                 new("quality", Number(q.Value)),
-                new("ceiling", Number(q.Ceiling)),
-                new("base", Number(q.Base)),
-                new("purity", Number(q.Purity)),
-                new("toxins", Number(q.Toxins)),
-                new("injuries", Number(q.Injuries)),
-                new("age", Number(q.Age)),
-                new("delay", Number(q.Delay)),
             ],
         };
+        LocKey Part(LocKey key, double value) => key with { Args = [new("value", Number(value))] };
+        return new(text,
+        [
+            WhyThreshold with { Args = [new("threshold", Number(forecast.Threshold)), new("foundation", Number(forecast.Foundation))] },
+            Part(WhyQualityBase, q.Base),
+            Part(WhyPurity, q.Purity),
+            Part(WhyToxins, q.Toxins),
+            Part(WhyInjuries, q.Injuries),
+            Part(WhyAge, q.Age),
+            Part(WhyDelay, q.Delay),
+            Part(WhyCeiling, q.Ceiling),
+        ]);
     }
+
+    /// <summary>Each line followed by its explanations, indented: for plain-text output.</summary>
+    private static IEnumerable<LocKey> Flatten(IEnumerable<ExplainedLine> lines) =>
+        lines.SelectMany(l => l.Why.Select(w => WhyItem with { Args = [new("text", w)] }).Prepend(l.Text));
+
+    /// <summary>What a <see cref="RunStatsSystem.ActivityKey"/> is called: a meditation direction by its own name.</summary>
+    private static LocKey ActivityKeyName(string key) => key switch
+    {
+        "wait" => new("str.summary.wait"),
+        RunStatsSystem.EventKey => new("str.summary.event"),
+        "inquire" => new("str.summary.inquire"),
+        "travel" => new("str.summary.travel"),
+        "breakthrough" => new("str.summary.breakthrough_seclusion"),
+        _ => Name(key),
+    };
+
+    private static string SnakeCase(string name) =>
+        string.Concat(name.Select((c, i) => char.IsUpper(c) && i > 0 ? "_" + char.ToLowerInvariant(c) : char.ToLowerInvariant(c).ToString()));
 
     /// <summary>Computed values are shown to one decimal place.</summary>
     private static double Number(double value) => Math.Round(value, 1);
