@@ -50,3 +50,63 @@
       text: { uk: "Два тижні самітник змушує вас слухати, як дихає земля. Наостанок лише пирхає: «Бувало й гірше»." }
     grotto:
       text: { uk: "Самітник смакує частування й, подобрівши, розповідає про грот у Туманних пагорбах, де колись медитував сам." }
+
+- id: evt.meditation.qi_turbulence
+  contexts: [meditation]
+  weight: 6
+  cooldown_weeks: 52
+  nodes:
+    start:
+      text: { uk: "Ці раптом збивається з ритму й кидається меридіанами, як кінь, що понісся. Ще мить — і вона вийде з-під контролю." }
+      options:
+        - text: { uk: "Проштовхнути її силою" }
+          outcomes:
+            - weight: 3
+              weight_per_stat: { stat.meridians: 0.3 }
+              success: true
+              effects: [ { stat: { id: stat.meridians, amount: 1 } } ]
+              next: broke_through
+            - weight: 4
+              effects: [ { injury: { id: injury.internal, amount: 10 } } ]
+              next: deviated
+        - text: { uk: "Перервати медитацію й розсіяти її" }
+          effects: [ { resource: { id: resource.qi_pool, amount: -30 } } ]
+          next: dispersed
+    broke_through:
+      text: { uk: "Ці проривається крізь затор, і меридіан, що досі ледь пропускав її, розширюється." }
+    deviated:
+      text: { uk: "Потік рветься вбік. Ви відкашлюєте кров і довго не можете зібрати подих." }
+    dispersed:
+      text: { uk: "Ви відпускаєте ці, і вона розходиться без шкоди, лишаючи по собі порожнечу." }
+
+- id: evt.meditation.spirit_fox
+  contexts: [meditation]
+  weight: 4
+  once_per_run: true
+  conditions:
+    - zone: [zone.misty_hills, zone.spirit_peak]
+  nodes:
+    start:
+      text: { uk: "Розплющивши очі, ви бачите на камені сріблясту лисицю. Вона дивиться не на вас, а на вашу торбу." }
+      options:
+        - text: { uk: "Пригостити її пігулкою збирання ці" }
+          conditions: [ { item: { id: item.pill.qi_gathering, min: 1 } } ]
+          effects: [ { item: { id: item.pill.qi_gathering, amount: -1 } }, { stat: { id: stat.perception, amount: 2 } } ]
+          next: blessed
+        - text: { uk: "Спробувати її впіймати" }
+          outcomes:
+            - weight: 1
+              weight_per_stat: { aspect.speed.agility: 0.1 }
+              success: true
+              effects: [ { stones: 10 } ]
+              next: caught
+            - weight: 6
+              effects: [ { injury: { id: injury.body, amount: 4 } } ]
+              next: vanished
+        - text: { uk: "Не зважати" }
+    blessed:
+      text: { uk: "Лисиця обережно бере пігулку й, перш ніж зникнути, торкається носом вашого чола. Світ стає трохи чіткішим." }
+    caught:
+      text: { uk: "Пальці хапають лише сріблясте хутро, що лишилося на камені. Аптекарі дадуть за нього добру ціну." }
+    vanished:
+      text: { uk: "Лисиця зникає, ніби її й не було, а ви боляче падаєте на каміння." }

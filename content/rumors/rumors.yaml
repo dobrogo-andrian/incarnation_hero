@@ -116,3 +116,213 @@
       text: { uk: "Крижаний дотик примар проникає до самих меридіан. Ви тікаєте до світанку." }
     taken:
       text: { uk: "Пагорб розкопано, а вогники більше не з'являються. Хтось уже забрав те, що тут було." }
+
+- id: rumor.bamboo_grove.sword_shrine
+  name: { uk: "Святилище меча" }
+  text: { uk: "Кажуть, у глибині Бамбукового гаю знайшли поросле мохом святилище мечника. На камені вирізано рухи його техніки, і хто їх прочитає, той збагне плинний удар." }
+  zone: zone.bamboo_grove
+  window_weeks: { min: 16, max: 30 }
+  appeal: 2
+  weight: 6
+  cooldown_weeks: 156
+  truth: carvings
+  falsehoods: { altar: 2, hideout: 1 }
+  nodes:
+    carvings:
+      text: { uk: "Серед бамбука стоїть камінь у людський зріст. Рядки рухів вирізано так глибоко, що їх видно навіть під мохом." }
+      options:
+        - text: { uk: "Вивчати різьбу (2 тижні)" }
+          effects: [ { time: 2 }, { knowledge: { id: tech.sword.flowing_cut, amount: 40 } } ]
+        - text: { uk: "Лише запам'ятати перші рядки" }
+          effects: [ { knowledge: { id: tech.sword.flowing_cut, amount: 12 } } ]
+    altar:
+      text: { uk: "Святилище є, але різьбу давно стерли дощі. Лишився тільки спокій старого місця." }
+      options:
+        - text: { uk: "Посидіти в тиші" }
+          effects: [ { stat: { id: stat.purity, amount: 1 } } ]
+    hideout:
+      text: { uk: "Замість святилища — табір розбійників, які пустили чутку, щоб заманювати шукачів." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.bandits.road, win: hideout_won, loss: hideout_lost } } ]
+        - text: { uk: "Тихо відступити" }
+          outcomes:
+            - weight: 5
+              weight_per_stat: { aspect.speed.agility: 0.3 }
+              success: true
+              next: slipped
+            - weight: 4
+              effects: [ { start_combat: { group: grp.bandits.road, win: hideout_won, loss: hideout_lost } } ]
+    hideout_won:
+      text: { uk: "Розбійники розбігаються, лишивши в таборі награбоване." }
+      options:
+        - text: { uk: "Забрати награбоване" }
+          effects: [ { stones: 18 }, { combat_insight: 20 } ]
+    hideout_lost:
+      text: { uk: "Вас обчищають і проганяють з гаю." }
+      options:
+        - text: { uk: "Піти геть" }
+          effects: [ { stones: -10 } ]
+    slipped:
+      text: { uk: "Ви задкуєте в зарості, і ніхто вас не помічає." }
+    taken:
+      text: { uk: "Біля каменя свіжі сліди, а різьбу хтось збив молотом, щоб ніхто інший її не прочитав." }
+
+- id: rumor.river_valley.spirit_carp
+  name: { uk: "Духовний короп" }
+  text: { uk: "Рибалки клянуться, що в Річковій долині випливає духовний короп із золотою лускою. Його м'ясо — як добра пігулка, а луска чогось варта в аптекарів. Тільки у вирі під валуном, кажуть, живе щось більше." }
+  zone: zone.river_valley
+  window_weeks: { min: 8, max: 16 }
+  appeal: 2
+  weight: 8
+  cooldown_weeks: 104
+  truth: carp
+  falsehoods: { plain_fish: 2, serpent: 1 }
+  nodes:
+    carp:
+      text: { uk: "На світанку вода біля валуна спалахує золотом. Короп важкий, і від нього тягне чистою ці." }
+      options:
+        - text: { uk: "Приготувати й з'їсти" }
+          effects: [ { pill_energy: 50 } ]
+        - text: { uk: "Продати луску й м'ясо аптекарям" }
+          effects: [ { stones: 25 } ]
+    plain_fish:
+      text: { uk: "Короп справжній, тільки звичайний: луска руда, а ці в ньому не більше, ніж у карасі." }
+      options:
+        - text: { uk: "Хоч повечеряти" }
+          effects: [ { resource: { id: resource.health, amount: 10 } } ]
+    serpent:
+      text: { uk: "Вода закипає, і з виру здіймається лускатий змій завтовшки з колоду. Короп, якщо й був, давно в його череві." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.beast.river_serpent, win: serpent_won, loss: serpent_lost } } ]
+        - text: { uk: "Відскочити від води" }
+          effects: [ { injury: { id: injury.body, amount: 5 } } ]
+    serpent_won:
+      text: { uk: "Змій зникає у вирі, лишивши на камінні кілька лусок завбільшки з долоню." }
+      options:
+        - text: { uk: "Зібрати луску" }
+          effects: [ { stones: 20 }, { combat_insight: 30 } ]
+    serpent_lost:
+      text: { uk: "Хвіст змія збиває вас у воду. Ви вибираєтеся на берег уже далеко за течією." }
+    taken:
+      text: { uk: "На березі тліє вогнище, а поруч — риб'ячі кістки із золотим полиском. Хтось устиг раніше." }
+
+- id: rumor.misty_hills.alchemist_garden
+  name: { uk: "Сад алхіміка" }
+  text: { uk: "Кажуть, у Туманних пагорбах здичавів сад покійного алхіміка: там досі ростуть трави, з яких виходять пігулки, що заспокоюють меридіани. Треба лише знати, які з них не отруйні." }
+  zone: zone.misty_hills
+  window_weeks: { min: 20, max: 40 }
+  appeal: 1
+  weight: 8
+  cooldown_weeks: 104
+  conditions:
+    - reputation: { id: sect.hundred_herbs, min: 1 }
+  truth: garden
+  falsehoods: { mushrooms: 2 }
+  nodes:
+    garden:
+      text: { uk: "За поваленою огорожею — грядки, які ніхто не полов роками. Та потрібні трави ще можна впізнати." }
+      options:
+        - text: { uk: "Зібрати й віддати аптекарям на пігулки" }
+          effects: [ { item: { id: item.pill.meridian_soothing, amount: 2 } }, { reputation: { id: sect.hundred_herbs, amount: 5 } } ]
+    mushrooms:
+      text: { uk: "Від саду лишилися тільки гриби з різким запахом. Схоже, хтось сплутав сад алхіміка з його смітником." }
+      options:
+        - text: { uk: "Спробувати один" }
+          outcomes:
+            - weight: 2
+              weight_per_stat: { stat.perception: 0.3 }
+              success: true
+              effects: [ { pill_energy: 15 } ]
+              next: lucky
+            - weight: 3
+              effects: [ { resource: { id: resource.toxins, amount: 10 } } ]
+              next: poisoned
+        - text: { uk: "Піти" }
+    lucky:
+      text: { uk: "Гриб гіркий, але ці в ньому справжня." }
+    poisoned:
+      text: { uk: "У роті пече, а в меридіанах осідає каламуть." }
+    taken:
+      text: { uk: "Грядки перекопано, лишилися тільки бур'яни. Аптекарі, видно, дізналися першими." }
+
+- id: rumor.spirit_peak.vein_surge
+  name: { uk: "Сплеск духовної жили" }
+  text: { uk: "Старі культиватори кажуть, що жила під Піком ось-ось сплесне: кілька тижнів ці там битиме ключем, і хто медитуватиме поруч, той очистить тіло за раз. Але сплеск буває і бурею." }
+  zone: zone.spirit_peak
+  window_weeks: { min: 6, max: 12 }
+  appeal: 2
+  weight: 5
+  cooldown_weeks: 156
+  truth: surge
+  falsehoods: { trickle: 2, storm: 1 }
+  nodes:
+    surge:
+      text: { uk: "Камінь під ногами гуде, і ці піднімається з тріщин, густа, як туман. Такої нагоди може більше не бути." }
+      options:
+        - text: { uk: "Медитувати в самому сплеску (2 тижні)" }
+          effects: [ { time: 2 }, { stat: { id: stat.purity, amount: 4 } }, { resource: { id: resource.toxins, amount: -10 } } ]
+    trickle:
+      text: { uk: "Жила й справді ворушиться, та сплеск слабкий: ледь відчутний подих із тріщин." }
+      options:
+        - text: { uk: "Взяти, що дає" }
+          effects: [ { stat: { id: stat.purity, amount: 1 } } ]
+    storm:
+      text: { uk: "Ці виривається з тріщин шаленим вихором і б'є в меридіани, як блискавка." }
+      options:
+        - text: { uk: "Втримати її в собі" }
+          outcomes:
+            - weight: 3
+              weight_per_stat: { stat.meridians: 0.2 }
+              success: true
+              effects: [ { stat: { id: stat.purity, amount: 3 } } ]
+              next: held
+            - weight: 4
+              effects: [ { injury: { id: injury.internal, amount: 15 } } ]
+              next: burned
+        - text: { uk: "Сховатися за скелю" }
+    held:
+      text: { uk: "Вихор проходить крізь вас і вщухає. Тіло легке, наче вимите." }
+    burned:
+      text: { uk: "Меридіани не витримують. Ви отямлюєтеся на камінні з присмаком крові в роті." }
+    taken:
+      text: { uk: "Біля тріщин сидять троє культиваторів з чужої секти. Сплеск минув, і все дісталося їм." }
+
+- id: rumor.ancient_tomb.master_cache
+  name: { uk: "Схованка Забутого Майстра" }
+  text: { uk: "У чайній шепочуться: в Гробниці Забутого Майстра є друга зала, де лежить фоліант його списової техніки. Ті, хто туди ходив, розповідають про вартового, що не спить." }
+  zone: zone.ancient_tomb
+  window_weeks: { min: 20, max: 40 }
+  appeal: 3
+  weight: 4
+  cooldown_weeks: 208
+  truth: cache
+  falsehoods: { empty_hall: 2, guardian: 2 }
+  nodes:
+    cache:
+      text: { uk: "За фальшивою стіною — тісна зала. На кам'яній полиці, загорнутий у шовк, лежить фоліант." }
+      options:
+        - text: { uk: "Забрати фоліант" }
+          effects: [ { item: { id: item.folio.piercing_dragon, amount: 1 } } ]
+    empty_hall:
+      text: { uk: "Друга зала існує, але порожня: лише пил і кілька забутих каменів у кутку." }
+      options:
+        - text: { uk: "Забрати камені" }
+          effects: [ { stones: 15 } ]
+    guardian:
+      text: { uk: "У темряві скрегоче камінь: вартовий гробниці повертає до вас порожні очниці." }
+      options:
+        - text: { uk: "Битися" }
+          effects: [ { start_combat: { group: grp.undead.tomb_guardian, win: guardian_won, loss: guardian_lost } } ]
+        - text: { uk: "Тікати до виходу" }
+          effects: [ { injury: { id: injury.internal, amount: 8 } } ]
+    guardian_won:
+      text: { uk: "Вартовий розсипається, і за ним відкривається ніша з підношеннями." }
+      options:
+        - text: { uk: "Забрати підношення" }
+          effects: [ { stones: 40 }, { combat_insight: 50 } ]
+    guardian_lost:
+      text: { uk: "Удар вартового відкидає вас до стіни. Ви виповзаєте з гробниці, ледве тримаючись на ногах." }
+    taken:
+      text: { uk: "Фальшиву стіну вже розбито, полиця порожня. На пилу — свіжі сліди чобіт." }

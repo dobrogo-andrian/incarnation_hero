@@ -11,3 +11,7 @@
 - id: source.sect_disciple
   name: { uk: "учень секти" }
   reliability: 0.8
+
+- id: source.rival_cultivator
+  name: { uk: "суперник-культиватор" }
+  reliability: 0.5

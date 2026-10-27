@@ -60,3 +60,22 @@
       text: { uk: "Вогні один за одним опускаються в траву. На душі стає легко й чисто." }
     fled:
       text: { uk: "Шепіт женеться за вами до самого ранку й лишає по собі важкість у грудях." }
+
+- id: evt.rest.campfire_stranger
+  contexts: [rest]
+  weight: 6
+  cooldown_weeks: 78
+  nodes:
+    start:
+      text: { uk: "До вашого вогнища підсідає старий мандрівник і просить погрітися. Кажуть, такі бачили багато доріг." }
+      options:
+        - text: { uk: "Поділитися їжею й розпитати" }
+          effects: [ { add_rumor: { id: rumor.spirit_peak.vein_surge, source: source.tea_house_gossip } } ]
+          next: story
+        - text: { uk: "Вартувати всю ніч, не довіряючи" }
+          effects: [ { resource: { id: resource.body_energy, amount: -20 } } ]
+          next: watched
+    story:
+      text: { uk: "Старий довго дивиться у вогонь, а потім розповідає, що жила під Піком скоро сплесне. Уранці його вже немає." }
+    watched:
+      text: { uk: "Старий мирно спить до світанку й іде, подякувавши. Ви ж ледве тримаєтеся на ногах." }

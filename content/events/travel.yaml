@@ -129,3 +129,77 @@
       text: { uk: "Вогонь спалахує на долоні, і зграя з виском кидається в туман." }
     waited:
       text: { uk: "Вовки кружляють під деревом кілька днів, а потім ідуть шукати легшої здобичі." }
+
+- id: evt.travel.washed_out_ford
+  contexts: [travel]
+  weight: 6
+  cooldown_weeks: 52
+  conditions:
+    - zone: [zone.river_valley]
+  nodes:
+    start:
+      text: { uk: "Брід через річку розмило зливами: вода брудна й бурхлива, а до мосту — тиждень в обхід." }
+      options:
+        - text: { uk: "Перепливти" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { stat.endurance: 0.3 }
+              success: true
+              next: crossed
+            - weight: 4
+              effects: [ { injury: { id: injury.body, amount: 10 } }, { stones: -5 } ]
+              next: swept
+        - text: { uk: "Іти в обхід (1 тиждень)" }
+          effects: [ { time: 1 } ]
+    crossed:
+      text: { uk: "Течія смикає за одяг, але ви вибираєтеся на той берег мокрим, проте цілим." }
+    swept:
+      text: { uk: "Вода збиває з ніг і б'є об каміння. На березі ви недораховуєтеся частини каменів." }
+
+- id: evt.travel.rival_cultivator
+  contexts: [travel]
+  weight: 6
+  cooldown_weeks: 78
+  conditions:
+    - zone_danger: { min: 1 }
+  nodes:
+    start:
+      text: { uk: "На привалі ви зустрічаєте культиватора вашого віку. Він хизується, що чув про схованку в Туманних пагорбах, і пропонує продати подробиці." }
+      options:
+        - text: { uk: "Купити розповідь за 8 каменів" }
+          conditions: [ { stones: { min: 8 } } ]
+          effects: [ { stones: -8 }, { add_rumor: { id: rumor.misty_hills.fallen_cultivator, source: source.rival_cultivator } } ]
+          next: sold
+        - text: { uk: "Позмагатися з ним у спарингу" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { aspect.speed.reaction: 0.3 }
+              success: true
+              effects: [ { combat_insight: 20 } ]
+              next: sparred
+            - weight: 4
+              effects: [ { injury: { id: injury.body, amount: 6 } } ]
+              next: beaten
+        - text: { uk: "Розійтися" }
+    sold:
+      text: { uk: "Суперник ховає камені й неохоче розповідає. Чи не бреше він, щоб відправити вас манівцями?" }
+    sparred:
+      text: { uk: "Ви кілька разів обмінюєтеся ударами, і він першим опускає руки. Схоже, ви ще зустрінетеся." }
+    beaten:
+      text: { uk: "Він швидший, ніж здавався. Ви розходитеся з синцями й уроком." }
+
+- id: evt.travel.roadside_herb
+  contexts: [travel]
+  weight: 6
+  cooldown_weeks: 26
+  nodes:
+    start:
+      text: { uk: "Біля стежки ({zone}) щось ледь помітно мерехтить у траві." }
+      options:
+        - text: { uk: "Придивитися" }
+          conditions: [ { stat: { id: stat.perception, min: 2 } } ]
+          effects: [ { pill_energy: 12 } ]
+          next: found
+        - text: { uk: "Пройти далі" }
+    found:
+      text: { uk: "Це духовна трава, ще молода, але свіжа. Ви розжовуєте її, і тепла ці розходиться по тілу." }

@@ -17,7 +17,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "97c29994b70f1147dc79fceb81944d0767e8717568427a484793038b3adec17d";
+        const string expectedHash = "ccd0759ede4f8b312aacaf31956fa0dc03f1ad52ec766bb50302170b15c2907e";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -34,7 +34,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakTakeTwoPillsThenAssimilateUntilDeath_Seed42()
     {
-        const string expectedHash = "8318b56aa6367d17a13831a0187a939b51207621ca1df856132df8e11639c9ae";
+        const string expectedHash = "e7c2180a6fdd2bcc1308078069925f722a48287fe623dac2ac7e19a967505990";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -47,25 +47,37 @@ public sealed class GoldenTests
     }
 
     /// <summary>
-    /// A first breakthrough end to end (no CLI equivalent yet): buy pill energy at the hub, purify at
-    /// the peak until the foundation covers the threshold, fill the scale, flush the pills' toxins,
-    /// break through, purify until death.
+    /// A first breakthrough end to end (no CLI equivalent yet): take the starting pills at the hub
+    /// (carried, they could go to events on the way) and buy one more, purify at the peak until the
+    /// foundation covers the threshold and the toxins are gone, take the bought pill, fill the scale, purify a little more, break through,
+    /// purify until death. Events on the way are passed with their first available choice.
     /// </summary>
     [Fact]
     public void PurifyFillTheScaleAndBreakThroughThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "19d1f8f95b0eb9f5075289b9351840850fcf0fbbf7bdf11814593c39863e970f";
+        const string expectedHash = "287535d68e6a21e883ade2cc97af282ea9d1ca2d708a74828056e30a77768ad0";
         var purify = new MeditateActivity("meditation.purification", "place.spirit_peak.vein");
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         Assert.True(sim.Execute(new Buy("item.pill.spirit_dew")).Accepted);
+        Assert.True(sim.Execute(new UsePill("item.pill.qi_gathering")).Accepted);
+        Assert.True(sim.Execute(new UsePill("item.pill.qi_gathering")).Accepted);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
         RunToEnd(sim, new StartActivity(purify, 400));
-        foreach (string pill in new[] { "item.pill.qi_gathering", "item.pill.qi_gathering", "item.pill.spirit_dew" })
-            Assert.True(sim.Execute(new UsePill(pill)).Accepted);
+        Assert.True(sim.Execute(new UsePill("item.pill.spirit_dew")).Accepted);
         sim.Execute(new SetInterruptStops([InterruptCategory.StageScaleFull]));
-        Assert.True(sim.Execute(new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null)).Accepted);
-        sim.Execute(new CancelActivity());
+        Command next = new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null);
+        while (true)
+        {
+            var outcome = sim.Execute(next);
+            Assert.True(outcome.Accepted, outcome.RejectReason?.Key);
+            if (outcome.Events.Any(e => e is StageScaleFull))
+                break;
+            next = TestContent.Proceed(sim.View);
+        }
+        while (sim.State.Event is not null)
+            sim.Execute(TestContent.Proceed(sim.View));
+        Assert.True(sim.Execute(new CancelActivity()).Accepted);
         RunToEnd(sim, new StartActivity(purify, 15));
         var forecast = sim.View.Tracks.Single().Forecast!;
         RunToEnd(sim, new AttemptBreakthrough("qi", "place.spirit_peak.vein"));
@@ -81,7 +93,8 @@ public sealed class GoldenTests
     /// <summary>Like <c>sim run</c>: continues through interrupts and takes the first available choice in events.</summary>
     private static void RunToEnd(Simulation sim, Command command)
     {
-        Assert.True(sim.Execute(command).Accepted);
+        var outcome = sim.Execute(command);
+        Assert.True(outcome.Accepted, outcome.RejectReason?.Key);
         while (sim.State.Event is not null || sim.State.Activity is not null)
             Assert.True(sim.Execute(TestContent.Proceed(sim.View)).Accepted);
     }

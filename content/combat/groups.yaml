@@ -15,3 +15,13 @@
   name: { uk: "Неспокійні духи поля бою" }
   power: 60
   loss_injuries: { injury.internal: 15 }
+
+- id: grp.beast.river_serpent
+  name: { uk: "Річковий змій" }
+  power: 45
+  loss_injuries: { injury.body: 20 }
+
+- id: grp.undead.tomb_guardian
+  name: { uk: "Вартовий гробниці" }
+  power: 90
+  loss_injuries: { injury.body: 10, injury.internal: 20 }

@@ -14,7 +14,7 @@ public sealed class RumorValidationTests
     [Fact]
     public void RepoRumors_AreLoaded()
     {
-        Assert.Equal(3, TestContent.Repo.All<RumorDef>().Count());
+        Assert.Equal(8, TestContent.Repo.All<RumorDef>().Count());
         Assert.NotEmpty(TestContent.Repo.All<RumorSourceDef>());
     }
 

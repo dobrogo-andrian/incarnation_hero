@@ -96,3 +96,97 @@
         - text: { uk: "Подякувати й відмовитися" }
     lecture:
       text: { uk: "Старійшина говорить повільно, і кожне слово лягає в меридіани, як вода в сухе русло." }
+
+- id: evt.settlement.merchant_tip
+  contexts: [settlement]
+  weight: 8
+  cooldown_weeks: 52
+  nodes:
+    start:
+      text: { uk: "У заїжджому дворі мандрівний торговець, підпивши, натякає, що знає дещо про Річкову долину. «Задарма язик не повертається», — підморгує він." }
+      options:
+        - text: { uk: "Заплатити 5 каменів за розповідь" }
+          conditions: [ { stones: { min: 5 } } ]
+          effects: [ { stones: -5 }, { add_rumor: { id: rumor.river_valley.spirit_carp, source: source.travelling_merchant } } ]
+          next: told
+        - text: { uk: "Підливати йому, доки не розбовкає сам" }
+          outcomes:
+            - weight: 3
+              weight_per_stat: { stat.perception: 0.3 }
+              success: true
+              effects: [ { add_rumor: { id: rumor.river_valley.spirit_carp, source: source.travelling_merchant } } ]
+              next: told
+            - weight: 4
+              effects: [ { stones: -3 } ]
+              next: asleep
+        - text: { uk: "Не слухати п'яних байок" }
+    told:
+      text: { uk: "Торговець, понизивши голос, розповідає про золотого коропа під валуном у Річковій долині." }
+    asleep:
+      text: { uk: "Торговець засинає просто за столом, і рахунок за вино доводиться сплатити вам." }
+
+- id: evt.settlement.iron_palm_scout
+  contexts: [settlement]
+  weight: 8
+  cooldown_weeks: 104
+  conditions:
+    - reputation: { id: sect.iron_palm, min: 10 }
+  nodes:
+    start:
+      text: { uk: "Знайомий учень Школи Залізної Долоні відводить вас убік. «Наші розвідники бачили в Бамбуковому гаю старе святилище. Старші ще не знають — хочеш бути першим?»" }
+      options:
+        - text: { uk: "Розпитати докладно" }
+          effects: [ { add_rumor: { id: rumor.bamboo_grove.sword_shrine, source: source.sect_disciple } } ]
+          next: told
+        - text: { uk: "Порадити йому сказати старшим" }
+          effects: [ { reputation: { id: sect.iron_palm, amount: 5 } } ]
+          next: loyal
+    told:
+      text: { uk: "Учень малює на пилу шлях до святилища й просить нікому не казати, звідки ви знаєте." }
+    loyal:
+      text: { uk: "Учень зітхає, але йде до наставника. Згодом у школі про вас говорять як про людину слова." }
+
+- id: evt.settlement.herb_gathering_job
+  contexts: [settlement]
+  weight: 8
+  cooldown_weeks: 26
+  nodes:
+    start:
+      text: { uk: "Павільйон Ста Трав шукає збирачів на околиці поселення. Платять мало, але чесно." }
+      options:
+        - text: { uk: "Збирати трави (3 тижні)" }
+          effects: [ { time: 3 }, { stones: 12 }, { reputation: { id: sect.hundred_herbs, amount: 3 } } ]
+          next: paid
+        - text: { uk: "Відмовитися" }
+    paid:
+      text: { uk: "Три тижні в росі й колючках. Наглядач рахує кошики й відсипає обіцяне." }
+
+- id: evt.settlement.tavern_brawl
+  contexts: [settlement]
+  weight: 6
+  cooldown_weeks: 52
+  nodes:
+    start:
+      text: { uk: "У корчмі п'яний культиватор чіпляється до вас: «Подивимось, чого вартий такий шмаркач!»" }
+      options:
+        - text: { uk: "Прийняти виклик на кулаках" }
+          outcomes:
+            - weight: 4
+              weight_per_stat: { stat.might: 0.3 }
+              success: true
+              effects: [ { reputation: { id: sect.iron_palm, amount: 3 } }, { combat_insight: 10 } ]
+              next: won
+            - weight: 5
+              effects: [ { injury: { id: injury.body, amount: 8 } } ]
+              next: lost
+        - text: { uk: "Пригостити його, щоб відчепився (4 камені)" }
+          conditions: [ { stones: { min: 4 } } ]
+          effects: [ { stones: -4 } ]
+          next: treated
+        - text: { uk: "Піти з корчми" }
+    won:
+      text: { uk: "Задирака гепається на лаву під регіт усієї корчми. Хтось із Залізної Долоні схвально плескає вас по плечу." }
+    lost:
+      text: { uk: "Кулак у нього важкий. Ви прокидаєтеся під столом із гулею на голові." }
+    treated:
+      text: { uk: "Задирака одразу добрішає й до ночі розповідає вам про свої колишні подвиги." }
