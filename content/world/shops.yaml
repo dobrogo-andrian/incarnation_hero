@@ -2,6 +2,7 @@
 
 - id: shop.hub.apothecary
   name: { uk: "Аптека хабу" }
+  description: { uk: "Тісна крамничка, де пахне сушеними травами й гірким димом. Аптекар зважує пігулки на крихітних терезах і не дивиться в очі." }
   zone: zone.hub
   map: { x: 74, y: 48 }
   prices: { item.pill.qi_gathering: 12, item.pill.spirit_dew: 30, item.pill.foundation_building: 80,
@@ -9,6 +10,7 @@
 
 - id: shop.hub.library
   name: { uk: "Книгарня хабу" }
+  description: { uk: "Полиці до стелі, заставлені сувоями й зшитками. Старий книжник дрімає над лампою, але щойно торкнешся фоліанта, розплющує одне око." }
   zone: zone.hub
   map: { x: 24, y: 34 }
   prices: { item.folio.piercing_dragon: 20, item.folio.fire: 20, item.folio.azure_breath: 40 }

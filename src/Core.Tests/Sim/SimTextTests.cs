@@ -23,7 +23,6 @@ public sealed class SimTextTests
                 "Вік: 12 р. 10 тиж.",
                 "Очікувана тривалість життя: 60 р. 0 тиж.",
                 "Режим: Світ",
-                "Заняття: немає",
                 "Місцевість: Поселення Біля Підніжжя, небезпека 0",
                 "Місце медитації: Тихий двір, щільність 1, резерв ці 8 / 8",
                 "Міць: 10 (Живучість 10, Стійкість 10)",
@@ -67,15 +66,10 @@ public sealed class SimTextTests
     }
 
     [Fact]
-    public void ViewLines_ShowActivityOrRunEnd()
+    public void ViewLines_ShowRunEnd_OnceTheRunIsOver()
     {
         var sim = Simulation.NewGame(TestContent.Calm, 1);
-
-        sim.State.Activity = new ActiveActivity { Activity = new WaitActivity(), WeeksLeft = 4 };
-        Assert.Contains("Заняття: Відпочинок, лишилось тижнів: 4", ViewText(sim));
-
-        sim.State.Activity.WeeksLeft = null;
-        Assert.Contains("Заняття: Відпочинок, без обмеження часу", ViewText(sim));
+        Assert.DoesNotContain(ViewText(sim), line => line.StartsWith("Забіг завершено", StringComparison.Ordinal));
 
         sim.State.Mode = GameMode.RunEnd;
         sim.State.EndCause = RunEndCause.OldAge;
@@ -87,7 +81,7 @@ public sealed class SimTextTests
     {
         Assert.Null(SimText.Describe(new WeekPassed(1, 625)));
         Assert.Equal("Заняття завершено: Відпочинок.", Loc.Resolve(SimText.Describe(new ActivityFinished(new WaitActivity()))!));
-        Assert.Equal("Заняття скасовано: Відпочинок.", Loc.Resolve(SimText.Describe(new ActivityCancelled(new WaitActivity()))!));
+        Assert.Equal("Заняття перервано: Відпочинок.", Loc.Resolve(SimText.Describe(new ActivityInterrupted(new WaitActivity()))!));
         Assert.Equal("До очікуваного кінця життя лишилось років: 5.", Loc.Resolve(SimText.Describe(new LifeEndApproaching(5))!));
         Assert.Equal("Забіг завершено: смерть від старості.", Loc.Resolve(SimText.Describe(new RunEnded(RunEndCause.OldAge))!));
         Assert.Equal("Прибуття: Туманні пагорби.", Loc.Resolve(SimText.Describe(new ZoneEntered("zone.misty_hills"))!));

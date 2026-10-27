@@ -113,9 +113,6 @@ public sealed class RuleBot : IBot
 
     private IEnumerable<Command> Overworld(PlayerView view)
     {
-        if (view.Activity?.Activity is BreakthroughActivity or TravelActivity)
-            yield return new ContinueActivity();
-
         var track = view.Tracks.First(t => t.VectorId == Simulation.QiVectorId);
         var placeHere = BestPlaceHere(view);
 

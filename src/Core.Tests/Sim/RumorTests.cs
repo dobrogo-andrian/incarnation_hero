@@ -135,7 +135,7 @@ public sealed class RumorTests
         sim.Execute(TestContent.Wait(10));
 
         Assert.Equal((1, "real"), (sim.State.Week, sim.State.Event!.NodeId));
-        Assert.Equal(9, sim.State.Activity!.WeeksLeft);
+        Assert.Null(sim.State.Activity);
     }
 
     [Fact]
@@ -182,14 +182,16 @@ public sealed class RumorTests
         var sim = Simulation.NewGame(TestContent.WithExtra(Extra), 1);
         var inquiry = sim.Content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId).Inquiry;
 
-        var outcome = sim.Execute(new StartActivity(new InquireActivity(), null));
+        var inquire = new StartActivity(new InquireActivity(), null);
+        var outcome = sim.Execute(inquire);
         while (sim.State.Rumors.Count == 0)
-            outcome = sim.Execute(TestContent.Proceed(sim.View));
+            outcome = sim.Execute(TestContent.Proceed(sim.View, inquire));
 
         var rumor = Assert.Single(sim.State.Rumors);
-        Assert.Equal(new RumorHeard(rumor.RumorId), outcome.Events[^1]);
+        Assert.Contains(new RumorHeard(rumor.RumorId), outcome.Events);
         Assert.Contains(rumor.SourceId, inquiry.Sources.Keys);
-        Assert.IsType<InquireActivity>(sim.State.Activity!.Activity);
+        Assert.Equal(new ActivityInterrupted(new InquireActivity()), outcome.Events[^1]);
+        Assert.Null(sim.State.Activity);
     }
 
     [Fact]

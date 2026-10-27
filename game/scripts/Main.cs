@@ -5,10 +5,11 @@ using Core.Sim;
 using Godot;
 
 /// <summary>
-/// The stage 1 playtest screen (D44): status bar on top, the map with the picked point's panel in
-/// the middle, side tabs on the right, the journal at the bottom, event dialogs over everything.
-/// All rules, saving included, stay in Core; this node loads content, owns the run session, sends
-/// commands and redraws every part from the new PlayerView.
+/// The stage 1 playtest screen (D44): a slim status bar on top; side tabs on the left; in the
+/// centre the picked point's actions (or the open event) above the journal, so everything that
+/// happens is read in one place; the map on the right, replaced by the place itself once the
+/// player steps into one. All rules, saving included, stay in Core; this node loads content, owns
+/// the run session, sends commands and redraws every part from the new PlayerView.
 /// </summary>
 public partial class Main : Control
 {
@@ -19,15 +20,16 @@ public partial class Main : Control
     private RunSession _session = null!;
 
     private readonly StatusBar _status = new();
-    private readonly Label _mapTitle = new();
-    private readonly MapView _map = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
-    private readonly PointPanel _panel = new();
     private readonly SideTabs _tabs = new();
-    private readonly JournalView _journal = new();
+    private readonly PointPanel _panel = new();
     private readonly EventDialog _dialog = new();
+    private readonly JournalView _journal = new();
+    private readonly Label _mapTitle = new();
+    private readonly MapView _map = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
+    private readonly LocationView _location = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
 
-    /// <summary>The zone the map was last set up for: arriving somewhere resets the map level and the picked point.</summary>
-    private string? _mapZone;
+    /// <summary>The zone the screen was last set up for: arriving somewhere resets the map level and the picked point.</summary>
+    private string? _shownZone;
     private bool _regionMap;
     private MapTarget? _target;
 
@@ -58,40 +60,53 @@ public partial class Main : Control
     {
         _status.Setup(_ui, OnNewRunPressed);
         _tabs.Setup(_ui);
-        _map.PointPressed += target => { _target = target; Refresh(); };
-        _map.ExitPressed += () => { _regionMap = true; _target = null; Refresh(); };
-        _panel.EnterPressed += () => { _regionMap = false; _target = null; Refresh(); };
+        _map.PointPressed += Pick;
+        _map.ExitPressed += () => { _regionMap = true; Pick(null); };
+        _panel.EnterPressed += () => { _regionMap = false; Pick(null); };
+        _panel.TargetPicked += Pick;
+        _location.LeavePressed += () => Pick(HomeTarget(_session.Sim.View));
         _mapTitle.AddThemeFontSizeOverride("font_size", 22);
+
+        var center = new VBoxContainer { CustomMinimumSize = new Vector2(520, 0) };
+        center.AddThemeConstantOverride("separation", 12);
+        center.AddChild(_panel);
+        center.AddChild(_dialog);
+        center.AddChild(new HSeparator());
+        center.AddChild(_journal);
+
+        var right = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        right.AddChild(_mapTitle);
+        right.AddChild(_map);
+        right.AddChild(_location);
+
+        var columns = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        columns.AddThemeConstantOverride("separation", 20);
+        columns.AddChild(_tabs);
+        columns.AddChild(center);
+        columns.AddChild(right);
+
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 12);
+        column.AddChild(_status);
+        column.AddChild(columns);
 
         var margin = new MarginContainer();
         margin.SetAnchorsPreset(LayoutPreset.FullRect);
         foreach (string side in new[] { "left", "top", "right", "bottom" })
             margin.AddThemeConstantOverride($"margin_{side}", 16);
-
-        var mapRow = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        mapRow.AddThemeConstantOverride("separation", 16);
-        mapRow.AddChild(_map);
-        mapRow.AddChild(_panel);
-
-        var center = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        center.AddChild(_mapTitle);
-        center.AddChild(mapRow);
-
-        var middle = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        middle.AddThemeConstantOverride("separation", 16);
-        middle.AddChild(center);
-        middle.AddChild(_tabs);
-
-        var column = new VBoxContainer();
-        column.AddThemeConstantOverride("separation", 12);
-        column.AddChild(_status);
-        column.AddChild(middle);
-        column.AddChild(_journal);
-
         margin.AddChild(column);
         AddChild(margin);
-        AddChild(_dialog);
     }
+
+    private void Pick(MapTarget? target)
+    {
+        _target = target;
+        Refresh();
+    }
+
+    /// <summary>What the centre shows with nothing picked: a wild zone's own panel (its places), or nothing in a settlement.</summary>
+    private MapTarget? HomeTarget(PlayerView view) =>
+        _ui.Db.Get<ZoneDef>(view.Zone.ZoneId).Settlement ? null : new ZoneTarget(view.Zone.ZoneId);
 
     /// <summary>Executes a command and logs what happened: the rejection reason, or each notable event with its week.</summary>
     private void Send(Command command)
@@ -120,7 +135,7 @@ public partial class Main : Control
         if (_session.TryStartNewRun())
         {
             _journal.Clear();
-            _mapZone = null;
+            _shownZone = null;
         }
         Refresh();
     }
@@ -129,28 +144,30 @@ public partial class Main : Control
     {
         var view = _session.Sim.View;
         string zoneId = view.Zone.ZoneId;
-        bool settlement = _ui.Db.Get<ZoneDef>(zoneId).Settlement;
-        if (zoneId != _mapZone)
+        if (zoneId != _shownZone)
         {
-            _mapZone = zoneId;
-            _regionMap = !settlement;
-            _target = null;
+            _shownZone = zoneId;
+            _regionMap = !_ui.Db.Get<ZoneDef>(zoneId).Settlement;
+            _target = HomeTarget(view);
         }
 
-        if (_regionMap)
-        {
-            _mapTitle.Text = _ui.Text("str.ui.region");
+        // Stepping into a place swaps the map for the place itself; a zone picked on the region map keeps the map.
+        bool inside = _target is PlaceTarget or ShopTarget or InquireTarget;
+        _map.Visible = !inside;
+        _location.Visible = inside;
+        if (inside)
+            _location.Refresh(_ui, _target!);
+        else if (_regionMap)
             _map.ShowRegion(_ui, view);
-        }
         else
-        {
-            _mapTitle.Text = _ui.Text(SimText.Name(zoneId));
             _map.ShowLocal(_ui, view);
-        }
+        _mapTitle.Text = _regionMap && !inside ? _ui.Text("str.ui.region") : _ui.Name(zoneId);
+
+        _panel.Visible = view.Event is null;
         _panel.Refresh(_ui, view, _target);
+        _dialog.Refresh(_ui, view);
         _status.Refresh(_ui, view);
         _tabs.Refresh(_ui, view);
-        _dialog.Refresh(_ui, view);
     }
 
     /// <summary>The run seed comes from the shell; Core itself never reads the clock or OS randomness.</summary>

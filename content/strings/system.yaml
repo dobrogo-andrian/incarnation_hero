@@ -7,9 +7,6 @@
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 
-- id: str.reject.no_activity
-  text: { uk: "Зараз немає заняття." }
-
 - id: str.reject.invalid_activity
   text: { uk: "Це заняття так не почати." }
 
@@ -104,15 +101,6 @@
 
 - id: str.view.mode
   text: { uk: "Режим: {mode}" }
-
-- id: str.view.activity
-  text: { uk: "Заняття: {activity}, лишилось тижнів: {weeks}" }
-
-- id: str.view.activity_open
-  text: { uk: "Заняття: {activity}, без обмеження часу" }
-
-- id: str.view.no_activity
-  text: { uk: "Заняття: немає" }
 
 - id: str.view.run_end
   text: { uk: "Забіг завершено: {cause}" }
@@ -239,8 +227,8 @@
 - id: str.event.activity_finished
   text: { uk: "Заняття завершено: {activity}." }
 
-- id: str.event.activity_cancelled
-  text: { uk: "Заняття скасовано: {activity}." }
+- id: str.event.activity_interrupted
+  text: { uk: "Заняття перервано: {activity}." }
 
 - id: str.event.life_end_approaching
   text: { uk: "До очікуваного кінця життя лишилось років: {years}." }
@@ -341,11 +329,14 @@
 - id: str.ui.exit
   text: { uk: "Вихід у регіон" }
 
+- id: str.ui.to_map
+  text: { uk: "На карту" }
+
 - id: str.ui.inquire
   text: { uk: "Чайна" }
 
 - id: str.ui.inquire_hint
-  text: { uk: "Тут можна розпитувати людей про чутки." }
+  text: { uk: "Гамірна чайна біля воріт: мандрівники, торговці й учні сект обмінюються новинами за чашкою. Тут можна розпитувати людей про чутки." }
 
 - id: str.ui.select_point
   text: { uk: "Оберіть точку на карті." }
@@ -355,6 +346,60 @@
 
 - id: str.ui.journal_line
   text: { uk: "Тиждень {week}. {text}" }
+
+- id: str.ui.meditate
+  text: { uk: "Медитувати" }
+
+- id: str.ui.direction
+  text: { uk: "Напрям" }
+
+- id: str.ui.subject
+  text: { uk: "Що осягати" }
+
+- id: str.ui.weeks
+  text: { uk: "Тижнів" }
+
+- id: str.ui.until_done
+  text: { uk: "Без обмеження" }
+
+- id: str.ui.stones
+  text: { uk: "Каменів" }
+
+- id: str.ui.refill_place
+  text: { uk: "Наповнити місце каменями" }
+
+- id: str.ui.restore_qi
+  text: { uk: "Відновити пул ці каменями" }
+
+- id: str.ui.buy
+  text: { uk: "Купити" }
+
+- id: str.ui.use_pill
+  text: { uk: "Прийняти" }
+
+- id: str.ui.inquire_start
+  text: { uk: "Розпитувати" }
+
+- id: str.ui.places_here
+  text: { uk: "Місця медитації:" }
+
+- id: str.ui.method
+  text: { uk: "Активний метод" }
+
+- id: str.ui.no_method
+  text: { uk: "Без методу" }
+
+- id: str.ui.breakthrough_place
+  text: { uk: "Місце усамітнення" }
+
+- id: str.ui.accept_death_risk
+  text: { uk: "Приймаю ризик смерті" }
+
+- id: str.ui.breakthrough_start
+  text: { uk: "Почати прорив" }
+
+- id: str.ui.no_place_here
+  text: { uk: "Прорив можливий лише в усамітненні на місці медитації, а тут такого немає." }
 
 # Events (D38)
 - id: str.reject.invalid_option

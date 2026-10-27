@@ -37,32 +37,33 @@ public sealed class TravelTests
     }
 
     [Fact]
-    public void InterruptedTravel_LeavesPlayerInTheLastZoneReached_AndContinues()
+    public void InterruptedTravel_LeavesPlayerInTheLastZoneReached_AndSettingOutAgainGoesOnFromThere()
     {
         var sim = NewGame();
         var player = sim.State.Player;
         player.AgeWeeks = player.LifespanWeeks - 5 * 52 - 2;   // the 5-year warning fires in week 2
 
-        sim.Execute(new Travel("zone.spirit_peak"));
+        var outcome = sim.Execute(new Travel("zone.spirit_peak"));
 
         Assert.Equal("zone.bamboo_grove", player.ZoneId);
-        Assert.Equal(4, sim.State.Activity!.WeeksLeft);
+        Assert.Null(sim.State.Activity);
+        Assert.IsType<ActivityInterrupted>(outcome.Events[^1]);
 
-        sim.Execute(new ContinueActivity());
+        sim.Execute(new Travel("zone.spirit_peak"));
 
+        // Week 2 was half of the 2-week leg to the hills; setting out anew starts that leg over.
         Assert.Equal("zone.spirit_peak", player.ZoneId);
-        Assert.Equal(6, sim.State.Week);
+        Assert.Equal(7, sim.State.Week);
     }
 
     [Fact]
-    public void CancelledTravel_KeepsPlayerWhereTheyGot()
+    public void TravelInterruptedBetweenZones_KeepsPlayerWhereTheyGot()
     {
         var sim = NewGame();
         var player = sim.State.Player;
         player.AgeWeeks = player.LifespanWeeks - 5 * 52 - 4;   // stops in week 4, between misty hills and the peak
 
         sim.Execute(new Travel("zone.spirit_peak"));
-        sim.Execute(new CancelActivity());
 
         Assert.Equal("zone.misty_hills", player.ZoneId);
         Assert.Null(sim.State.Activity);

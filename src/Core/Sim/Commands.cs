@@ -30,11 +30,6 @@ public sealed record ChooseEventOption(int Index) : EventDialogCommand;
 /// </summary>
 public sealed record StartActivity(Activity Activity, int? Weeks) : OverworldCommand;
 
-/// <summary>Runs the interrupted activity further.</summary>
-public sealed record ContinueActivity : OverworldCommand;
-
-public sealed record CancelActivity : OverworldCommand;
-
 /// <summary>Travels to <paramref name="ZoneId"/> by the fastest route (replacing any current activity).</summary>
 public sealed record Travel(string ZoneId) : OverworldCommand;
 

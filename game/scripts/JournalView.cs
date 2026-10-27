@@ -1,6 +1,6 @@
 using Godot;
 
-/// <summary>The event log at the bottom of the screen; keeps the latest lines and follows new ones.</summary>
+/// <summary>The event log under the centre panel; keeps the latest lines and follows new ones.</summary>
 public partial class JournalView : RichTextLabel
 {
     private const int MaxLines = 400;
@@ -9,7 +9,7 @@ public partial class JournalView : RichTextLabel
     {
         ScrollFollowing = true;
         SelectionEnabled = true;
-        CustomMinimumSize = new Vector2(0, 170);
+        SizeFlagsVertical = SizeFlags.ExpandFill;
     }
 
     public void Add(string line)

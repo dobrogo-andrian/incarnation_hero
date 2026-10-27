@@ -16,9 +16,6 @@ public static class SimText
     private static readonly LocKey Lifespan = new("str.view.lifespan");
     private static readonly LocKey Duration = new("str.view.duration");
     private static readonly LocKey ModeLine = new("str.view.mode");
-    private static readonly LocKey ActivityLine = new("str.view.activity");
-    private static readonly LocKey OpenActivityLine = new("str.view.activity_open");
-    private static readonly LocKey NoActivityLine = new("str.view.no_activity");
     private static readonly LocKey RunEndLine = new("str.view.run_end");
     private static readonly LocKey Track = new("str.view.track");
     private static readonly LocKey StatLine = new("str.view.stat");
@@ -65,7 +62,7 @@ public static class SimText
     private static readonly LocKey OldAge = new("str.end.old_age");
 
     private static readonly LocKey Finished = new("str.event.activity_finished");
-    private static readonly LocKey Cancelled = new("str.event.activity_cancelled");
+    private static readonly LocKey Interrupted = new("str.event.activity_interrupted");
     private static readonly LocKey LifeEnd = new("str.event.life_end_approaching");
     private static readonly LocKey Ended = new("str.event.run_ended");
     private static readonly LocKey Entered = new("str.event.zone_entered");
@@ -115,12 +112,13 @@ public static class SimText
     [
         .. TimeLines(view, db),
         ModeLine with { Args = [new("mode", ModeName(view.Mode))] },
-        StateText(view),
+        .. EndLines(view),
         ZoneText(view),
         .. PlaceLines(view),
         .. CharacterLines(view),
         .. CultivationLines(view, db),
         .. ItemLines(view),
+        .. view.ShopOffers.Select(OfferText),
         .. SocialLines(view),
     ];
 
@@ -136,9 +134,9 @@ public static class SimText
         ];
     }
 
-    /// <summary>The current activity, or how the run ended.</summary>
-    public static LocKey StateText(PlayerView view) =>
-        view.EndCause is { } cause ? RunEndLine with { Args = [new("cause", CauseName(cause))] } : ActivityText(view.Activity);
+    /// <summary>How the run ended, once it has; nothing while it goes on.</summary>
+    public static IReadOnlyList<LocKey> EndLines(PlayerView view) =>
+        view.EndCause is { } cause ? [RunEndLine with { Args = [new("cause", CauseName(cause))] }] : [];
 
     public static LocKey ZoneText(PlayerView view) =>
         ZoneLine with { Args = [new("zone", Name(view.Zone.ZoneId)), new("danger", view.Zone.Danger)] };
@@ -250,19 +248,16 @@ public static class SimText
         };
     }
 
-    /// <summary>Stones, carried items and the offers of shops here.</summary>
-    public static IReadOnlyList<LocKey> ItemLines(PlayerView view)
+    /// <summary>Stones and carried items.</summary>
+    public static IReadOnlyList<LocKey> ItemLines(PlayerView view) => [StonesText(view), .. view.Items.Select(ItemText)];
+
+    /// <summary>A carried item with its count; a pill also with the energy the next one would give.</summary>
+    public static LocKey ItemText(ItemView item)
     {
-        var lines = new List<LocKey> { StonesText(view) };
-        foreach (var item in view.Items)
-        {
-            LocArg[] args = [new("item", Name(item.ItemId)), new("count", item.Count)];
-            lines.Add(item.NextPillEnergy is double energy
-                ? PillLine with { Args = [.. args, new("energy", Number(energy))] }
-                : ItemLine with { Args = args });
-        }
-        lines.AddRange(view.ShopOffers.Select(OfferText));
-        return lines;
+        LocArg[] args = [new("item", Name(item.ItemId)), new("count", item.Count)];
+        return item.NextPillEnergy is double energy
+            ? PillLine with { Args = [.. args, new("energy", Number(energy))] }
+            : ItemLine with { Args = args };
     }
 
     public static LocKey StonesText(PlayerView view) => StonesLine with { Args = [new("stones", view.Stones)] };
@@ -297,6 +292,9 @@ public static class SimText
 
     /// <summary>The localized name of a content object, for UI labels.</summary>
     public static LocKey Name(string contentId) => new(LocTable.ContentKey(contentId, "name"));
+
+    /// <summary>The localized description of a content object that has one (a place or a shop).</summary>
+    public static LocKey Description(string contentId) => new(LocTable.ContentKey(contentId, "description"));
 
     /// <summary>The open event node's text; the current zone is available to it as <c>{zone}</c>.</summary>
     public static LocKey EventText(EventView view, PlayerView player) =>
@@ -351,7 +349,7 @@ public static class SimText
     public static LocKey? Describe(SimEvent e) => e switch
     {
         ActivityFinished f => Finished with { Args = [new("activity", ActivityName(f.Activity))] },
-        ActivityCancelled c => Cancelled with { Args = [new("activity", ActivityName(c.Activity))] },
+        ActivityInterrupted i => Interrupted with { Args = [new("activity", ActivityName(i.Activity))] },
         LifeEndApproaching l => LifeEnd with { Args = [new("years", l.YearsLeft)] },
         RunEnded r => Ended with { Args = [new("cause", CauseName(r.Cause))] },
         ZoneEntered z => Entered with { Args = [new("zone", Name(z.ZoneId))] },
@@ -417,13 +415,6 @@ public static class SimText
 
     private static LocKey Years(int weeks, int weeksPerYear) =>
         Duration with { Args = [new("years", weeks / weeksPerYear), new("weeks", weeks % weeksPerYear)] };
-
-    private static LocKey ActivityText(ActivityView? activity) => activity switch
-    {
-        null => NoActivityLine,
-        { WeeksLeft: int left } => ActivityLine with { Args = [new("activity", ActivityName(activity.Activity)), new("weeks", left)] },
-        _ => OpenActivityLine with { Args = [new("activity", ActivityName(activity.Activity))] },
-    };
 
     private static LocKey ActivityName(Activity activity) => activity switch
     {

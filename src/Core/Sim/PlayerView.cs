@@ -12,7 +12,6 @@ public sealed record PlayerView(
     int AgeWeeks,
     int LifespanWeeks,
     GameMode Mode,
-    ActivityView? Activity,
     RunEndCause? EndCause,
     ZoneView Zone,
     IReadOnlyList<PlaceView> Places,
@@ -42,7 +41,6 @@ public sealed record PlayerView(
             player.AgeWeeks,
             player.LifespanWeeks,
             state.Mode,
-            state.Activity is { } active ? new ActivityView(active.Activity, active.WeeksLeft) : null,
             state.EndCause,
             new ZoneView(player.ZoneId, content.Get<ZoneDef>(player.ZoneId).Danger),
             state.World.Places
@@ -61,7 +59,7 @@ public sealed record PlayerView(
                 .Select(r => new ResourceView(r.ResourceId, r.Current, rules.Explain(player, r.ResourceId)))
                 .ToList(),
             player.Injuries.Select(i => new InjuryView(i.InjuryId, i.Value, content.Get<InjuryDef>(i.InjuryId).Max)).ToList(),
-            player.Tracks.Select(t => TrackView.From(state, t, rules, content)).ToList(),
+            player.Tracks.Select(t => TrackView.From(player, t, rules, content)).ToList(),
             player.Buffs.Select(b => new BuffView(b.Kind, b.Points)).ToList(),
             player.Stones,
             player.Items
@@ -78,8 +76,6 @@ public sealed record PlayerView(
             EventSystem.View(state, ctx));
     }
 }
-
-public sealed record ActivityView(Activity Activity, int? WeeksLeft);
 
 public sealed record ZoneView(string ZoneId, int Danger);
 
@@ -101,7 +97,7 @@ public sealed record InjuryView(string InjuryId, double Value, double Max);
 /// <summary>
 /// A cultivation vector's stage, how full its breakthrough scale is and the rank of the last
 /// breakthrough. With a full scale and a next stage, <see cref="Forecast"/> is the breakthrough as
-/// it will resolve at the end of the seclusion (the one in progress, or one started now).
+/// it would resolve at the end of a seclusion started now.
 /// </summary>
 public sealed record TrackView(
     string VectorId,
@@ -111,17 +107,12 @@ public sealed record TrackView(
     int? LastBreakthroughQuality,
     BreakthroughEstimate? Forecast)
 {
-    public static TrackView From(GameState state, CultivationTrack track, CharacterRules rules, ContentDb content)
+    public static TrackView From(PlayerState player, CultivationTrack track, CharacterRules rules, ContentDb content)
     {
         var stage = CultivationSystem.Stage(track, content);
-        BreakthroughEstimate? forecast = null;
-        if (stage.Breakthrough is { } breakthrough && track.StageProgress >= stage.ProgressRequired)
-        {
-            int weeksAhead = state.Activity is { Activity: BreakthroughActivity attempt, WeeksLeft: int left } && attempt.VectorId == track.VectorId
-                ? left
-                : breakthrough.Weeks;
-            forecast = BreakthroughSystem.Estimate(state.Player, track, content, rules, weeksAhead);
-        }
+        var forecast = stage.Breakthrough is { } breakthrough && track.StageProgress >= stage.ProgressRequired
+            ? BreakthroughSystem.Estimate(player, track, content, rules, breakthrough.Weeks)
+            : null;
         return new(track.VectorId, track.StageIndex, track.StageProgress, stage.ProgressRequired, track.LastBreakthroughQuality, forecast);
     }
 }

@@ -56,7 +56,7 @@ public sealed class GoldenTests
     [Fact]
     public void PurifyFillTheScaleAndBreakThroughThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "95edc983d114edd9245645ad09cf52b7185955294861cd6760bfd64868228da5";
+        const string expectedHash = "b0f9470c23c6040b34935ee06cd5fc15e424a70910f87908d27db62aae863337";
         var purify = new MeditateActivity("meditation.purification", "place.spirit_peak.vein");
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
@@ -66,20 +66,9 @@ public sealed class GoldenTests
         RunToEnd(sim, new Travel("zone.spirit_peak"));
         RunToEnd(sim, new StartActivity(purify, 400));
         Assert.True(sim.Execute(new UsePill("item.pill.spirit_dew")).Accepted);
-        sim.Execute(new SetInterruptStops([InterruptCategory.StageScaleFull]));
-        Command next = new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null);
-        while (true)
-        {
-            var outcome = sim.Execute(next);
-            Assert.True(outcome.Accepted, outcome.RejectReason?.Key);
-            if (outcome.Events.Any(e => e is StageScaleFull))
-                break;
-            next = TestContent.Proceed(sim.View);
-        }
-        // A full scale ends the assimilation itself (D44); only an open event is left to close.
-        while (sim.State.Event is not null)
-            sim.Execute(TestContent.Proceed(sim.View));
-        Assert.Null(sim.State.Activity);
+        // A full scale ends the assimilation itself (D44).
+        RunToEnd(sim, new StartActivity(new MeditateActivity("meditation.assimilation", "place.spirit_peak.vein"), null));
+        Assert.Equal(sim.State.Player.Tracks.Single().StageProgress, sim.View.Tracks.Single().ProgressRequired);
         RunToEnd(sim, new StartActivity(purify, 15));
         var forecast = sim.View.Tracks.Single().Forecast!;
         RunToEnd(sim, new AttemptBreakthrough("qi", "place.spirit_peak.vein"));
@@ -92,12 +81,6 @@ public sealed class GoldenTests
         Assert.Equal(expectedHash, SaveSerializer.HashState(sim.State));
     }
 
-    /// <summary>Like <c>sim run</c>: continues through interrupts and takes the first available choice in events.</summary>
-    private static void RunToEnd(Simulation sim, Command command)
-    {
-        var outcome = sim.Execute(command);
-        Assert.True(outcome.Accepted, outcome.RejectReason?.Key);
-        while (sim.State.Event is not null || sim.State.Activity is not null)
-            Assert.True(sim.Execute(TestContent.Proceed(sim.View)).Accepted);
-    }
+    /// <summary>Like <c>sim run</c>: restarts the activity after interrupts and takes the first available choice in events.</summary>
+    private static void RunToEnd(Simulation sim, Command command) => Assert.True(Script.Run(sim, command));
 }

@@ -95,6 +95,7 @@
 
 - id: place.hub.quiet_courtyard
   name: { uk: "Тихий двір" }
+  description: { uk: "Вимощений камінням двір за стіною поселення. Стара сосна, кам'яна лава й тиша, яку порушують хіба що горобці. Ці тут ледь відчутна, зате ніхто не заважає." }
   zone: zone.hub
   map: { x: 50, y: 22 }
   density: 1
@@ -103,6 +104,7 @@
 
 - id: place.bamboo_grove.clearing
   name: { uk: "Галявина серед бамбуку" }
+  description: { uk: "Невелика галявина, оточена шелестким бамбуком. Вітер гойдає стовбури, і в їхньому стукоті легко втратити лік часу." }
   zone: zone.bamboo_grove
   density: 1
   capacity: 10
@@ -110,6 +112,7 @@
 
 - id: place.river_valley.boulder
   name: { uk: "Валун над водою" }
+  description: { uk: "Плаский валун над бистриною. Вода внизу не змовкає ні на мить, а в бризках ледь помітно мерехтить ці." }
   zone: zone.river_valley
   density: 1.5
   capacity: 15
@@ -117,6 +120,7 @@
 
 - id: place.misty_hills.cave
   name: { uk: "Печера туману" }
+  description: { uk: "Низька печера, куди туман затікає, мов вода. Стіни вкриті вологим мохом, а повітря густе від ці." }
   zone: zone.misty_hills
   density: 2
   capacity: 60
@@ -124,6 +128,7 @@
 
 - id: place.old_battlefield.altar
   name: { uk: "Розбитий вівтар" }
+  description: { uk: "Розколотий кам'яний вівтар серед іржавих уламків зброї. Ці тут сильна, але неспокійна, наче пам'ятає давню різанину." }
   zone: zone.old_battlefield
   density: 2.5
   capacity: 70
@@ -131,6 +136,7 @@
 
 - id: place.spirit_peak.vein
   name: { uk: "Духовна жила" }
+  description: { uk: "Тріщина в скелі на самій вершині, звідки струменить світла ці. Від її подиху дзвенить у вухах, і медитувати тут — майже як пити з джерела." }
   zone: zone.spirit_peak
   density: 4
   capacity: 200
@@ -138,6 +144,7 @@
 
 - id: place.ancient_tomb.sealed_hall
   name: { uk: "Запечатана зала" }
+  description: { uk: "Зала за кам'яними дверима, вкрита печатками, що ледь жевріють. Повітря нерухоме, і кожен крок відлунює надто довго." }
   zone: zone.ancient_tomb
   density: 3.5
   capacity: 150
@@ -146,6 +153,7 @@
 # Hidden places: a little better than what their zone offers in the open.
 - id: place.bamboo_grove.hidden_spring
   name: { uk: "Прихована джерельна заводь" }
+  description: { uk: "Тиха заводь серед густого бамбуку, про яку знають одиниці. Вода прозора до самого дна, а над нею повисла прохолодна ці." }
   zone: zone.bamboo_grove
   density: 2
   capacity: 25
@@ -154,6 +162,7 @@
 
 - id: place.misty_hills.hermit_grotto
   name: { uk: "Грот самітника" }
+  description: { uk: "Затишний грот із вигладженою підлогою та давно погаслим вогнищем. Хтось роками медитував тут, і його спокій досі висить у повітрі." }
   zone: zone.misty_hills
   density: 3
   capacity: 80

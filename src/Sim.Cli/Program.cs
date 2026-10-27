@@ -106,21 +106,20 @@ static Activity WeeksActivity(Simulation sim, string? direction, string? subject
 }
 
 /// <summary>
-/// Executes <paramref name="command"/> and keeps continuing its activity through interrupts,
-/// printing notable events. In an event dialog it takes the first available choice, printing the
-/// text and the choice. False when Core rejects a command.
+/// Plays <paramref name="command"/> as a script (<see cref="Script.Play"/>): restarts its activity
+/// after interrupts and takes the first available choice in event dialogs, printing notable events,
+/// each dialog's text and the choice. False when Core rejects the command.
 /// </summary>
 static bool RunToEnd(Simulation sim, Command command, Localizer localizer)
 {
-    while (true)
+    int week = sim.State.Week;
+    foreach (var (_, outcome) in Script.Play(sim, command))
     {
-        var outcome = sim.Execute(command);
         if (!outcome.Accepted)
         {
             Console.Error.WriteLine(localizer.Resolve(outcome.RejectReason!));
             return false;
         }
-        int week = sim.State.Week;
         foreach (var e in outcome.Events)
         {
             if (e is WeekPassed passed)
@@ -130,16 +129,12 @@ static bool RunToEnd(Simulation sim, Command command, Localizer localizer)
         }
         if (sim.View.Event is { } dialog)
         {
-            var choice = SimText.EventChoices(dialog).First(c => c.Available);
+            // The script answers with the first available choice, as printed here.
             Console.WriteLine($"[{week}] {localizer.Resolve(SimText.EventText(dialog, sim.View))}");
-            Console.WriteLine($"[{week}] > {localizer.Resolve(choice.Text)}");
-            command = new ChooseEventOption(choice.Index);
-            continue;
+            Console.WriteLine($"[{week}] > {localizer.Resolve(SimText.EventChoices(dialog).First(c => c.Available).Text)}");
         }
-        if (sim.State.Activity is null)
-            return true;
-        command = new ContinueActivity();
     }
+    return true;
 }
 
 /// <summary>Loads and validates content, printing every error. Null means the content is unusable.</summary>

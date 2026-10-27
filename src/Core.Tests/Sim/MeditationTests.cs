@@ -49,18 +49,19 @@ public sealed class MeditationTests
     }
 
     [Fact]
-    public void PlaceQiLow_FiresOnceWhenTheReserveStopsCoveringAWeek_AndStopsTimeByDefault()
+    public void PlaceQiLow_FiresOnceWhenTheReserveStopsCoveringAWeek_AndEndsMeditationByDefault()
     {
         var sim = Simulation.NewGame(Content, 1);
 
         var outcome = sim.Execute(Meditate("meditation.purification", 10));
 
-        Assert.Equal(new PlaceQiLow("place.hub.test"), outcome.Events[^1]);
+        Assert.Contains(new PlaceQiLow("place.hub.test"), outcome.Events);
+        Assert.IsType<ActivityInterrupted>(outcome.Events[^1]);
         Assert.Equal(2, sim.State.Week);
-        Assert.Equal(8, sim.State.Activity!.WeeksLeft);
+        Assert.Null(sim.State.Activity);
 
-        var rest = sim.Execute(new ContinueActivity());
-        Assert.DoesNotContain(rest.Events, e => e is PlaceQiLow);
+        var again = sim.Execute(Meditate("meditation.purification", 8));
+        Assert.DoesNotContain(again.Events, e => e is PlaceQiLow);
     }
 
     [Fact]

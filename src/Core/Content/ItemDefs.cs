@@ -56,6 +56,9 @@ public sealed class ShopDef : ContentDef, IValidatedDef
     /// <summary>Its point on the settlement's local map (D44).</summary>
     public MapPoint? Map { get; set; }
 
+    /// <summary>What the player sees on entering it (D44).</summary>
+    public LocalizedText? Description { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (Prices.Values.Any(p => p <= 0))

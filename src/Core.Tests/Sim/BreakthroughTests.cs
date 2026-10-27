@@ -92,18 +92,19 @@ public sealed class BreakthroughTests
     }
 
     [Fact]
-    public void ForecastDuringSeclusion_CountsOnlyTheWeeksLeft()
+    public void Seclusion_IsNotStoppedByInterrupts_AndResolves()
     {
         var sim = Ready(purity: 50);
         sim.Execute(new SetInterruptStops([InterruptCategory.LifeEndApproaching]));
         sim.State.Player.LifespanWeeks = sim.State.Player.AgeWeeks + 5 * WeeksPerYear + 2;
-        var before = Forecast(sim);
 
-        sim.Execute(Attempt);
+        var outcome = sim.Execute(Attempt);
 
-        // The five-year warning stops time after 2 of 4 weeks; the attempt still resolves at the same age.
-        Assert.Equal(2, sim.State.Activity!.WeeksLeft);
-        Assert.Equal(before, Forecast(sim));
+        // The five-year warning comes after 2 of 4 weeks, but stopping would throw the seclusion away (D44).
+        Assert.Contains(new LifeEndApproaching(5), outcome.Events);
+        Assert.DoesNotContain(outcome.Events, e => e is ActivityInterrupted);
+        Assert.Equal(4, sim.State.Week);
+        Assert.NotNull(Qi(sim).LastBreakthroughQuality);
     }
 
     [Fact]

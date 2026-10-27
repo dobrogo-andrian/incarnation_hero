@@ -151,7 +151,6 @@ public sealed class RunRecorder
         StartActivity start => ActivityKey(start.Activity),
         Travel => "travel",
         AttemptBreakthrough => "breakthrough",
-        ContinueActivity => before.Activity is { } active ? ActivityKey(active.Activity) : null,
         ChooseEventOption => "event",
         _ => null,
     };

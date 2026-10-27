@@ -111,6 +111,9 @@ public sealed class PlaceDef : ContentDef, IValidatedDef
     /// <summary>Its point on a settlement's local map (D44); wild zones have no local map.</summary>
     public MapPoint? Map { get; set; }
 
+    /// <summary>What the player sees on entering it (D44).</summary>
+    public LocalizedText? Description { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (Density <= 0 || Capacity <= 0)

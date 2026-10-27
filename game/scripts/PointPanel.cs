@@ -1,86 +1,132 @@
 using Core.Content;
-using Core.Loc;
 using Core.Sim;
+using Core.State;
 using Godot;
+using static Widgets;
 
 /// <summary>
-/// What the picked map point offers: a zone's danger and journey with "set out", the current
-/// settlement's entrance, a place's reserve, a shop's offers. Rebuilt from the PlayerView on every
-/// refresh, so it never shows stale numbers.
+/// The centre panel's actions for the picked point (D44): a zone's danger and journey with "set
+/// out", the current settlement's entrance or the current wild zone's places; inside a place,
+/// meditation and refilling its reserve; in the tea house, asking around; in a shop, its offers.
+/// The place itself (name, description) is drawn where the map was. Rebuilt from the PlayerView on
+/// every refresh, with the player's picks kept in <see cref="Choices"/>.
 /// </summary>
 public partial class PointPanel : VBoxContainer
 {
     /// <summary>"Enter the settlement" was pressed on the region map.</summary>
     public event Action? EnterPressed;
 
+    /// <summary>A point was picked from the panel itself (a place of the current wild zone).</summary>
+    public event Action<MapTarget>? TargetPicked;
+
+    private UiContext? _ui;
+    private PlayerView? _view;
+    private MapTarget? _target;
+
     public PointPanel()
     {
-        CustomMinimumSize = new Vector2(340, 0);
         AddThemeConstantOverride("separation", 12);
     }
 
     public void Refresh(UiContext ui, PlayerView view, MapTarget? target)
     {
+        (_ui, _view, _target) = (ui, view, target);
+        Rebuild();
+    }
+
+    /// <summary>Rebuilds from the last view; also after a pick that changes which controls are shown.</summary>
+    private void Rebuild()
+    {
         foreach (var child in GetChildren())
             child.QueueFree();
+        var (ui, view) = (_ui!, _view!);
+        bool free = view.Mode == GameMode.Overworld;
 
-        switch (target)
+        switch (_target)
         {
             case null:
-                AddText(ui.Text("str.ui.select_point"));
+                AddChild(Text(ui.Text("str.ui.select_point")));
                 break;
             case ZoneTarget zone:
-                ShowZone(ui, view, zone.ZoneId);
+                ShowZone(ui, view, zone.ZoneId, free);
                 break;
             case PlaceTarget place when view.Places.FirstOrDefault(p => p.PlaceId == place.PlaceId) is { } here:
-                AddTitle(ui.Text(SimText.Name(place.PlaceId)));
-                AddText(ui.Text(SimText.PlaceText(here)));
+                ShowPlace(ui, here, free);
                 break;
             case ShopTarget shop:
-                AddTitle(ui.Text(SimText.Name(shop.ShopId)));
-                AddText(ui.Lines(view.ShopOffers.Where(o => o.ShopId == shop.ShopId).Select(SimText.OfferText)));
+                ShowShop(ui, view, shop.ShopId, free);
                 break;
             case InquireTarget:
-                AddTitle(ui.Text("str.ui.inquire"));
-                AddText(ui.Text("str.ui.inquire_hint"));
+                AddChild(Duration(ui));
+                AddChild(Button(ui.Text("str.ui.inquire_start"), () => ui.Send(new StartActivity(new InquireActivity(), ui.Choices.ActivityWeeks)), free));
                 break;
         }
     }
 
-    private void ShowZone(UiContext ui, PlayerView view, string zoneId)
+    private void ShowZone(UiContext ui, PlayerView view, string zoneId, bool free)
     {
         if (view.Region.FirstOrDefault(z => z.ZoneId == zoneId) is not { } zone)
             return;
-        AddTitle(ui.Text(SimText.Name(zoneId)));
-        AddText(ui.Text(SimText.RegionZoneText(zone, view)));
-        bool free = view.Mode == Core.State.GameMode.Overworld;
+        AddChild(Title(ui.Name(zoneId)));
+        AddChild(Text(ui.Text(SimText.RegionZoneText(zone, view))));
 
         if (zoneId != view.Zone.ZoneId)
         {
             if (zone.TravelWeeks is not null)
-                AddButton(ui.Text("str.ui.travel"), free, () => ui.Send(new Travel(zoneId)));
+                AddChild(Button(ui.Text("str.ui.travel"), () => ui.Send(new Travel(zoneId)), free));
             return;
         }
         if (ui.Db.Get<ZoneDef>(zoneId).Settlement)
-            AddButton(ui.Text("str.ui.enter_settlement"), true, () => EnterPressed?.Invoke());
-        else
-            AddText(ui.Lines(SimText.PlaceLines(view)));
+        {
+            AddChild(Button(ui.Text("str.ui.enter_settlement"), () => EnterPressed?.Invoke()));
+            return;
+        }
+        AddChild(Text(ui.Text("str.ui.places_here")));
+        foreach (var place in view.Places)
+            AddChild(Button(ui.Name(place.PlaceId), () => TargetPicked?.Invoke(new PlaceTarget(place.PlaceId))));
     }
 
-    private void AddTitle(string text)
+    /// <summary>Meditation in a direction (comprehension also names its subject), and refilling the reserve with stones.</summary>
+    private void ShowPlace(UiContext ui, PlaceView place, bool free)
     {
-        var label = new Label { Text = text };
-        label.AddThemeFontSizeOverride("font_size", 22);
-        AddChild(label);
+        var choices = ui.Choices;
+        AddChild(Text(ui.Text(SimText.PlaceText(place))));
+
+        var directions = ui.Db.All<MeditationDirectionDef>().Select(d => (d.Id, ui.Name(d.Id))).ToList();
+        choices.Direction = Pick(directions, choices.Direction);
+        AddChild(Row(new Label { Text = ui.Text("str.ui.direction") }, Options(directions, choices.Direction, id => { choices.Direction = id; Rebuild(); })));
+
+        string? subject = null;
+        if (choices.Direction is { } directionId && ui.Db.Get<MeditationDirectionDef>(directionId).Studies)
+        {
+            var subjects = StudySubjects(ui).ToList();
+            subject = choices.Subject = Pick(subjects, choices.Subject);
+            AddChild(Row(new Label { Text = ui.Text("str.ui.subject") }, Options(subjects, subject, id => choices.Subject = id)));
+        }
+        AddChild(Duration(ui));
+        AddChild(Button(ui.Text("str.ui.meditate"), () =>
+            ui.Send(new StartActivity(new MeditateActivity(choices.Direction!, place.PlaceId, subject is null ? null : choices.Subject), choices.ActivityWeeks)), free));
+
+        AddChild(new HSeparator());
+        AddChild(Row(
+            new Label { Text = ui.Text("str.ui.stones") },
+            Amount(choices.Stones, 9999, v => choices.Stones = v),
+            Button(ui.Text("str.ui.refill_place"), () => ui.Send(new RefillPlaceWithStones(place.PlaceId, choices.Stones)), free)));
     }
 
-    private void AddText(string text) =>
-        AddChild(new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart });
+    /// <summary>Carried folios first, then every element, which can be sensed without a folio (§6).</summary>
+    private IEnumerable<(string Id, string Text)> StudySubjects(UiContext ui) =>
+        _view!.Items.Where(i => ui.Db.Get<ItemDef>(i.ItemId).Folio is not null).Select(i => (i.ItemId, ui.Name(i.ItemId)))
+            .Concat(ui.Db.All<KnowledgeDef>().Where(k => k.IsElement).Select(k => (k.Id, ui.Name(k.Id))));
 
-    private void AddButton(string text, bool enabled, Action pressed)
+    private void ShowShop(UiContext ui, PlayerView view, string shopId, bool free)
     {
-        var button = new Button { Text = text, Disabled = !enabled };
-        button.Pressed += pressed;
-        AddChild(button);
+        AddChild(Text(ui.Text(SimText.StonesText(view))));
+        foreach (var offer in view.ShopOffers.Where(o => o.ShopId == shopId))
+        {
+            var line = Text(ui.Text(SimText.OfferText(offer)));
+            line.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            AddChild(Row(line, Button(ui.Text("str.ui.buy"), () => ui.Send(new Buy(offer.ItemId)), free)));
+        }
     }
 }

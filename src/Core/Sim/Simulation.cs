@@ -70,8 +70,6 @@ public sealed class Simulation
             Travel c => ExecuteTravel(c),
             AttemptBreakthrough c => ExecuteBreakthrough(c),
             SetActiveMethod c => CultivationSystem.SetActiveMethod(State.Player, _ctx, c.MethodId),
-            ContinueActivity => ExecuteContinue(),
-            CancelActivity => ExecuteCancel(),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
             ChooseEventOption c => EventSystem.Choose(State, _ctx, c.Index),
             UsePill c => ItemSystem.UsePill(State.Player, _ctx, c.ItemId),
@@ -117,18 +115,6 @@ public sealed class Simulation
         return Start(attempt, BreakthroughSystem.Weeks(State.Player, Content, command.VectorId));
     }
 
-    private CommandOutcome ExecuteContinue() =>
-        State.Activity is null ? CommandOutcome.Reject(RejectReasons.NoActivity) : RunActivity();
-
-    private CommandOutcome ExecuteCancel()
-    {
-        if (State.Activity is not { } active)
-            return CommandOutcome.Reject(RejectReasons.NoActivity);
-
-        State.Activity = null;
-        return CommandOutcome.Accept([new ActivityCancelled(active.Activity)]);
-    }
-
     private CommandOutcome ExecuteSetInterruptStops(SetInterruptStops command)
     {
         State.StoppingInterrupts = command.Categories.Distinct().Order().ToList();
@@ -138,11 +124,6 @@ public sealed class Simulation
     private CommandOutcome Start(Activity activity, int? weeks)
     {
         State.Activity = new ActiveActivity { Activity = activity, WeeksLeft = weeks };
-        return RunActivity();
-    }
-
-    private CommandOutcome RunActivity()
-    {
         var events = new List<SimEvent>();
         TimeSystem.RunActivity(State, _ctx, events);
         return CommandOutcome.Accept(events);

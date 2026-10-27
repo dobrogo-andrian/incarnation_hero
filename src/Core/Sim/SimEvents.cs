@@ -10,7 +10,8 @@ public sealed record WeekPassed(int Week, int AgeWeeks) : SimEvent;
 
 public sealed record ActivityFinished(Activity Activity) : SimEvent;
 
-public sealed record ActivityCancelled(Activity Activity) : SimEvent;
+/// <summary>An event or a stopping interrupt ended the activity before it was done (D44); nothing resumes it.</summary>
+public sealed record ActivityInterrupted(Activity Activity) : SimEvent;
 
 /// <summary>The player reached a zone, on the way or at the destination.</summary>
 public sealed record ZoneEntered(string ZoneId) : SimEvent;

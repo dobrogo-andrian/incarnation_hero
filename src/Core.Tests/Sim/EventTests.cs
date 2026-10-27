@@ -102,10 +102,9 @@ public sealed class EventTests
     }
 
     [Fact]
-    public void NodeWithoutOptions_ClosesWithContinue_AndKeepsTheActivity()
+    public void NodeWithoutOptions_ClosesWithContinue()
     {
         var sim = Open();
-        sim.State.Activity = new ActiveActivity { Activity = new WaitActivity(), WeeksLeft = 5 };
         sim.Execute(new ChooseEventOption(Trade));
 
         var choices = SimText.EventChoices(sim.View.Event!);
@@ -117,8 +116,6 @@ public sealed class EventTests
         Assert.Equal([new EventEnded("evt.test.trial")], outcome.Events);
         Assert.Equal(GameMode.Overworld, sim.State.Mode);
         Assert.Null(sim.State.Event);
-        Assert.Equal(5, sim.State.Activity.WeeksLeft);
-        Assert.True(sim.Execute(new ContinueActivity()).Accepted);
     }
 
     [Fact]
@@ -135,7 +132,7 @@ public sealed class EventTests
             Localizer.FromContent(Content).Resolve(SimText.EventChoices(sim.View.Event!)[Expensive].Text));
         Assert.Equal(RejectReasons.OptionUnavailable, sim.Execute(new ChooseEventOption(Expensive)).RejectReason);
         Assert.Equal(RejectReasons.InvalidOption, sim.Execute(new ChooseEventOption(99)).RejectReason);
-        Assert.Equal(RejectReasons.WrongMode, sim.Execute(new ContinueActivity()).RejectReason);
+        Assert.Equal(RejectReasons.WrongMode, sim.Execute(TestContent.Wait(1)).RejectReason);
     }
 
     [Fact]
@@ -258,26 +255,26 @@ public sealed class EventTests
     }
 
     [Fact]
-    public void WeeklyRoll_OpensAnEvent_ThatStopsTimeUntilItCloses()
+    public void WeeklyRoll_OpensAnEvent_ThatEndsTheActivityAndStopsTimeUntilItCloses()
     {
         var sim = Simulation.NewGame(TestContent.Repo, 5);
-        Assert.True(sim.Execute(new Travel("zone.bamboo_grove")).Accepted);
-        while (sim.State.Event is not null || sim.State.Activity is not null)
-            sim.Execute(TestContent.Proceed(sim.View));
+        Assert.True(Script.Run(sim, new Travel("zone.bamboo_grove")));
 
-        var outcome = sim.Execute(TestContent.Wait(null));
-        while (sim.State.Event is null)
-            outcome = sim.Execute(new ContinueActivity());
+        var rest = TestContent.Wait(null);
+        var outcome = sim.Execute(rest);
+        while (sim.State.Event is null && sim.State.Mode == GameMode.Overworld)
+            outcome = sim.Execute(rest);
 
-        var started = Assert.IsType<EventStarted>(outcome.Events[^1]);
+        var started = outcome.Events.OfType<EventStarted>().Last();
         Assert.Contains(EventContexts.Rest, TestContent.Repo.Get<EventDef>(started.EventId).Contexts);
         Assert.Equal(GameMode.EventDialog, sim.State.Mode);
-        Assert.NotNull(sim.State.Activity);
+        Assert.Equal(new ActivityInterrupted(new WaitActivity()), outcome.Events[^1]);
+        Assert.Null(sim.State.Activity);
 
         while (sim.State.Event is not null)
-            sim.Execute(TestContent.Proceed(sim.View));
+            sim.Execute(TestContent.Proceed(sim.View, rest));
         Assert.Equal(GameMode.Overworld, sim.State.Mode);
-        Assert.True(sim.Execute(new ContinueActivity()).Accepted);
+        Assert.Null(sim.State.Activity);
     }
 
     [Fact]

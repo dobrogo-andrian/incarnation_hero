@@ -40,9 +40,6 @@ public sealed class RandomBot(ContentDb content, Xoshiro256StarStar rng) : IBot
     private List<Command> OverworldCommands(PlayerView view)
     {
         var commands = new List<Command>();
-        if (view.Activity is not null)
-            commands.Add(new ContinueActivity());
-
         commands.Add(Start(new WaitActivity()));
         commands.Add(Start(new InquireActivity()));
         var subjects = view.Items.Select(i => i.ItemId)

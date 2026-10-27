@@ -77,7 +77,7 @@ public sealed class CultivationTests
         var outcome = sim.Execute(TestContent.Wait(20));
 
         // 2 × 0.9^7 ≈ 0.96 is under the minimum of 1.
-        Assert.Equal(new BuffExhausted(BuffKind.CombatInsight), outcome.Events[^1]);
+        Assert.Equal([new BuffExhausted(BuffKind.CombatInsight), new ActivityInterrupted(new WaitActivity())], outcome.Events.TakeLast(2));
         Assert.Equal(7, sim.State.Week);
         Assert.Empty(sim.State.Player.Buffs);
     }

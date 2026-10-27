@@ -84,20 +84,14 @@ public class SimulationTests
     }
 
     [Fact]
-    public void StoppingInterrupt_LeavesActivityWithRemainder_AndContinueFinishesIt()
+    public void StoppingInterrupt_EndsTheActivity()
     {
         var sim = NearFiveYearWarning(weeksBefore: 2);
 
-        var first = sim.Execute(TestContent.Wait(10));
+        var outcome = sim.Execute(TestContent.Wait(10));
 
-        Assert.Equal(new LifeEndApproaching(5), first.Events[^1]);
+        Assert.Equal([new LifeEndApproaching(5), new ActivityInterrupted(new WaitActivity())], outcome.Events.TakeLast(2));
         Assert.Equal(2, sim.State.Week);
-        Assert.Equal(8, sim.State.Activity!.WeeksLeft);
-
-        var second = sim.Execute(new ContinueActivity());
-
-        Assert.Equal(new ActivityFinished(new WaitActivity()), second.Events[^1]);
-        Assert.Equal(10, sim.State.Week);
         Assert.Null(sim.State.Activity);
     }
 
@@ -125,35 +119,13 @@ public class SimulationTests
     }
 
     [Fact]
-    public void ContinueAndCancel_WithoutActivity_AreRejected()
-    {
-        var sim = NewGame();
-
-        Assert.Equal(RejectReasons.NoActivity, sim.Execute(new ContinueActivity()).RejectReason);
-        Assert.Equal(RejectReasons.NoActivity, sim.Execute(new CancelActivity()).RejectReason);
-    }
-
-    [Fact]
-    public void Cancel_DropsInterruptedActivity()
-    {
-        var sim = NearFiveYearWarning(weeksBefore: 1);
-        sim.Execute(TestContent.Wait(10));
-
-        var outcome = sim.Execute(new CancelActivity());
-
-        Assert.Equal([new ActivityCancelled(new WaitActivity())], outcome.Events);
-        Assert.Null(sim.State.Activity);
-        Assert.Equal(1, sim.State.Week);
-    }
-
-    [Fact]
     public void OpenEndedWait_EndsInNaturalDeathInsideTheWindow()
     {
         var sim = NewGame(seed: 3);
 
         var outcome = sim.Execute(TestContent.Wait(null));
         while (sim.State.Mode != GameMode.RunEnd)
-            outcome = sim.Execute(TestContent.Proceed(sim.View));
+            outcome = sim.Execute(TestContent.Proceed(sim.View, TestContent.Wait(null)));
 
         Assert.Equal(new RunEnded(RunEndCause.OldAge), outcome.Events[^1]);
         Assert.Equal(RunEndCause.OldAge, sim.State.EndCause);
@@ -175,7 +147,6 @@ public class SimulationTests
         Assert.Equal(sim.State.Player.AgeWeeks, view.AgeWeeks);
         Assert.Equal(60 * 52, view.LifespanWeeks);
         Assert.Equal(GameMode.Overworld, view.Mode);
-        Assert.Equal(new ActivityView(new WaitActivity(), 3), view.Activity);
         Assert.Null(view.EndCause);
         Assert.Equal(new TrackView("qi", 0, 0, 100, null, null), Assert.Single(view.Tracks));
         Assert.Empty(view.Buffs);

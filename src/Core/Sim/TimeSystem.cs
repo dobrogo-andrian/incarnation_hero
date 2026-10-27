@@ -7,23 +7,36 @@ public static class TimeSystem
 {
     /// <summary>
     /// Advances weeks until the activity ends, an interrupt of a stopping category fires, an event
-    /// opens or the run ends. Non-stopping interrupts are still reported in <paramref name="events"/>.
+    /// opens or the run ends. An interrupt or event ends the activity for good (D44): the player
+    /// decides anew what to do. Seclusion runs to its resolution, since no event comes during it
+    /// and stopping would throw away its weeks. Non-stopping interrupts are still reported in
+    /// <paramref name="events"/>.
     /// </summary>
     public static void RunActivity(GameState state, SimContext ctx, List<SimEvent> events)
     {
-        while (true)
+        while (state.Activity is { } active && state.Mode == GameMode.Overworld)
         {
             int weekStart = events.Count;
             AdvanceWeek(state, ctx, events);
 
-            if (state.Mode != GameMode.Overworld || state.Activity is null)
-                return;
-            for (int i = weekStart; i < events.Count; i++)
+            bool stopped = state.Mode == GameMode.EventDialog
+                || (active.Activity is not BreakthroughActivity && StopsAt(state, events, weekStart));
+            if (stopped && state.Activity is not null)
             {
-                if (events[i] is InterruptEvent interrupt && state.StoppingInterrupts.Contains(interrupt.Category))
-                    return;
+                state.Activity = null;
+                events.Add(new ActivityInterrupted(active.Activity));
             }
         }
+    }
+
+    private static bool StopsAt(GameState state, List<SimEvent> events, int weekStart)
+    {
+        for (int i = weekStart; i < events.Count; i++)
+        {
+            if (events[i] is InterruptEvent interrupt && state.StoppingInterrupts.Contains(interrupt.Category))
+                return true;
+        }
+        return false;
     }
 
     /// <summary>
