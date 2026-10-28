@@ -45,3 +45,9 @@ __pycache__/
 
 # Claude Code worktrees of background sessions
 .claude/worktrees/
+
+# Balance analysis (tech 6.2): venv, generated bot runs and rendered reports
+analysis/.venv/
+analysis/data/
+analysis/out/
+.ipynb_checkpoints/

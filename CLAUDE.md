@@ -42,7 +42,11 @@ dotnet test IncarnationHero.sln
 dotnet test src/Core.Tests --filter "FullyQualifiedName~RngTests"   # single test class/method
 dotnet run --project src/Sim.Cli -- <args>
 powershell -File tools/export-windows.ps1 -Godot <path to Godot .NET exe>   # release exe + zip in build/ (D51)
+py -3.12 -m venv analysis/.venv && analysis/.venv/Scripts/pip install -r analysis/requirements.txt   # once
+analysis/.venv/Scripts/jupyter nbconvert --to html --execute --output-dir analysis/out analysis/01_bots.ipynb   # or open in Jupyter
 ```
+
+Notebooks run Sim.Cli themselves (`analysis/simruns.py`, 1000 runs per bot, ≈ 2 min) and cache the JSONL in `analysis/data/` until Core, Sim.Cli or content changes. Use Python 3.12: the default 3.15 has no pandas wheels. Notebooks are committed without outputs.
 
 The game reads content embedded in Core (`ContentFiles.Embedded`), so a YAML change shows up in Godot only after a build, which the editor runs before every play. Export templates for 4.7.2 .NET must be installed in the editor.
 
@@ -61,7 +65,7 @@ The game reads content embedded in Core (`ContentFiles.Embedded`), so a YAML cha
 /build               export output, git-ignored
 /content             YAML content and balance; folder layout: tech 3.2
 /loc                 (planned) localization tables (uk, en, zh) as CSV
-/analysis            (planned) Python notebooks
+/analysis            Python notebooks on Sim.Cli bot runs (tech 6.2), shared loader simruns.py
 /docs                design docs: README.md (index), progress.md, gdd/, tech/
 ```
 
