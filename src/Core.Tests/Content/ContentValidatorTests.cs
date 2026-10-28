@@ -48,6 +48,24 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void RankedStatWithoutOverflow_HasNoBreakthroughs()
+    {
+        var errors = Validate("""
+            - id: stat_progress.test
+              ranks: [stat_rank.test.1, stat_rank.test.2]
+            - id: stat_rank.test.1
+              name: { uk: "Тест" }
+              pool: 5
+              breakthrough: 2
+            - id: stat_rank.test.2
+              name: { uk: "Тест" }
+              pool: 5
+            """);
+
+        Assert.Contains("ranks just follow the scale", Assert.Single(errors).Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MissingReference_IsReportedWithSourceAndId()
     {
         var errors = Validate("""

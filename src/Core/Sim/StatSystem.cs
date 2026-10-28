@@ -9,7 +9,8 @@ namespace Core.Sim;
 /// position on its rank's scale: above the full scale it is overflow, which breaks through to the
 /// next rank when there is enough; below the rank's base it is a deficit (for stats that take it),
 /// which collapses the stat to the rank below when there is enough. Both fade back to the scale
-/// week by week.
+/// week by week. A ranked stat without overflow (D50) just moves along its scales, changing rank
+/// as it crosses them.
 /// </summary>
 public static class StatSystem
 {
@@ -25,6 +26,8 @@ public static class StatSystem
         }
 
         var progress = ctx.Content.Get<StatProgressDef>(progressId);
+        if (progress.OverflowDecayPerWeek is null)
+            return Move(value, progress, ctx.Content, amount, events);
         var s = StatProgress.Of(value, progress, ctx.Content);
         double position = value.Base + value.Overflow - value.Deficit;
         double floor = s.Collapse is null ? s.RankBase : double.NegativeInfinity;   // no deficit where there is nowhere to fall
@@ -48,6 +51,21 @@ public static class StatSystem
         return StateNumbers.Round(after - position);
     }
 
+    /// <summary>A stat without overflow moves within its whole range; its rank is the scale it lands on.</summary>
+    private static double Move(StatValue value, StatProgressDef progress, ContentDb db, double amount, List<SimEvent> events)
+    {
+        double before = value.Base;
+        double top = progress.Ranks.Sum(r => db.Get<StatRankDef>(r).Pool);
+        value.Base = StateNumbers.Round(Math.Clamp(before + amount, 0, top));
+        int rank = StatProgress.RankFor(value.Base, progress, db);
+        if (rank != value.Rank)
+        {
+            value.Rank = rank;
+            events.Add(new StatRankChanged(value.StatId, progress.Ranks[rank]));
+        }
+        return StateNumbers.Round(value.Base - before);
+    }
+
     /// <summary>
     /// World phase: erosion takes its points (toxins and injuries wearing purity away), then overflow
     /// and deficit fade by their shares; a crumb too small to keep is dropped.
@@ -63,7 +81,7 @@ public static class StatSystem
             if (def.Progress is not { } progressId)
                 continue;
             var progress = ctx.Content.Get<StatProgressDef>(progressId);
-            value.Overflow = Fade(value.Overflow, progress.OverflowDecayPerWeek);
+            value.Overflow = Fade(value.Overflow, progress.OverflowDecayPerWeek ?? 0);
             value.Deficit = Fade(value.Deficit, progress.DeficitHealPerWeek ?? 0);
         }
     }

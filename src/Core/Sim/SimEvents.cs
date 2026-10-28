@@ -90,6 +90,9 @@ public sealed record StatRankUp(string StatId, string RankId) : SimEvent;
 /// <summary>A ranked stat's deficit collapsed it to <paramref name="RankId"/> (D49).</summary>
 public sealed record StatRankDown(string StatId, string RankId) : SimEvent;
 
+/// <summary>A ranked stat without breakthroughs crossed onto the scale of <paramref name="RankId"/>, up or down (D50).</summary>
+public sealed record StatRankChanged(string StatId, string RankId) : SimEvent;
+
 /// <summary>A resource's current amount changed by <paramref name="Amount"/>.</summary>
 public sealed record ResourceChanged(string ResourceId, double Amount) : SimEvent;
 

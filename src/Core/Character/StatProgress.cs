@@ -7,7 +7,8 @@ namespace Core.Character;
 /// Where a ranked stat stands within its rank (D48, D49), for the rules and the view alike:
 /// <see cref="Filled"/> of <see cref="Pool"/> on the scale, <see cref="Overflow"/> above it towards
 /// <see cref="Breakthrough"/> (null on the last rank) and <see cref="Deficit"/> below it towards
-/// <see cref="Collapse"/> (null on the first rank or a stat without a deficit).
+/// <see cref="Collapse"/> (null on the first rank or a stat without a deficit). <see cref="DecayPerWeek"/>
+/// is null for a stat without overflow (D50), whose rank just follows the scale.
 /// </summary>
 public sealed record StatStanding(
     string RankId,
@@ -18,7 +19,7 @@ public sealed record StatStanding(
     double Filled,
     double Overflow,
     double? Breakthrough,
-    double DecayPerWeek,
+    double? DecayPerWeek,
     double Deficit,
     double? Collapse,
     double? HealPerWeek)

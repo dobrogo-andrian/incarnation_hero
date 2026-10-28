@@ -235,6 +235,12 @@
 - id: str.view.stat_standing
   text: { uk: "{rank}: шкала {filled} / {pool}, надлишок {overflow} / {needed}" }
 
+- id: str.view.stat_scale
+  text: { uk: "{rank}: шкала {filled} / {pool}" }
+
+- id: str.why.stat_scale_only
+  text: { uk: "Очки заповнюють шкалу й одразу підвищують характеристику. Повна шкала сама переходить на наступний ступінь, без надлишку й прориву; втрати так само повертають на нижчий." }
+
 - id: str.view.stat_standing_top
   text: { uk: "{rank} (найвищий): шкала {filled} / {pool}, надлишок {overflow}" }
 
@@ -552,6 +558,9 @@
 
 - id: str.event.stat_changed
   text: { uk: "{stat}: {amount}." }
+
+- id: str.event.stat_rank_changed
+  text: { uk: "{stat}: ступінь — {rank}." }
 
 - id: str.event.stat_rank_up
   text: { uk: "{stat}: прорив, новий ступінь — {rank}." }

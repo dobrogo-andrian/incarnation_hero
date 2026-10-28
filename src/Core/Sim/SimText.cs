@@ -35,6 +35,8 @@ public static class SimText
     private static readonly LocKey RankedBodyStatLine = new("str.view.body_stat_rank");
     private static readonly LocKey StandingLine = new("str.view.stat_standing");
     private static readonly LocKey StandingTopLine = new("str.view.stat_standing_top");
+    private static readonly LocKey ScaleOnlyLine = new("str.view.stat_scale");
+    private static readonly LocKey WhyScaleOnly = new("str.why.stat_scale_only");
     private static readonly LocKey WhyScale = new("str.why.stat_scale");
     private static readonly LocKey WhyOverflow = new("str.why.stat_overflow");
     private static readonly LocKey WhyStatBreakthrough = new("str.why.stat_breakthrough");
@@ -98,6 +100,7 @@ public static class SimText
     private static readonly LocKey StatChangedLine = new("str.event.stat_changed");
     private static readonly LocKey StatRankUpLine = new("str.event.stat_rank_up");
     private static readonly LocKey StatRankDownLine = new("str.event.stat_rank_down");
+    private static readonly LocKey StatRankChangedLine = new("str.event.stat_rank_changed");
     private static readonly LocKey ResourceChangedLine = new("str.event.resource_changed");
     private static readonly LocKey ItemsChangedLine = new("str.event.items_changed");
     private static readonly LocKey StonesChangedLine = new("str.event.stones_changed");
@@ -275,7 +278,7 @@ public static class SimText
         return lines;
     }
 
-    private static LocKey StandingText(StatStanding s) => (s.Breakthrough is null ? StandingTopLine : StandingLine) with
+    private static LocKey StandingText(StatStanding s) => (s.DecayPerWeek is null ? ScaleOnlyLine : s.Breakthrough is null ? StandingTopLine : StandingLine) with
     {
         Args =
         [
@@ -291,7 +294,9 @@ public static class SimText
     public static IReadOnlyList<LocKey> StandingHelp(StatView stat)
     {
         var s = stat.Standing!;
-        var lines = new List<LocKey> { WhyScale, WhyOverflow with { Args = [new("decay", Number(s.DecayPerWeek * 100))] } };
+        if (s.DecayPerWeek is not { } decay)
+            return [WhyScaleOnly];
+        var lines = new List<LocKey> { WhyScale, WhyOverflow with { Args = [new("decay", Number(decay * 100))] } };
         if (s.Breakthrough is { } needed)
             lines.Add(WhyStatBreakthrough with { Args = [new("needed", Number(needed))] });
         if (s.HealPerWeek is { } heal)
@@ -525,6 +530,7 @@ public static class SimText
         StatChanged s => StatChangedLine with { Args = [new("stat", Name(s.StatId)), new("amount", Signed(s.Amount))] },
         StatRankUp r => StatRankUpLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
         StatRankDown r => StatRankDownLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
+        StatRankChanged r => StatRankChangedLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
         ResourceChanged r => ResourceChangedLine with { Args = [new("resource", Name(r.ResourceId)), new("amount", Signed(r.Amount))] },
         ItemsChanged i => ItemsChangedLine with { Args = [new("item", Name(i.ItemId)), new("amount", Signed(i.Count))] },
         StonesChanged s => StonesChangedLine with { Args = [new("amount", Signed(s.Amount))] },

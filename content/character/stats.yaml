@@ -54,6 +54,36 @@
   name: { uk: "Сприйняття" }
   start_value: 0
   diminish_scale: 10            # gains shrink as it grows: × 1 / (1 + value / 10) (§2.1)
+  progress: stat_progress.perception
+
+# Ranked perception (D50): scales without overflow or breakthroughs, the rank just follows the value.
+# 20 shows event chances exactly (config.events), so rank IV ends there. Draft numbers and names.
+- id: stat_progress.perception
+  ranks: [stat_rank.perception.1, stat_rank.perception.2, stat_rank.perception.3, stat_rank.perception.4, stat_rank.perception.5, stat_rank.perception.6]
+
+- id: stat_rank.perception.1
+  name: { uk: "Ступінь I" }
+  pool: 2
+
+- id: stat_rank.perception.2
+  name: { uk: "Ступінь II" }
+  pool: 3
+
+- id: stat_rank.perception.3
+  name: { uk: "Ступінь III" }
+  pool: 5
+
+- id: stat_rank.perception.4
+  name: { uk: "Ступінь IV" }
+  pool: 10
+
+- id: stat_rank.perception.5
+  name: { uk: "Ступінь V" }
+  pool: 20
+
+- id: stat_rank.perception.6
+  name: { uk: "Ступінь VI" }
+  pool: 40
 
 # Foundation (§4.1): purity grows by purification and widens the qi pool. Knowledge comes with folios.
 # Purity is ranked with a mirrored scale (D49): toxins and injuries wear it away each week, and losses

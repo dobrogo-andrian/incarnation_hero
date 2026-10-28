@@ -50,6 +50,8 @@ public sealed class StatDef : ContentDef, IValidatedDef
 /// With <see cref="DeficitHealPerWeek"/> the scale mirrors downwards (D49): losses past the rank's
 /// base are a deficit, which heals the same way; enough deficit collapses the stat to the rank below,
 /// whose scale is then full, and the deficit is gone. Without it a rank's base is a floor.
+/// Without <see cref="OverflowDecayPerWeek"/> there is neither overflow nor breakthroughs (D50): the
+/// stat just moves along the scales, and its rank is whichever scale it stands on.
 /// </summary>
 public sealed class StatProgressDef : ContentDef, IValidatedDef
 {
@@ -57,8 +59,8 @@ public sealed class StatProgressDef : ContentDef, IValidatedDef
     [ContentRef(typeof(StatRankDef))]
     public List<string> Ranks { get; set; } = [];
 
-    /// <summary>Share of the overflow lost each week, so the more there is, the faster it goes.</summary>
-    public double OverflowDecayPerWeek { get; set; }
+    /// <summary>Share of the overflow lost each week, so the more there is, the faster it goes; null for no overflow.</summary>
+    public double? OverflowDecayPerWeek { get; set; }
 
     /// <summary>Share of the deficit healed each week; null when losses stop at the rank's base.</summary>
     public double? DeficitHealPerWeek { get; set; }
@@ -74,6 +76,12 @@ public sealed class StatProgressDef : ContentDef, IValidatedDef
         var ranks = Ranks.Select(db.Get<StatRankDef>).ToList();
         if (ranks.Any(r => r.Pool <= 0))
             yield return "every rank needs a positive pool.";
+        if (OverflowDecayPerWeek is null)
+        {
+            if (DeficitHealPerWeek is not null || ranks.Any(r => r.Breakthrough is not null || r.Collapse is not null))
+                yield return "without overflow_decay_per_week ranks just follow the scale: no breakthrough, collapse or deficit_heal_per_week.";
+            yield break;
+        }
         if (ranks.SkipLast(1).Any(r => r.Breakthrough is not > 0))
             yield return "every rank but the last needs a positive breakthrough.";
         if (ranks[^1].Breakthrough is not null)

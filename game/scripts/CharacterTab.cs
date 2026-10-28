@@ -29,13 +29,15 @@ public partial class CharacterTab : VBoxContainer, IViewPart
     }
 
     /// <summary>
-    /// The scale takes most of the row; the overflow bar to its right fills towards the breakthrough,
+    /// A stat without overflow (D50) has its scale alone. Otherwise the scale takes most of the row; the overflow bar to its right fills towards the breakthrough,
     /// and for a stat with a deficit (D49) the deficit bar to its left fills towards the collapse; on the
     /// first rank, with nowhere to fall, it stays empty.
     /// </summary>
     private static HBoxContainer Bars(string tooltip, StatStanding standing)
     {
         var scale = Bar(standing.Pool, standing.Filled, ScaleColor, tooltip);
+        if (standing.DecayPerWeek is null)
+            return Row(scale);
         scale.SizeFlagsStretchRatio = 3;
         var overflow = Bar(standing.Breakthrough ?? Math.Max(standing.Overflow, 1), standing.Overflow, OverflowColor, tooltip);
         if (standing.HealPerWeek is null)

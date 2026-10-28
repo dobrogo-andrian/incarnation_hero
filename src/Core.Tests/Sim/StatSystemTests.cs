@@ -6,7 +6,8 @@ namespace Core.Tests.Sim;
 
 /// <summary>
 /// Repo ranked body stats (D48): a fresh character has Might 10 at rank 1 (pool 12, breakthrough 2),
-/// rank 2 holds 8 more and needs 3; overflow fades 5% of itself a week. Perception is a plain stat.
+/// rank 2 holds 8 more and needs 3; overflow fades 5% of itself a week. Perception (D50) has scales
+/// 2, 3, 5, 10, 20, 40 without overflow.
 /// Purity (D49) starts at 0 on rank 1 (pool 20); rank 2 (base 20, pool 30) collapses at deficit 6,
 /// which heals 5% a week; toxins erode 0.004 a point a week, internal injuries 0.004, body ones 0.001.
 /// </summary>
@@ -14,6 +15,7 @@ public sealed class StatSystemTests
 {
     private const string Might = "stat.might";
     private const string Purity = "stat.purity";
+    private const string Perception = "stat.perception";
 
     private static Simulation NewGame() => Simulation.NewGame(TestContent.Calm, 1);
 
@@ -110,15 +112,26 @@ public sealed class StatSystemTests
     }
 
     [Fact]
-    public void PlainStat_JustMoves_AndStopsAtZero()
+    public void ScaleOnlyStat_ChangesRankAsItCrossesScales_WithoutOverflow_AndStopsAtBothEnds()
     {
         var sim = NewGame();
 
-        Change(sim, "stat.perception", 3);
-        Change(sim, "stat.perception", -5);
+        Assert.Empty(Change(sim, Perception, 2));
+        Assert.Equal((2.0, 0), (Stat(sim, Perception).Base, Stat(sim, Perception).Rank));
 
-        Assert.Equal(0, Stat(sim, "stat.perception").Base);
-        Assert.Null(sim.View.Stats.Single(s => s.Stat.Id == "stat.perception").Standing);
+        Assert.Equal(new StatRankChanged(Perception, "stat_rank.perception.3"), Assert.Single(Change(sim, Perception, 4)));
+        var perception = Stat(sim, Perception);
+        Assert.Equal((6.0, 0.0, 2), (perception.Base, perception.Overflow, perception.Rank));
+        Assert.Equal(6, sim.Rules.Value(sim.State.Player, Perception));
+        var standing = sim.View.Stats.Single(s => s.Stat.Id == Perception).Standing!;
+        Assert.Equal((5.0, 5.0, 1.0), (standing.RankBase, standing.Pool, standing.Filled));
+        Assert.Null(standing.DecayPerWeek);
+
+        Assert.Equal(new StatRankChanged(Perception, "stat_rank.perception.1"), Assert.Single(Change(sim, Perception, -10)));
+        Assert.Equal((0.0, 0), (Stat(sim, Perception).Base, Stat(sim, Perception).Rank));
+
+        Change(sim, Perception, 1000);
+        Assert.Equal((80.0, 5), (Stat(sim, Perception).Base, Stat(sim, Perception).Rank));
     }
 
     [Fact]

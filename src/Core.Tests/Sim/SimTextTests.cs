@@ -34,6 +34,7 @@ public sealed class SimTextTests
                 "Сила меридіан: 10 (Ємність 10, Потік 10)",
                 "Ступінь I: шкала 10 / 12, надлишок 0 / 2",
                 "Сприйняття: 0",
+                "Ступінь I: шкала 0 / 2",
                 "Чистота: 0",
                 "Каламутне тіло: шкала 0 / 20, надлишок 0 / 2",
                 "Здоров'я: 100 / 100",
@@ -80,9 +81,9 @@ public sealed class SimTextTests
         var perception = sim.View.Stats.Single(s => s.Stat.Id == "stat.perception");
 
         Assert.Equal("Чистота: Прояснена кров", Loc.Resolve(SimText.StatTitle(purity).Text));
-        Assert.Equal("Сприйняття: 0", Loc.Resolve(SimText.StatTitle(perception).Text));
+        Assert.Equal("Сприйняття: Ступінь I", Loc.Resolve(SimText.StatTitle(perception).Text));
         Assert.Equal(["Прояснена кров: шкала 3 / 30, надлишок 0 / 4", "Дефіцит: 1.5 / 6"], SimText.StandingLines(purity).Select(Loc.Resolve));
-        Assert.Empty(SimText.StandingLines(perception));
+        Assert.Equal(["Ступінь I: шкала 0 / 2"], SimText.StandingLines(perception).Select(Loc.Resolve));
     }
 
     [Fact]
