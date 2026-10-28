@@ -49,9 +49,8 @@ public partial class Main : Control
 
     public override void _Ready()
     {
-        // Dev build: content lives next to game/, not inside it (packaging is a stage 5 task).
-        string contentDir = ProjectSettings.GlobalizePath("res://").PathJoin("../content").SimplifyPath();
-        var loaded = ContentLoader.Load(ContentFiles.FromDirectory(contentDir));
+        // The editor run and the exported game read the same content, embedded in Core at build time.
+        var loaded = ContentLoader.Load(ContentFiles.Embedded());
         var errors = loaded.Errors.Concat(ContentValidator.Validate(loaded.Db)).ToList();
         var loc = Localizer.FromContent(loaded.Db);
         if (errors.Count > 0)

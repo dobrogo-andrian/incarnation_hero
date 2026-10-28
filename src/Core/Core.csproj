@@ -6,8 +6,18 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- The Godot export builds referenced projects with its own configuration name. -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'ExportRelease' ">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
+  </ItemGroup>
+
+  <!-- The shipped content travels inside Core (ContentFiles.Embedded); any YAML change rebuilds it. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\content\**\*.yaml" LogicalName="content/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

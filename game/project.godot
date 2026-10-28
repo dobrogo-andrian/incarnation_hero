@@ -10,8 +10,11 @@ config_version=5
 
 [application]
 
-config/name="incarnation_hero"
+config/name="Incarnation Hero"
+config/version="0.1.0"
 run/main_scene="res://scenes/main.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="IncarnationHero"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 

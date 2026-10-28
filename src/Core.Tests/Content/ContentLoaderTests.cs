@@ -143,4 +143,13 @@ public sealed class ContentLoaderTests
         Assert.True(result.Db.TryGet<CultivationVectorDef>("vector.qi", out var qi));
         Assert.NotEmpty(qi.Stages);
     }
+
+    [Fact]
+    public void EmbeddedContent_MatchesRepoContent()
+    {
+        var embedded = ContentFiles.Embedded();
+
+        Assert.NotEmpty(embedded);
+        Assert.Equal(ContentFiles.FromDirectory(RepoPaths.Content), embedded);
+    }
 }

@@ -41,7 +41,10 @@ dotnet build IncarnationHero.sln
 dotnet test IncarnationHero.sln
 dotnet test src/Core.Tests --filter "FullyQualifiedName~RngTests"   # single test class/method
 dotnet run --project src/Sim.Cli -- <args>
+powershell -File tools/export-windows.ps1 -Godot <path to Godot .NET exe>   # release exe + zip in build/ (D51)
 ```
+
+The game reads content embedded in Core (`ContentFiles.Embedded`), so a YAML change shows up in Godot only after a build, which the editor runs before every play. Export templates for 4.7.2 .NET must be installed in the editor.
 
 `IncarnationHero.sln` (root) contains all projects. `game/incarnation_hero.sln` is Godot's own solution, which the editor uses to build. Leave it alone: the Godot project already pulls in Core through `ProjectReference`. The Godot project only has `Debug`/`ExportDebug`/`ExportRelease` configurations, so the root solution maps `Release` to `Debug` for it.
 
@@ -54,6 +57,8 @@ dotnet run --project src/Sim.Cli -- <args>
 /src/Sim.Cli.Tests   xUnit for bots, bot runs and bot golden tests
 /src/Tools.Validate  (planned) content validator CLI, may become a Sim.Cli subcommand
 /game                Godot project: UI, combat scene, input, audio only
+/tools               build scripts (Windows export)
+/build               export output, git-ignored
 /content             YAML content and balance; folder layout: tech 3.2
 /loc                 (planned) localization tables (uk, en, zh) as CSV
 /analysis            (planned) Python notebooks
