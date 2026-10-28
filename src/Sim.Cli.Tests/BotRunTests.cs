@@ -80,9 +80,9 @@ public sealed class BotRunTests
     /// update the hash only deliberately.
     /// </summary>
     [Theory]
-    [InlineData("cautious", "f52922c84ccee89fd47128e7bb1012641deb7c948b2efa909a770aa940317ee0")]
-    [InlineData("fighter", "9e20181f4f7cb5f303502da4e37353e129602280eb4e2237a3cb90473ef63f80")]
-    [InlineData("random", "3ebe35a546094bde0e61ef83a29399706b577ae9c085af00c67eff3996257eeb")]
+    [InlineData("cautious", "627667d369050380d8be7e5ce7f3bf978ac3d358ca308fe58cf945e09b8f54d3")]
+    [InlineData("fighter", "281d9aadd98f807e5d685fc352036a510b1359867ff4e37d4175e3ffaff35140")]
+    [InlineData("random", "e288f0236bfd97ae29c36fed9a4eee40cd170f8f13f26d2d93a351f85cffb2bd")]
     public void Golden_Seed42(string bot, string expectedHash)
     {
         var (_, sim) = BotRunner.Play(Repo, bot, 42);

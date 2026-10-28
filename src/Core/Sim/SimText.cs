@@ -31,6 +31,17 @@ public static class SimText
     private static readonly LocKey StatLine = new("str.view.stat");
     private static readonly LocKey BodyStatLine = new("str.view.body_stat");
     private static readonly LocKey AspectPart = new("str.view.aspect");
+    private static readonly LocKey RankedStatLine = new("str.view.stat_rank");
+    private static readonly LocKey RankedBodyStatLine = new("str.view.body_stat_rank");
+    private static readonly LocKey StandingLine = new("str.view.stat_standing");
+    private static readonly LocKey StandingTopLine = new("str.view.stat_standing_top");
+    private static readonly LocKey WhyScale = new("str.why.stat_scale");
+    private static readonly LocKey WhyOverflow = new("str.why.stat_overflow");
+    private static readonly LocKey WhyStatBreakthrough = new("str.why.stat_breakthrough");
+    private static readonly LocKey DeficitLine = new("str.view.stat_deficit");
+    private static readonly LocKey WhyDeficit = new("str.why.stat_deficit");
+    private static readonly LocKey WhyCollapse = new("str.why.stat_collapse");
+    private static readonly LocKey WhyErosion = new("str.why.stat_erosion");
     private static readonly LocKey ResourceLine = new("str.view.resource");
     private static readonly LocKey InjuryLine = new("str.view.injury");
     private static readonly LocKey ZoneLine = new("str.view.zone");
@@ -44,7 +55,6 @@ public static class SimText
     private static readonly LocKey PillLine = new("str.view.pill");
     private static readonly LocKey OfferLine = new("str.view.offer");
     private static readonly LocKey FoundationLine = new("str.view.foundation");
-    private static readonly LocKey InjuredFoundationLine = new("str.view.foundation_injured");
     private static readonly LocKey KnowledgeLine = new("str.view.knowledge");
     private static readonly LocKey MeditateStudy = new("str.activity.meditate_study");
     private static readonly LocKey LastQualityLine = new("str.view.last_breakthrough");
@@ -86,6 +96,8 @@ public static class SimText
     private static readonly LocKey Healed = new("str.event.injury_healed");
     private static readonly LocKey EventOpened = new("str.event.event_started");
     private static readonly LocKey StatChangedLine = new("str.event.stat_changed");
+    private static readonly LocKey StatRankUpLine = new("str.event.stat_rank_up");
+    private static readonly LocKey StatRankDownLine = new("str.event.stat_rank_down");
     private static readonly LocKey ResourceChangedLine = new("str.event.resource_changed");
     private static readonly LocKey ItemsChangedLine = new("str.event.items_changed");
     private static readonly LocKey StonesChangedLine = new("str.event.stones_changed");
@@ -126,8 +138,6 @@ public static class SimText
     private static readonly LocKey WhyThreshold = new("str.why.threshold");
     private static readonly LocKey WhyQualityBase = new("str.why.quality_base");
     private static readonly LocKey WhyPurity = new("str.why.purity");
-    private static readonly LocKey WhyToxins = new("str.why.toxins");
-    private static readonly LocKey WhyInjuries = new("str.why.injuries");
     private static readonly LocKey WhyAge = new("str.why.age");
     private static readonly LocKey WhyDelay = new("str.why.delay");
     private static readonly LocKey WhyCeiling = new("str.why.ceiling");
@@ -201,27 +211,12 @@ public static class SimText
     }
 
     /// <summary>Stats with their aspects, resources and injuries; a stat or resource changed by modifiers explains where its number comes from.</summary>
-    public static IReadOnlyList<ExplainedLine> CharacterLines(PlayerView view)
+    public static IReadOnlyList<ExplainedLine> CharacterLines(PlayerView view) => [.. view.Stats.SelectMany(StatLines), .. ConditionLines(view)];
+
+    /// <summary>Resources against their maximums, then injuries.</summary>
+    public static IReadOnlyList<ExplainedLine> ConditionLines(PlayerView view)
     {
         var lines = new List<ExplainedLine>();
-        foreach (var stat in view.Stats)
-        {
-            var name = new LocArg("stat", Name(stat.Stat.Id));
-            var value = new LocArg("value", Number(stat.Stat.Value));
-            var text = stat.Aspects.Count == 0
-                ? StatLine with { Args = [name, value] }
-                : BodyStatLine with
-                {
-                    Args =
-                    [
-                        name,
-                        value,
-                        new("aspects", stat.Aspects.Select(a => AspectPart with { Args = [new("aspect", Name(a.Id)), new("value", Number(a.Value))] }).ToList()),
-                    ],
-                };
-            lines.Add(new(text, [.. BreakdownLines(stat.Stat), .. stat.Aspects.SelectMany(BreakdownLines)]));
-        }
-
         foreach (var resource in view.Resources)
         {
             var text = ResourceLine with
@@ -237,6 +232,74 @@ public static class SimText
         }
         foreach (var injury in view.Injuries)
             lines.Add(ExplainedLine.Plain(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] }));
+        return lines;
+    }
+
+    /// <summary>A stat with its value and aspects, then, for a ranked stat, its scale, overflow and deficit.</summary>
+    public static IReadOnlyList<ExplainedLine> StatLines(StatView stat) =>
+        [Title(stat, StatLine, BodyStatLine, new("value", Number(stat.Stat.Value))), .. StandingLines(stat).Select(ExplainedLine.Plain)];
+
+    /// <summary>
+    /// A stat's line for a view that draws a ranked stat's scale (§2.3): its rank stands in for the value,
+    /// which the scale already shows.
+    /// </summary>
+    public static ExplainedLine StatTitle(StatView stat) => stat.Standing is { } s
+        ? Title(stat, RankedStatLine, RankedBodyStatLine, new("rank", Name(s.RankId)))
+        : Title(stat, StatLine, BodyStatLine, new("value", Number(stat.Stat.Value)));
+
+    private static ExplainedLine Title(StatView stat, LocKey plain, LocKey withAspects, LocArg value)
+    {
+        var name = new LocArg("stat", Name(stat.Stat.Id));
+        var text = stat.Aspects.Count == 0
+            ? plain with { Args = [name, value] }
+            : withAspects with
+            {
+                Args =
+                [
+                    name,
+                    value,
+                    new("aspects", stat.Aspects.Select(a => AspectPart with { Args = [new("aspect", Name(a.Id)), new("value", Number(a.Value))] }).ToList()),
+                ],
+            };
+        return new(text, [.. BreakdownLines(stat.Stat), .. stat.Aspects.SelectMany(BreakdownLines)]);
+    }
+
+    /// <summary>A ranked stat's rank, scale and overflow, and its deficit when the rank can fall; nothing for other stats.</summary>
+    public static IReadOnlyList<LocKey> StandingLines(StatView stat)
+    {
+        if (stat.Standing is not { } s)
+            return [];
+        var lines = new List<LocKey> { StandingText(s) };
+        if (s.Collapse is { } collapse)
+            lines.Add(DeficitLine with { Args = [new("deficit", Number(s.Deficit)), new("collapse", Number(collapse))] });
+        return lines;
+    }
+
+    private static LocKey StandingText(StatStanding s) => (s.Breakthrough is null ? StandingTopLine : StandingLine) with
+    {
+        Args =
+        [
+            new("rank", Name(s.RankId)),
+            new("filled", Number(s.Filled)),
+            new("pool", Number(s.Pool)),
+            new("overflow", Number(s.Overflow)),
+            new("needed", Number(s.Breakthrough ?? 0)),
+        ],
+    };
+
+    /// <summary>How a ranked stat's scale, overflow, deficit and their rank changes work, for the bars' tooltip.</summary>
+    public static IReadOnlyList<LocKey> StandingHelp(StatView stat)
+    {
+        var s = stat.Standing!;
+        var lines = new List<LocKey> { WhyScale, WhyOverflow with { Args = [new("decay", Number(s.DecayPerWeek * 100))] } };
+        if (s.Breakthrough is { } needed)
+            lines.Add(WhyStatBreakthrough with { Args = [new("needed", Number(needed))] });
+        if (s.HealPerWeek is { } heal)
+            lines.Add(WhyDeficit with { Args = [new("heal", Number(heal * 100))] });
+        if (s.Collapse is { } collapse)
+            lines.Add(WhyCollapse with { Args = [new("collapse", Number(collapse))] });
+        if (stat.ErodedBy.Count > 0)
+            lines.Add(WhyErosion with { Args = [new("sources", stat.ErodedBy.Select(Name).ToList())] });
         return lines;
     }
 
@@ -281,9 +344,7 @@ public static class SimText
 
         var foundation = view.Foundation;
         LocArg[] parts = [new("total", Number(foundation.Total)), new("knowledge", Number(foundation.Knowledge)), new("purity", Number(foundation.Purity))];
-        lines.Add(foundation.Injuries > 0
-            ? InjuredFoundationLine with { Args = [.. parts, new("injuries", Number(foundation.Injuries))] }
-            : FoundationLine with { Args = parts });
+        lines.Add(FoundationLine with { Args = parts });
         foreach (var knowledge in view.Knowledge)
             lines.Add(KnowledgeLine with { Args = [new("knowledge", Name(knowledge.KnowledgeId)), new("level", knowledge.Level)] });
 
@@ -462,6 +523,8 @@ public static class SimText
         InjuryHealed h => Healed with { Args = [new("injury", Name(h.InjuryId))] },
         EventStarted => EventOpened,
         StatChanged s => StatChangedLine with { Args = [new("stat", Name(s.StatId)), new("amount", Signed(s.Amount))] },
+        StatRankUp r => StatRankUpLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
+        StatRankDown r => StatRankDownLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
         ResourceChanged r => ResourceChangedLine with { Args = [new("resource", Name(r.ResourceId)), new("amount", Signed(r.Amount))] },
         ItemsChanged i => ItemsChangedLine with { Args = [new("item", Name(i.ItemId)), new("amount", Signed(i.Count))] },
         StonesChanged s => StonesChangedLine with { Args = [new("amount", Signed(s.Amount))] },
@@ -496,8 +559,6 @@ public static class SimText
             WhyThreshold with { Args = [new("threshold", Number(forecast.Threshold)), new("foundation", Number(forecast.Foundation))] },
             Part(WhyQualityBase, q.Base),
             Part(WhyPurity, q.Purity),
-            Part(WhyToxins, q.Toxins),
-            Part(WhyInjuries, q.Injuries),
             Part(WhyAge, q.Age),
             Part(WhyDelay, q.Delay),
             Part(WhyCeiling, q.Ceiling),

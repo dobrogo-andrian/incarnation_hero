@@ -18,9 +18,6 @@ public sealed class BreakthroughConfigDef : ContentDef, IValidatedDef
     /// <summary>Quality per point of effective purity, counted only up to the purity cap.</summary>
     public double QualityPerPurity { get; set; }
 
-    /// <summary>Quality lost per point of toxins left in the body (§4.4).</summary>
-    public double QualityPerToxin { get; set; }
-
     /// <summary>Quality lost per year of age above <see cref="AgePenaltyFromYears"/> (§3).</summary>
     public double QualityPerAgeYear { get; set; }
 

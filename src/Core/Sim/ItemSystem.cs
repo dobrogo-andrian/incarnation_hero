@@ -30,8 +30,8 @@ public static class ItemSystem
     /// <summary>
     /// Takes a carried pill: its energy joins the pill-energy buff, a breakthrough pill raises the next
     /// breakthrough's ceiling (the strongest one counts), a healing pill heals injuries (§8), and its
-    /// toxins build up. Refused when the toxins would go over their maximum, the tolerance (§4.4), or
-    /// when a pill that only heals has nothing to heal.
+    /// toxins build up; a purifying pill gives stat points, shrinking with repeats like energy (D49).
+    /// Refused when the toxins would go over their maximum, the tolerance (§4.4), or when a pill that only heals has nothing to heal.
     /// </summary>
     public static CommandOutcome UsePill(PlayerState player, SimContext ctx, string itemId)
     {
@@ -39,7 +39,7 @@ public static class ItemSystem
             return CommandOutcome.Reject(RejectReasons.NoSuchItem);
         if (ctx.Content.Get<ItemDef>(itemId).Pill is not { } pill)
             return CommandOutcome.Reject(RejectReasons.NotAPill);
-        if (pill.Energy + pill.CeilingBonus <= 0 && pill.Heals.Keys.All(id => InjurySystem.Value(player, id) == 0))
+        if (pill.Energy + pill.CeilingBonus <= 0 && pill.Stats.Count == 0 && pill.Heals.Keys.All(id => InjurySystem.Value(player, id) == 0))
             return CommandOutcome.Reject(RejectReasons.NothingToHeal);
 
         string toxinsId = ctx.Config.ToxinsResource;
@@ -57,6 +57,13 @@ public static class ItemSystem
         var events = new List<SimEvent> { new PillTaken(itemId, energy) };
         foreach (var (injuryId, amount) in pill.Heals.OrderBy(h => h.Key, StringComparer.Ordinal))
             InjurySystem.Heal(player, ctx, injuryId, amount, events);
+        double strength = Math.Pow(pill.RepeatFactor, Count(player.PillsTaken, itemId) - 1);
+        foreach (var (statId, amount) in pill.Stats.OrderBy(s => s.Key, StringComparer.Ordinal))
+        {
+            var rankChanges = new List<SimEvent>();
+            events.Add(new StatChanged(statId, StatSystem.Change(player, ctx, statId, amount * strength, rankChanges)));
+            events.AddRange(rankChanges);
+        }
         return CommandOutcome.Accept(events);
     }
 }

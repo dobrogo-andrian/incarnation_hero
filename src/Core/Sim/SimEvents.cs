@@ -81,8 +81,14 @@ public sealed record EventStarted(string EventId) : SimEvent;
 /// <summary>The event dialog closed; the interrupted activity can be continued.</summary>
 public sealed record EventEnded(string EventId) : SimEvent;
 
-/// <summary>A stat's base value changed by <paramref name="Amount"/>.</summary>
+/// <summary>A stat gained or lost <paramref name="Amount"/> points (for a ranked stat, overflow included).</summary>
 public sealed record StatChanged(string StatId, double Amount) : SimEvent;
+
+/// <summary>A ranked stat broke through to <paramref name="RankId"/> (D48).</summary>
+public sealed record StatRankUp(string StatId, string RankId) : SimEvent;
+
+/// <summary>A ranked stat's deficit collapsed it to <paramref name="RankId"/> (D49).</summary>
+public sealed record StatRankDown(string StatId, string RankId) : SimEvent;
 
 /// <summary>A resource's current amount changed by <paramref name="Amount"/>.</summary>
 public sealed record ResourceChanged(string ResourceId, double Amount) : SimEvent;

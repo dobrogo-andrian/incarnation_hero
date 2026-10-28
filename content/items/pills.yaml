@@ -14,6 +14,11 @@
   name: { uk: "Пігулка закладання основи" }
   pill: { energy: 0, toxicity: 10, repeat_factor: 1, ceiling_bonus: 15 }
 
+# A purifying pill (D49): purity points without toxins; rare, found only through events and rumors.
+- id: item.pill.marrow_washing
+  name: { uk: "Пігулка промивання кісткового мозку" }
+  pill: { energy: 0, toxicity: 0, repeat_factor: 0.8, stats: { stat.purity: 6 } }
+
 # Healing pills (§8): take injury points off at once; no energy.
 - id: item.pill.bone_mending
   name: { uk: "Пігулка зрощення кісток" }

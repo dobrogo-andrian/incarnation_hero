@@ -133,23 +133,4 @@ public sealed class InjuryTests
         Assert.Empty(sim.State.Player.Buffs);
         Assert.Equal([new InjuryHealed(Body)], sim.Execute(new UsePill("item.pill.bone_mending")).Events.OfType<InjuryHealed>());
     }
-
-    [Fact]
-    public void InternalInjuries_LowerBreakthroughQuality_AndDeepenTheDeficit()
-    {
-        var sim = NewGame();
-        sim.State.Player.Tracks.Single().StageProgress = 100;
-        sim.State.Player.Stats.First(s => s.StatId == "stat.purity").Base = 50;
-        var healthy = sim.View.Tracks.Single().Forecast!;
-
-        Inflict(sim, Internal, 50);
-        var injured = sim.View.Tracks.Single().Forecast!;
-
-        // Foundation 50 − 15 = 35 against the threshold 40: deficit 0.125 of the light zone, chance 0.4 × 0.125 / 0.2.
-        Assert.Equal(new Foundation(0, 50, 15), sim.View.Foundation);
-        Assert.Equal((35.0, 0.25, "failure_zone.light"), (injured.Foundation, injured.FailureChance, injured.FailureZoneId));
-        Assert.Equal(15, injured.Quality.Injuries);
-        Assert.Equal(healthy.Quality.Value - 15, injured.Quality.Value, 4);
-        Assert.Equal(0, healthy.FailureChance);
-    }
 }

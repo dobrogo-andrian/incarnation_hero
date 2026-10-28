@@ -69,7 +69,7 @@ public sealed class PillTests
 
         Assert.Equal(RejectReasons.ToxinsTooHigh, sim.Execute(new UsePill(QiGathering)).RejectReason);   // 16 + 8 > 20
 
-        sim.State.Player.Stats.Single(s => s.StatId == "stat.purity").Base = 4;
+        TestContent.SetStat(sim, "stat.purity", 4);
         Assert.True(sim.Execute(new UsePill(QiGathering)).Accepted);   // 16 + 8 ≤ 24
     }
 

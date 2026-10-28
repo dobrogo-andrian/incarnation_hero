@@ -50,7 +50,7 @@ public static class MeditationSystem
         else if (gain > 0)
             Apply(state.Player, ctx, direction.Target!, gain, events);
         foreach (var (statId, rate) in direction.SideGains.OrderBy(g => g.Key, StringComparer.Ordinal))
-            GainStat(state.Player, ctx, statId, rate * strength);
+            GainStat(state.Player, ctx, statId, rate * strength, events);
 
         if (covered && place.Reserve < draw)
             events.Add(new PlaceQiLow(meditation.PlaceId));
@@ -74,15 +74,14 @@ public static class MeditationSystem
             return;
         }
 
-        GainStat(player, ctx, target, gain);
+        GainStat(player, ctx, target, gain, events);
     }
 
-    /// <summary>Raises a stat's base value; a stat with a diminish scale gains less the higher it is.</summary>
-    private static void GainStat(PlayerState player, SimContext ctx, string statId, double gain)
+    /// <summary>Raises a stat; a stat with a diminish scale gains less the higher it is.</summary>
+    private static void GainStat(PlayerState player, SimContext ctx, string statId, double gain, List<SimEvent> events)
     {
-        var stat = player.Stats.First(s => s.StatId == statId);
         if (ctx.Content.Get<StatDef>(statId).DiminishScale is double scale)
-            gain /= 1 + stat.Base / scale;
-        stat.Base = StateNumbers.Round(stat.Base + gain);
+            gain /= 1 + player.Stats.First(s => s.StatId == statId).Base / scale;
+        StatSystem.Change(player, ctx, statId, gain, events);
     }
 }

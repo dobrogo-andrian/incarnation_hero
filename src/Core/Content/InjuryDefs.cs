@@ -25,16 +25,10 @@ public sealed class InjuryDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ContentDef))]
     public Dictionary<string, double> Effects { get; set; } = [];
 
-    /// <summary>Breakthrough quality lost per point (§4.5).</summary>
-    public double QualityPerPoint { get; set; }
-
-    /// <summary>Foundation lost per point, which deepens a breakthrough's deficit (§4.5).</summary>
-    public double FoundationPerPoint { get; set; }
-
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (Max <= 0 || HealPerWeek < 0 || RestHealPerWeek < 0 || QualityPerPoint < 0 || FoundationPerPoint < 0)
-            yield return "needs a positive max and non-negative healing and penalties.";
+        if (Max <= 0 || HealPerWeek < 0 || RestHealPerWeek < 0)
+            yield return "needs a positive max and non-negative healing.";
         foreach (var (target, perPoint) in Effects.OrderBy(e => e.Key, StringComparer.Ordinal))
         {
             if (db.Contains(target) && !db.TryGet<StatDef>(target, out _) && !db.TryGet<AspectDef>(target, out _) && !db.TryGet<ResourceDef>(target, out _))

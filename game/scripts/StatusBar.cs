@@ -4,7 +4,8 @@ using Godot;
 
 /// <summary>
 /// The top bar (D44): week, age, life left, zone, stones and stage scale on one line; resting; the
-/// interrupt settings; how fast weeks are shown (D47), and skipping the weeks being shown.
+/// interrupt settings; how fast weeks are shown (D47), and skipping the weeks being shown; quitting the
+/// game at the far right, which loses nothing since every command is already saved.
 /// </summary>
 public partial class StatusBar : HBoxContainer
 {
@@ -18,6 +19,7 @@ public partial class StatusBar : HBoxContainer
     private readonly Label _speedText = new() { CustomMinimumSize = new Vector2(190, 0) };
     private readonly HSlider _speed = new() { MinValue = 0, Step = 1, CustomMinimumSize = new Vector2(110, 0), SizeFlagsVertical = SizeFlags.ShrinkCenter };
     private readonly Button _skip = new();
+    private readonly Button _quit = new();
 
     private UiContext _ui = null!;
     private PlayerView? _view;
@@ -31,10 +33,12 @@ public partial class StatusBar : HBoxContainer
         _restOpen.Text = ui.Text("str.shell.wait_until_interrupt");
         _interrupts.Text = ui.Text("str.ui.interrupts");
         _skip.Text = ui.Text("str.ui.skip");
+        _quit.Text = ui.Text("str.ui.quit");
         _restWeek.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), 1));
         _restOpen.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), null));
         _interrupts.Pressed += OpenInterrupts;
         _skip.Pressed += skip;
+        _quit.Pressed += () => GetTree().Quit();
 
         _speed.MaxValue = UiSettings.Speeds.Length - 1;
         _speed.Value = ui.Settings.Speed;
@@ -45,7 +49,7 @@ public partial class StatusBar : HBoxContainer
         };
         ShowSpeed();
 
-        foreach (var node in new Node[] { _info, _restWeek, _restOpen, _interrupts, _speedText, _speed, _skip, _popup })
+        foreach (var node in new Node[] { _info, _restWeek, _restOpen, _interrupts, _speedText, _speed, _skip, _quit, _popup })
             AddChild(node);
     }
 

@@ -19,7 +19,7 @@ public partial class SideTabs : TabContainer
     public void Setup(UiContext ui)
     {
         CustomMinimumSize = new Vector2(440, 0);
-        Add(ui, "str.ui.tab_character", new TextTab { Lines = (_, view) => SimText.CharacterLines(view) });
+        Add(ui, "str.ui.tab_character", new CharacterTab());
         Add(ui, "str.ui.tab_cultivation", new BreakthroughTab());
         Add(ui, "str.ui.tab_items", new ItemsTab());
         Add(ui, "str.ui.tab_rumors", new TextTab { Lines = (_, view) => SimText.SocialLines(view).Select(ExplainedLine.Plain) });

@@ -1,7 +1,8 @@
 # How breakthroughs are judged (§4.5, D35). Draft numbers until Sim.Cli reports.
-# Quality = base + min(purity, purity cap) × quality_per_purity − toxins × quality_per_toxin
+# Quality = base + min(purity, purity cap) × quality_per_purity
 #   − years of age past age_penalty_from_years × quality_per_age_year
 #   − years since the scale filled × quality_per_delay_year, clamped to [0, ceiling].
+# Toxins and injuries count only through the purity they wear away (D49).
 # Ceiling and purity cap come from the active method (growing with its level), or the no-method values;
 # a breakthrough pill adds to the ceiling of the next attempt.
 
@@ -9,7 +10,6 @@
   ranks: [rank.flawed, rank.common, rank.good, rank.perfect, rank.flawless]
   base_quality: 30
   quality_per_purity: 0.5
-  quality_per_toxin: 0.5
   quality_per_age_year: 1
   age_penalty_from_years: 12
   quality_per_delay_year: 2

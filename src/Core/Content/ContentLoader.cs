@@ -26,6 +26,8 @@ public static class ContentLoader
         ["str"] = typeof(StringDef),
         ["config"] = typeof(RunConfigDef),
         ["stat"] = typeof(StatDef),
+        ["stat_progress"] = typeof(StatProgressDef),
+        ["stat_rank"] = typeof(StatRankDef),
         ["aspect"] = typeof(AspectDef),
         ["aspect_profile"] = typeof(AspectProfileDef),
         ["resource"] = typeof(ResourceDef),

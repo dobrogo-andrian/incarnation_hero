@@ -37,7 +37,6 @@ public sealed record BreakthroughRecord(
     double Foundation,
     double Purity,
     double Knowledge,
-    double InjuryPenalty,
     double Deficit,
     double FailureChance,
     double Toxins);

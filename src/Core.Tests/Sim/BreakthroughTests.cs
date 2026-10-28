@@ -16,7 +16,7 @@ public sealed class BreakthroughTests
         var sim = Simulation.NewGame(TestContent.Repo, seed);
         sim.Execute(new SetInterruptStops([]));
         Qi(sim).StageProgress = 100;
-        Stat(sim, "stat.purity").Base = purity;
+        TestContent.SetStat(sim, "stat.purity", purity);
         return sim;
     }
 
@@ -108,24 +108,22 @@ public sealed class BreakthroughTests
     }
 
     [Fact]
-    public void Quality_FallsWithToxinsAgeAndDelay_AndStopsAtTheCeiling()
+    public void Quality_FallsWithAgeAndDelay_AndStopsAtTheCeiling()
     {
         var sim = Ready(purity: 200);
         var player = sim.State.Player;
         player.AgeWeeks += 10 * WeeksPerYear - 4;
         Qi(sim).ScaleFullSinceAgeWeeks = player.AgeWeeks + 4 - 3 * WeeksPerYear;
-        player.Resources.First(r => r.ResourceId == "resource.toxins").Current = 10;
 
         var quality = Forecast(sim).Quality;
 
         // Purity counts up to the no-method cap of 20; the attempt resolves at 22, three years after the scale filled.
-        Assert.Equal(new QualityBreakdown(30, 10, 5, 0, 10, 6, 45), quality);
-        Assert.Equal(19, quality.Value);
-        Assert.Equal("rank.flawed", Forecast(sim).RankId);
+        Assert.Equal(new QualityBreakdown(30, 10, 10, 6, 45), quality);
+        Assert.Equal(24, quality.Value);
+        Assert.Equal("rank.common", Forecast(sim).RankId);
 
         player.AgeWeeks = 12 * WeeksPerYear;
         Qi(sim).ScaleFullSinceAgeWeeks = null;
-        player.Resources.First(r => r.ResourceId == "resource.toxins").Current = 0;
         player.BreakthroughCeilingBonus = -20;
         Assert.Equal(25, Forecast(sim).Quality.Value);
     }

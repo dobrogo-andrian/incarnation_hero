@@ -151,11 +151,11 @@ public static class EventSystem
                     TimeSystem.PassWeeks(state, ctx, weeks, events);
                     break;
                 case { Stat: { } stat }:
-                    var value = player.Stats.First(s => s.StatId == stat.Id);
-                    double before = value.Base;
-                    value.Base = StateNumbers.Round(Math.Max(0, value.Base + stat.Amount));
+                    var rankUps = new List<SimEvent>();
+                    double changed = StatSystem.Change(player, ctx, stat.Id, stat.Amount, rankUps);
                     ResourceSystem.ClampToMax(player, ctx);
-                    events.Add(new StatChanged(stat.Id, StateNumbers.Round(value.Base - before)));
+                    events.Add(new StatChanged(stat.Id, changed));
+                    events.AddRange(rankUps);
                     break;
                 case { Resource: { } resource }:
                     double had = player.Resources.First(r => r.ResourceId == resource.Id).Current;

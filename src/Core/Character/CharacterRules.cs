@@ -46,7 +46,12 @@ public sealed class CharacterRules
     /// <summary>Gives a new character its starting stats and profile, with every resource full.</summary>
     public void InitPlayer(PlayerState player)
     {
-        player.Stats = Stats.Select(s => new StatValue { StatId = s.Id, Base = s.StartValue }).ToList();
+        player.Stats = Stats.Select(s => new StatValue
+        {
+            StatId = s.Id,
+            Base = s.StartValue,
+            Rank = s.Progress is { } progress ? StatProgress.RankFor(s.StartValue, _db.Get<StatProgressDef>(progress), _db) : 0,
+        }).ToList();
         player.AspectProfileId = StartAspectProfile;
         player.Resources = Resources.Select(r => new ResourceValue { ResourceId = r.Id, Current = r.StartEmpty ? 0 : Value(player, r.Id) }).ToList();
     }

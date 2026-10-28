@@ -7,10 +7,11 @@ using Core.State;
 namespace Core.Sim;
 
 /// <summary>A breakthrough's quality term by term, for "where does this number come from".</summary>
-public sealed record QualityBreakdown(double Base, double Purity, double Toxins, double Injuries, double Age, double Delay, double Ceiling)
+/// Toxins and injuries count only through the purity they wear away (D49).
+public sealed record QualityBreakdown(double Base, double Purity, double Age, double Delay, double Ceiling)
 {
-    /// <summary>Base + purity − toxins − injuries − age − delay, within [0, ceiling].</summary>
-    public double Value => StateNumbers.Round(Math.Clamp(Base + Purity - Toxins - Injuries - Age - Delay, 0, Ceiling));
+    /// <summary>Base + purity − age − delay, within [0, ceiling].</summary>
+    public double Value => StateNumbers.Round(Math.Clamp(Base + Purity - Age - Delay, 0, Ceiling));
 }
 
 /// <summary>
@@ -96,14 +97,16 @@ public static class BreakthroughSystem
         double years = breakthrough.LifespanYears[estimate.RankIndex];
         player.LifespanWeeks += (int)Math.Round(years * ctx.Config.WeeksPerYear);
         double gain = breakthrough.StatGain[estimate.RankIndex];
+        var rankUps = new List<SimEvent>();
         foreach (var stat in player.Stats.Where(s => ctx.Breakthrough.GainStats.Contains(s.StatId)))
-            stat.Base = StateNumbers.Round(stat.Base + gain);
+            StatSystem.Change(player, ctx, stat.StatId, gain, rankUps);
 
         track.StageIndex++;
         track.StageProgress = 0;
         track.ScaleFullSinceAgeWeeks = null;
         track.LastBreakthroughQuality = estimate.RankIndex;
         events.Add(new BreakthroughSucceeded(track.VectorId, CultivationSystem.Stage(track, ctx.Content).Id, estimate.RankId, years));
+        events.AddRange(rankUps);
     }
 
     /// <summary>A fatal zone counts only for an attempt that accepted the risk; otherwise the worst survivable zone applies.</summary>
@@ -129,9 +132,11 @@ public static class BreakthroughSystem
             track.ScaleFullSinceAgeWeeks = null;
         }
         ResourceSystem.Restore(player, ctx, ctx.Config.ToxinsResource, zone.Toxins);
-        var purity = player.Stats.First(s => s.StatId == ctx.Config.PurityStat);
-        purity.Base = StateNumbers.Round(purity.Base * (1 - zone.PurityLoss));
+        var lost = new List<SimEvent>();
+        if (zone.PurityLoss > 0)
+            StatSystem.Change(player, ctx, ctx.Config.PurityStat, -player.Stats.First(s => s.StatId == ctx.Config.PurityStat).Base * zone.PurityLoss, lost);
         events.Add(new BreakthroughFailed(track.VectorId, zone.Id));
+        events.AddRange(lost);
         foreach (var (injuryId, amount) in zone.Injuries.OrderBy(i => i.Key, StringComparer.Ordinal))
             InjurySystem.Inflict(player, ctx, injuryId, amount, events);
     }
@@ -154,7 +159,7 @@ public static class BreakthroughSystem
     }
 
     /// <summary>
-    /// Quality (§4.5): purity counts up to the method's cap; toxins, injuries, age past the free years
+    /// Quality (§4.5): purity counts up to the method's cap; age past the free years
     /// and the years since the scale filled take it down; the method (and a breakthrough pill) set the ceiling.
     /// </summary>
     private static QualityBreakdown QualityOf(
@@ -171,14 +176,11 @@ public static class BreakthroughSystem
 
         int ageWeeks = player.AgeWeeks + weeksAhead;
         double Years(int weeks) => Math.Max(0, weeks) / (double)run.WeeksPerYear;
-        double toxins = player.Resources.First(r => r.ResourceId == run.ToxinsResource).Current;
         double delay = track.ScaleFullSinceAgeWeeks is int since ? Years(ageWeeks - since) : 0;
 
         return new QualityBreakdown(
             config.BaseQuality,
             StateNumbers.Round(Math.Min(rules.Value(player, run.PurityStat), purityCap) * config.QualityPerPurity),
-            StateNumbers.Round(toxins * config.QualityPerToxin),
-            InjurySystem.QualityPenalty(player, db),
             StateNumbers.Round(Years(ageWeeks - config.AgePenaltyFromYears * run.WeeksPerYear) * config.QualityPerAgeYear),
             StateNumbers.Round(delay * config.QualityPerDelayYear),
             StateNumbers.Round(ceiling + player.BreakthroughCeilingBonus));

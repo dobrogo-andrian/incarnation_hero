@@ -56,7 +56,11 @@ public sealed record PlayerView(
                 .Select(z => new RegionZoneView(z.Id, z.Danger, z.Id == player.ZoneId ? null : WorldSystem.RouteTo(state, ctx, z.Id)?.Sum(l => l.Weeks)))
                 .ToList(),
             rules.Stats
-                .Select(s => new StatView(rules.Explain(player, s.Id), s.Aspects.Select(a => rules.Explain(player, a)).ToList()))
+                .Select(s => new StatView(
+                    rules.Explain(player, s.Id),
+                    s.Aspects.Select(a => rules.Explain(player, a)).ToList(),
+                    s.Progress is { } progress ? StatProgress.Of(player.Stats.First(v => v.StatId == s.Id), content.Get<StatProgressDef>(progress), content) : null,
+                    s.Erosion.Keys.Order(StringComparer.Ordinal).ToList()))
                 .ToList(),
             player.Resources
                 .Select(r => new ResourceView(r.ResourceId, r.Current, rules.Explain(player, r.ResourceId)))
@@ -90,8 +94,11 @@ public sealed record RegionZoneView(string ZoneId, int Danger, int? TravelWeeks)
 /// <summary>A meditation place in the player's zone; being there, the player sees its reserve.</summary>
 public sealed record PlaceView(string PlaceId, double Density, double Reserve, double Capacity);
 
-/// <summary>A stat and, for a body stat, its aspects; each with its breakdown for tooltips.</summary>
-public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> Aspects);
+/// <summary>
+/// A stat and, for a body stat, its aspects, each with its breakdown for tooltips; a ranked stat (D48)
+/// also shows where it stands in its rank; <see cref="ErodedBy"/> lists what wears it away each week (D49).
+/// </summary>
+public sealed record StatView(StatBreakdown Stat, IReadOnlyList<StatBreakdown> Aspects, StatStanding? Standing, IReadOnlyList<string> ErodedBy);
 
 /// <summary>A resource's current amount and its computed maximum.</summary>
 public sealed record ResourceView(string ResourceId, double Current, StatBreakdown Max);

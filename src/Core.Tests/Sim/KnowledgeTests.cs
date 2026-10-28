@@ -114,9 +114,9 @@ public sealed class KnowledgeTests
         var sim = NewGame();
         sim.Execute(Study("element.fire", 2));
         sim.Execute(Study("element.water", 2));
-        sim.State.Player.Stats.Single(s => s.StatId == "stat.purity").Base = 3;
+        TestContent.SetStat(sim, "stat.purity", 3);
 
-        Assert.Equal(new Foundation(20, 3, 0), sim.View.Foundation);
+        Assert.Equal(new Foundation(20, 3), sim.View.Foundation);
         Assert.Equal(23, sim.View.Foundation.Total);
     }
 }

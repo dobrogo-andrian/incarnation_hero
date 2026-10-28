@@ -1,9 +1,11 @@
 # Character stats and their aspects (§2.1, D25). Aspect names are placeholders until the GDD names them.
 # Start values are the same for every run (D26); prerequisites (§2.4) will vary them later.
+# Body stats are ranked (D48): stat_progress.body at the end of this file.
 
 - id: stat.might
   name: { uk: "Міць" }
   start_value: 10
+  progress: stat_progress.body
   aspects: [aspect.might.vitality, aspect.might.resilience]
 
 - id: aspect.might.vitality
@@ -15,6 +17,7 @@
 - id: stat.endurance
   name: { uk: "Витривалість" }
   start_value: 10
+  progress: stat_progress.body
   aspects: [aspect.endurance.reserve, aspect.endurance.output]
 
 - id: aspect.endurance.reserve
@@ -26,6 +29,7 @@
 - id: stat.speed
   name: { uk: "Швидкість" }
   start_value: 10
+  progress: stat_progress.body
   aspects: [aspect.speed.reaction, aspect.speed.agility]
 
 - id: aspect.speed.reaction
@@ -37,6 +41,7 @@
 - id: stat.meridians
   name: { uk: "Сила меридіан" }
   start_value: 10
+  progress: stat_progress.body
   aspects: [aspect.meridians.capacity, aspect.meridians.flow]
 
 - id: aspect.meridians.capacity
@@ -51,6 +56,91 @@
   diminish_scale: 10            # gains shrink as it grows: × 1 / (1 + value / 10) (§2.1)
 
 # Foundation (§4.1): purity grows by purification and widens the qi pool. Knowledge comes with folios.
+# Purity is ranked with a mirrored scale (D49): toxins and injuries wear it away each week, and losses
+# below a rank's base are a deficit that can collapse it to the rank below.
 - id: stat.purity
   name: { uk: "Чистота" }
   start_value: 0
+  progress: stat_progress.purity
+  erosion:                      # points lost a week per unit
+    resource.toxins: 0.004
+    injury.internal: 0.004
+    injury.body: 0.001
+
+# Ranked body stats (§2.1, D48). Points fill a rank's pool and raise the stat; points past the full
+# pool are overflow, which fades by overflow_decay_per_week of itself each week. Overflow reaching the
+# rank's breakthrough moves the stat to the next rank: its scale starts empty, the overflow is gone.
+# A rank's base is the sum of the pools below it. Draft numbers until Sim.Cli reports; names are placeholders.
+- id: stat_progress.body
+  overflow_decay_per_week: 0.05
+  ranks: [stat_rank.body.1, stat_rank.body.2, stat_rank.body.3, stat_rank.body.4, stat_rank.body.5, stat_rank.body.6]
+
+- id: stat_rank.body.1
+  name: { uk: "Ступінь I" }
+  pool: 12
+  breakthrough: 2
+
+- id: stat_rank.body.2
+  name: { uk: "Ступінь II" }
+  pool: 8
+  breakthrough: 3
+
+- id: stat_rank.body.3
+  name: { uk: "Ступінь III" }
+  pool: 10
+  breakthrough: 4
+
+- id: stat_rank.body.4
+  name: { uk: "Ступінь IV" }
+  pool: 12
+  breakthrough: 5
+
+- id: stat_rank.body.5
+  name: { uk: "Ступінь V" }
+  pool: 15
+  breakthrough: 6
+
+- id: stat_rank.body.6
+  name: { uk: "Ступінь VI" }
+  pool: 20
+
+# Ranked purity (D49): the body scale mirrored downwards. Meditation gives 0.1 × density a week, so its
+# overflow levels off near 1.9 × density: higher ranks need denser places or purifying pills.
+- id: stat_progress.purity
+  overflow_decay_per_week: 0.05
+  deficit_heal_per_week: 0.05
+  ranks: [stat_rank.purity.1, stat_rank.purity.2, stat_rank.purity.3, stat_rank.purity.4, stat_rank.purity.5, stat_rank.purity.6]
+
+- id: stat_rank.purity.1
+  name: { uk: "Каламутне тіло" }
+  pool: 20
+  breakthrough: 2
+
+- id: stat_rank.purity.2
+  name: { uk: "Прояснена кров" }
+  pool: 30
+  breakthrough: 4
+  collapse: 6
+
+- id: stat_rank.purity.3
+  name: { uk: "Чисті меридіани" }
+  pool: 40
+  breakthrough: 6
+  collapse: 8
+
+- id: stat_rank.purity.4
+  name: { uk: "Прозорі кістки" }
+  pool: 60
+  breakthrough: 8
+  collapse: 10
+
+- id: stat_rank.purity.5
+  name: { uk: "Нефритове тіло" }
+  pool: 80
+  breakthrough: 10
+  collapse: 12
+
+- id: stat_rank.purity.6
+  name: { uk: "Бездоганне тіло" }
+  pool: 120
+  collapse: 15

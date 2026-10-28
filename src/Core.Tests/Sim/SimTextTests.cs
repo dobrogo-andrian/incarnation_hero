@@ -26,11 +26,16 @@ public sealed class SimTextTests
                 "Місцевість: Поселення Біля Підніжжя, небезпека 0",
                 "Місце медитації: Тихий двір, щільність 1, резерв ці 8 / 8",
                 "Міць: 10 (Живучість 10, Стійкість 10)",
+                "Ступінь I: шкала 10 / 12, надлишок 0 / 2",
                 "Витривалість: 10 (Запас 10, Віддача 10)",
+                "Ступінь I: шкала 10 / 12, надлишок 0 / 2",
                 "Швидкість: 10 (Реакція 10, Верткість 10)",
+                "Ступінь I: шкала 10 / 12, надлишок 0 / 2",
                 "Сила меридіан: 10 (Ємність 10, Потік 10)",
+                "Ступінь I: шкала 10 / 12, надлишок 0 / 2",
                 "Сприйняття: 0",
                 "Чистота: 0",
+                "Каламутне тіло: шкала 0 / 20, надлишок 0 / 2",
                 "Здоров'я: 100 / 100",
                 "Енергія тіла: 100 / 100",
                 "Пул ці: 100 / 100",
@@ -63,6 +68,21 @@ public sealed class SimTextTests
         ModifierSystem.Apply(sim.State.Player, new Modifier { TargetId = "stat.speed", Op = ModifierOp.Mul, Value = 0.123, SourceId = "s" });
 
         Assert.Contains("Швидкість: 11.2 (Реакція 11.2, Верткість 11.2)", ViewText(sim));
+    }
+
+    [Fact]
+    public void StatTitle_ShowsARankedStatsRank_AndKeepsItsNumbersForTheScale()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        TestContent.SetStat(sim, "stat.purity", 23);
+        sim.State.Player.Stats.Single(s => s.StatId == "stat.purity").Deficit = 1.5;
+        var purity = sim.View.Stats.Single(s => s.Stat.Id == "stat.purity");
+        var perception = sim.View.Stats.Single(s => s.Stat.Id == "stat.perception");
+
+        Assert.Equal("Чистота: Прояснена кров", Loc.Resolve(SimText.StatTitle(purity).Text));
+        Assert.Equal("Сприйняття: 0", Loc.Resolve(SimText.StatTitle(perception).Text));
+        Assert.Equal(["Прояснена кров: шкала 3 / 30, надлишок 0 / 4", "Дефіцит: 1.5 / 6"], SimText.StandingLines(purity).Select(Loc.Resolve));
+        Assert.Empty(SimText.StandingLines(perception));
     }
 
     [Fact]
@@ -116,13 +136,11 @@ public sealed class SimTextTests
                 "    · Поріг 40, фундамент 0: нестача фундаменту — шанс провалу",
                 "    · Якість: база 30",
                 "    · Чистота: +0",
-                "    · Токсини: −0",
-                "    · Травми: −0",
                 "    · Вік: −0.1",
                 "    · Відкладання прориву: −0",
                 "    · Стеля якості етапу: 45",
             ],
-            text.Skip(at + 1).Take(8));
+            text.Skip(at + 1).Take(6));
     }
 
     [Fact]

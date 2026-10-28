@@ -224,6 +224,8 @@
       options:
         - text: { uk: "Зібрати й віддати аптекарям на пігулки" }
           effects: [ { item: { id: item.pill.meridian_soothing, amount: 2 } }, { reputation: { id: sect.hundred_herbs, amount: 5 } } ]
+        - text: { uk: "Пошукати в заростях кореня кісткового мозку для себе" }
+          effects: [ { item: { id: item.pill.marrow_washing, amount: 1 } } ]
     mushrooms:
       text: { uk: "Від саду лишилися тільки гриби з різким запахом. Схоже, хтось сплутав сад алхіміка з його смітником." }
       options:

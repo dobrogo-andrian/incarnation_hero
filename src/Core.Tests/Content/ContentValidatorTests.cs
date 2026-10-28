@@ -27,6 +27,27 @@ public sealed class ContentValidatorTests
     }
 
     [Fact]
+    public void RankedStat_NeedsAStartValueWithinItsRanks_AndNoBreakthroughOnTheLastRank()
+    {
+        var errors = Validate("""
+            - id: stat_progress.test
+              overflow_decay_per_week: 0.1
+              ranks: [stat_rank.test.1]
+            - id: stat_rank.test.1
+              name: { uk: "Тест" }
+              pool: 5
+              breakthrough: 2
+            - id: stat.test
+              name: { uk: "Тест" }
+              start_value: 6
+              progress: stat_progress.test
+            """).Select(e => e.Message).ToList();
+
+        Assert.Contains(errors, m => m.Contains("nowhere to break through", StringComparison.Ordinal));
+        Assert.Contains(errors, m => m.Contains("start_value is above", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void MissingReference_IsReportedWithSourceAndId()
     {
         var errors = Validate("""

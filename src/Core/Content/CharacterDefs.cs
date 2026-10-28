@@ -1,7 +1,7 @@
 namespace Core.Content;
 
 /// <summary>A character stat (<c>stat.might</c>, §2.1). Body stats split into aspects; Perception has none.</summary>
-public sealed class StatDef : ContentDef
+public sealed class StatDef : ContentDef, IValidatedDef
 {
     public LocalizedText Name { get; set; } = new();
 
@@ -15,6 +15,91 @@ public sealed class StatDef : ContentDef
 
     [ContentRef(typeof(AspectDef))]
     public List<string> Aspects { get; set; } = [];
+
+    /// <summary>Ranks with a scale and an overflow to break through (§2.1, D48); null for a plain number.</summary>
+    [ContentRef(typeof(StatProgressDef))]
+    public string? Progress { get; set; }
+
+    /// <summary>
+    /// What wears the stat away each week (D49): a resource's current amount or an injury's value →
+    /// points lost per unit. Purity erodes this way under toxins and injuries.
+    /// </summary>
+    [ContentRef(typeof(ContentDef))]
+    public Dictionary<string, double> Erosion { get; set; } = [];
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        foreach (var (source, perUnit) in Erosion.OrderBy(e => e.Key, StringComparer.Ordinal))
+        {
+            if (db.Contains(source) && !db.TryGet<ResourceDef>(source, out _) && !db.TryGet<InjuryDef>(source, out _))
+                yield return $"erosion source '{source}' is neither a resource nor an injury.";
+            if (perUnit <= 0)
+                yield return $"erosion by '{source}' must be positive.";
+        }
+        if (Progress is not null && db.TryGet<StatProgressDef>(Progress, out var progress) && progress.Ranks.All(r => db.TryGet<StatRankDef>(r, out _))
+            && StartValue > progress.Ranks.Sum(r => db.Get<StatRankDef>(r).Pool))
+            yield return $"start_value is above the top of the last rank of '{Progress}'.";
+    }
+}
+
+/// <summary>
+/// How a ranked stat grows (<c>stat_progress.body</c>, §2.1, D48). Within a rank, points fill its
+/// pool and raise the stat; points past the full pool are overflow, which fades each week by
+/// <see cref="OverflowDecayPerWeek"/> of itself. Enough overflow breaks through to the next rank:
+/// its scale starts empty from where the last one ended, and the overflow is gone.
+/// With <see cref="DeficitHealPerWeek"/> the scale mirrors downwards (D49): losses past the rank's
+/// base are a deficit, which heals the same way; enough deficit collapses the stat to the rank below,
+/// whose scale is then full, and the deficit is gone. Without it a rank's base is a floor.
+/// </summary>
+public sealed class StatProgressDef : ContentDef, IValidatedDef
+{
+    /// <summary>Ranks from the lowest; a rank's base is the sum of the pools below it.</summary>
+    [ContentRef(typeof(StatRankDef))]
+    public List<string> Ranks { get; set; } = [];
+
+    /// <summary>Share of the overflow lost each week, so the more there is, the faster it goes.</summary>
+    public double OverflowDecayPerWeek { get; set; }
+
+    /// <summary>Share of the deficit healed each week; null when losses stop at the rank's base.</summary>
+    public double? DeficitHealPerWeek { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (Ranks.Count == 0)
+            yield return "needs at least one rank.";
+        if (OverflowDecayPerWeek is < 0 or > 1 || DeficitHealPerWeek is < 0 or > 1)
+            yield return "overflow_decay_per_week and deficit_heal_per_week must be within [0, 1].";
+        if (Ranks.Count == 0 || !Ranks.All(r => db.TryGet<StatRankDef>(r, out _)))
+            yield break;
+        var ranks = Ranks.Select(db.Get<StatRankDef>).ToList();
+        if (ranks.Any(r => r.Pool <= 0))
+            yield return "every rank needs a positive pool.";
+        if (ranks.SkipLast(1).Any(r => r.Breakthrough is not > 0))
+            yield return "every rank but the last needs a positive breakthrough.";
+        if (ranks[^1].Breakthrough is not null)
+            yield return "the last rank has nowhere to break through to.";
+        if (ranks[0].Collapse is not null)
+            yield return "the first rank has nowhere to collapse to.";
+        if (DeficitHealPerWeek is null && ranks.Any(r => r.Collapse is not null))
+            yield return "collapse needs deficit_heal_per_week.";
+        if (DeficitHealPerWeek is not null && ranks.Skip(1).Any(r => r.Collapse is not > 0))
+            yield return "with a deficit, every rank but the first needs a positive collapse.";
+    }
+}
+
+/// <summary>One rank of a ranked stat (<c>stat_rank.body.1</c>).</summary>
+public sealed class StatRankDef : ContentDef
+{
+    public LocalizedText Name { get; set; } = new();
+
+    /// <summary>Points the rank's scale holds.</summary>
+    public double Pool { get; set; }
+
+    /// <summary>Overflow past the full pool that breaks through to the next rank; null for the last rank.</summary>
+    public double? Breakthrough { get; set; }
+
+    /// <summary>Deficit past the rank's base that collapses it to the rank below (D49); null for the first rank.</summary>
+    public double? Collapse { get; set; }
 }
 
 /// <summary>One of a body stat's aspects (<c>aspect.might.vitality</c>, §2.1).</summary>

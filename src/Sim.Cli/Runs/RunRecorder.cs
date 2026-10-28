@@ -186,7 +186,6 @@ public sealed class RunRecorder
             Round(forecast.Foundation),
             Round(before.Foundation.Purity),
             Round(before.Foundation.Knowledge),
-            Round(before.Foundation.Injuries),
             Round(Math.Max(0, (forecast.Threshold - forecast.Foundation) / forecast.Threshold)),
             Round(forecast.FailureChance),
             Round(toxins.Current));

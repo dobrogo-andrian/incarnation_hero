@@ -53,14 +53,6 @@ public static class InjurySystem
             Heal(player, ctx, injury.InjuryId, ctx.Content.Get<InjuryDef>(injury.InjuryId).RestHealPerWeek, events);
     }
 
-    /// <summary>Breakthrough quality the injuries take away (§4.5).</summary>
-    public static double QualityPenalty(PlayerState player, ContentDb db) =>
-        StateNumbers.Round(player.Injuries.Sum(i => i.Value * db.Get<InjuryDef>(i.InjuryId).QualityPerPoint));
-
-    /// <summary>Foundation the injuries take away (§4.5).</summary>
-    public static double FoundationPenalty(PlayerState player, ContentDb db) =>
-        StateNumbers.Round(player.Injuries.Sum(i => i.Value * db.Get<InjuryDef>(i.InjuryId).FoundationPerPoint));
-
     /// <summary>Stores the new value (no entry at zero), replaces the scale's modifiers and keeps resources under their new maximums.</summary>
     private static void Set(PlayerState player, SimContext ctx, InjuryDef def, double value)
     {

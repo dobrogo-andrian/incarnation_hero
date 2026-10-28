@@ -141,12 +141,6 @@
 - id: str.why.purity
   text: { uk: "Чистота: +{value}" }
 
-- id: str.why.toxins
-  text: { uk: "Токсини: −{value}" }
-
-- id: str.why.injuries
-  text: { uk: "Травми: −{value}" }
-
 - id: str.why.age
   text: { uk: "Вік: −{value}" }
 
@@ -231,6 +225,40 @@
 - id: str.view.aspect
   text: { uk: "{aspect} {value}" }
 
+# Ranked body stats (D48)
+- id: str.view.stat_rank
+  text: { uk: "{stat}: {rank}" }
+
+- id: str.view.body_stat_rank
+  text: { uk: "{stat}: {rank} ({aspects})" }
+
+- id: str.view.stat_standing
+  text: { uk: "{rank}: шкала {filled} / {pool}, надлишок {overflow} / {needed}" }
+
+- id: str.view.stat_standing_top
+  text: { uk: "{rank} (найвищий): шкала {filled} / {pool}, надлишок {overflow}" }
+
+- id: str.view.stat_deficit
+  text: { uk: "Дефіцит: {deficit} / {collapse}" }
+
+- id: str.why.stat_deficit
+  text: { uk: "Втрати нижче основи ступеня — дефіцит, дзеркальний надлишку. Він згасає на {heal}% від себе щотижня, а нові очки спершу йдуть на нього." }
+
+- id: str.why.stat_collapse
+  text: { uk: "Дефіцит {collapse} — прорив у зворотний бік: ступінь падає на нижчий, його шкала лишається повною, дефіцит згорає." }
+
+- id: str.why.stat_erosion
+  text: { uk: "Щотижня роз'їдають: {sources}. Що їх більше, то більша втрата." }
+
+- id: str.why.stat_scale
+  text: { uk: "Очки спершу заповнюють шкалу ступеня й одразу підвищують характеристику." }
+
+- id: str.why.stat_overflow
+  text: { uk: "Очки понад повну шкалу — надлишок. Щотижня він згасає на {decay}% від себе: що більший, то швидше." }
+
+- id: str.why.stat_breakthrough
+  text: { uk: "Надлишок {needed} прориває на наступний ступінь: нова шкала починається з нуля, надлишок згорає." }
+
 - id: str.view.resource
   text: { uk: "{resource}: {current} / {max}" }
 
@@ -257,9 +285,6 @@
 
 - id: str.view.foundation
   text: { uk: "Фундамент: {total} (знання {knowledge}, чистота {purity})" }
-
-- id: str.view.foundation_injured
-  text: { uk: "Фундамент: {total} (знання {knowledge}, чистота {purity}, травми −{injuries})" }
 
 - id: str.view.knowledge
   text: { uk: "Знання: {knowledge}, рівень {level}" }
@@ -440,6 +465,9 @@
 - id: str.ui.skip
   text: { uk: "Пропустити" }
 
+- id: str.ui.quit
+  text: { uk: "Вийти з гри" }
+
 - id: str.ui.summary_title
   text: { uk: "Підсумок забігу" }
 
@@ -524,6 +552,12 @@
 
 - id: str.event.stat_changed
   text: { uk: "{stat}: {amount}." }
+
+- id: str.event.stat_rank_up
+  text: { uk: "{stat}: прорив, новий ступінь — {rank}." }
+
+- id: str.event.stat_rank_down
+  text: { uk: "{stat}: прорив у зворотний бік, ступінь знизився — {rank}." }
 
 - id: str.event.resource_changed
   text: { uk: "{resource}: {amount}." }

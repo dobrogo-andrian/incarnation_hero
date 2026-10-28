@@ -35,7 +35,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 14;
+    public const int CurrentSchemaVersion = 16;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -273,7 +273,16 @@ public sealed class PlaceState
 public sealed class StatValue
 {
     public string StatId { get; set; } = "";
+
+    /// <summary>The stat's value before modifiers; for a ranked stat, its rank's base plus the filled part of the scale.</summary>
     public double Base { get; set; }
+
+    /// <summary>Ranked stats only (D48): the rank index, the points past the full scale and those lost below the rank's base (D49).</summary>
+    public int Rank { get; set; }
+
+    public double Overflow { get; set; }
+
+    public double Deficit { get; set; }
 }
 
 public sealed class ResourceValue

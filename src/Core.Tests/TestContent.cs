@@ -16,6 +16,17 @@ internal static class TestContent
 
     public static StartActivity Wait(int? weeks) => new(new WaitActivity(), weeks);
 
+    /// <summary>Puts a stat at <paramref name="value"/> as a fresh character would start there: a ranked stat (D48) at the rank that holds it.</summary>
+    public static void SetStat(Simulation sim, string statId, double value)
+    {
+        var stat = sim.State.Player.Stats.First(s => s.StatId == statId);
+        stat.Base = value;
+        stat.Overflow = 0;
+        stat.Deficit = 0;
+        if (sim.Content.Get<StatDef>(statId).Progress is { } progress)
+            stat.Rank = Core.Character.StatProgress.RankFor(value, sim.Content.Get<StatProgressDef>(progress), sim.Content);
+    }
+
     /// <summary>
     /// What a run that goes on by itself sends next, like <c>sim run</c>: the first available choice
     /// in an event dialog, otherwise <paramref name="activity"/> again, since an interrupt or event

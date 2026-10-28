@@ -87,6 +87,7 @@ public static class TimeSystem
         ModifierSystem.AdvanceWeek(state);
         CultivationSystem.AdvanceWeek(state, ctx, events);
         InjurySystem.AdvanceWeek(state, ctx, events);
+        StatSystem.AdvanceWeek(state.Player, ctx, events);
         ResourceSystem.AdvanceWeek(state, ctx);
         WorldSystem.AdvanceWeek(state, ctx.Content);
         RumorSystem.AdvanceWeek(state, ctx);

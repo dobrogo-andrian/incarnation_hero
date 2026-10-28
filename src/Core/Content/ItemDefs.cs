@@ -13,9 +13,9 @@ public sealed class ItemDef : ContentDef, IValidatedDef
     {
         if ((Pill is null) == (Folio is null))
             yield return "must be exactly one of: pill, folio.";
-        if (Pill is not null && (Pill.Energy < 0 || Pill.CeilingBonus < 0 || Pill.Heals.Values.Any(h => h <= 0)
-            || Pill.Energy + Pill.CeilingBonus <= 0 && Pill.Heals.Count == 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1))
-            yield return "pill needs energy, a ceiling_bonus or heals (none negative), non-negative toxicity and a repeat_factor in (0, 1].";
+        if (Pill is not null && (Pill.Energy < 0 || Pill.CeilingBonus < 0 || Pill.Heals.Values.Any(h => h <= 0) || Pill.Stats.Values.Any(s => s <= 0)
+            || Pill.Energy + Pill.CeilingBonus <= 0 && Pill.Heals.Count == 0 && Pill.Stats.Count == 0 || Pill.Toxicity < 0 || Pill.RepeatFactor is <= 0 or > 1))
+            yield return "pill needs energy, a ceiling_bonus, heals or stats (none negative), non-negative toxicity and a repeat_factor in (0, 1].";
         if (Folio is not null && (Folio.MaxLevel <= 0 || Folio.Speed <= 0))
             yield return "folio needs a positive max_level and speed.";
     }
@@ -36,6 +36,10 @@ public sealed class PillDef
 
     [ContentRef(typeof(InjuryDef))]
     public Dictionary<string, double> Heals { get; set; } = [];
+
+    /// <summary>Stat points the pill gives (D49), shrinking by the repeat factor like its energy.</summary>
+    [ContentRef(typeof(StatDef))]
+    public Dictionary<string, double> Stats { get; set; } = [];
 
     public double Toxicity { get; set; }
 
