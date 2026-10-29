@@ -46,7 +46,7 @@ py -3.12 -m venv analysis/.venv && analysis/.venv/Scripts/pip install -r analysi
 analysis/.venv/Scripts/jupyter nbconvert --to html --execute --output-dir analysis/out analysis/01_bots.ipynb   # or open in Jupyter
 ```
 
-Notebooks run Sim.Cli themselves (`analysis/simruns.py`, 1000 runs per bot, ≈ 2 min) and cache the JSONL in `analysis/data/` until Core, Sim.Cli or content changes. Use Python 3.12: the default 3.15 has no pandas wheels. Notebooks are committed without outputs.
+Notebooks run Sim.Cli themselves (`analysis/simruns.py`, 1000 runs per bot, ≈ 2 min) and cache the JSONL in `analysis/data/` until Core, Sim.Cli or content changes. Use Python 3.12: the default 3.15 has no pandas wheels. Notebooks are committed with their outputs, so the reports can be read on GitHub without running them; outputs may lag later rule changes, so re-run a notebook before drawing conclusions from it.
 
 The game reads content embedded in Core (`ContentFiles.Embedded`), so a YAML change shows up in Godot only after a build, which the editor runs before every play. Export templates for 4.7.2 .NET must be installed in the editor.
 
