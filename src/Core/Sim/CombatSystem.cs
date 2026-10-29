@@ -6,20 +6,23 @@ using Core.State;
 namespace Core.Sim;
 
 /// <summary>
-/// Fights started by events (tech 4.1, D42): builds the fighters' snapshots, lets the resolver
+/// Fights started by events, hunting and the arena (tech 4.1, D42): builds the fighters' snapshots, lets the resolver
 /// decide on the fight's own subseed from the combat stream, and writes the result back: health
 /// and qi, injuries, combat insight by difficulty, loot of a won fight, or death.
 /// </summary>
 public static class CombatSystem
 {
-    /// <summary>Fights <paramref name="groupId"/>; true when won. An escape is a loss; death ends the run.</summary>
-    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events)
+    /// <summary>
+    /// Fights <paramref name="groupId"/>; true when won. An escape is a loss; death ends the run.
+    /// A bout that <paramref name="yields"/> (the arena) ends in giving up instead of escape or death.
+    /// </summary>
+    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events, bool yields = false)
     {
         var player = state.Player;
         var config = ctx.Combat;
         var me = Snapshot(player, ctx);
         var foes = Foes(ctx, groupId);
-        var result = FormulaResolver.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)));
+        var result = FormulaResolver.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)), yields);
 
         double qiBefore = me.Shield + me.QiPool;
         SetCurrent(player, config.HealthResource, result.Health);
@@ -59,6 +62,13 @@ public static class CombatSystem
             0 => StageRelation.Equal,
             _ => StageRelation.Higher,
         });
+    }
+
+    /// <summary>Whether the player has the health hunting and the arena ask for (§5).</summary>
+    public static bool FitToFight(PlayerState player, SimContext ctx)
+    {
+        string health = ctx.Combat.HealthResource;
+        return player.Resources.First(r => r.ResourceId == health).Current >= ctx.Combat.FightMinHealthShare * ctx.Rules.Value(player, health);
     }
 
     /// <summary>The player as a fighter, from current resources and computed values.</summary>

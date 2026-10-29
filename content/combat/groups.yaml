@@ -24,3 +24,41 @@
 - id: grp.undead.tomb_guardian
   name: { uk: "Вартовий гробниці" }
   members: [ { enemy: enemy.undead.tomb_guardian } ]
+
+# Hunting prey (§5): the loot is what pelts and meat fetch in the settlement.
+- id: grp.beast.wild_boar
+  name: { uk: "Дикий кабан" }
+  members: [ { enemy: enemy.beast.wild_boar } ]
+  loot: { stones_min: 2, stones_max: 5 }
+
+- id: grp.beast.red_foxes
+  name: { uk: "Руді лисиці" }
+  members: [ { enemy: enemy.beast.red_fox, count: 2 } ]
+  loot: { stones_min: 1, stones_max: 4 }
+
+- id: grp.beast.lone_wolf
+  name: { uk: "Вовк-одинак" }
+  members: [ { enemy: enemy.beast.grey_wolf } ]
+  loot: { stones_min: 2, stones_max: 5 }
+
+- id: grp.beast.mist_leopard
+  name: { uk: "Туманний леопард" }
+  members: [ { enemy: enemy.beast.mist_leopard } ]
+  loot: { stones_min: 8, stones_max: 16 }
+
+# Arena opponents (§5): no loot, the arena pays its prize instead.
+- id: grp.arena.novices
+  name: { uk: "Новачки арени" }
+  members: [ { enemy: enemy.human.arena_novice } ]
+
+- id: grp.arena.brawlers
+  name: { uk: "Бійці арени" }
+  members: [ { enemy: enemy.human.arena_brawler } ]
+
+- id: grp.arena.adepts
+  name: { uk: "Адепти арени" }
+  members: [ { enemy: enemy.human.arena_adept } ]
+
+- id: grp.arena.champion
+  name: { uk: "Чемпіон арени" }
+  members: [ { enemy: enemy.human.arena_champion } ]

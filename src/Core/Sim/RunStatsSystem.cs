@@ -9,10 +9,13 @@ namespace Core.Sim;
 /// </summary>
 public static class RunStatsSystem
 {
-    /// <summary>What a week of <paramref name="activity"/> is counted as: meditation by its direction, the rest by kind.</summary>
+    /// <summary>What a week of <paramref name="activity"/> is counted as: meditation by its direction, training by its job, ground or arena, the rest by kind.</summary>
     public static string ActivityKey(Activity activity) => activity switch
     {
         MeditateActivity m => m.DirectionId,
+        WorkActivity w => w.JobId,
+        HuntActivity h => h.HuntId,
+        ArenaActivity a => a.ArenaId,
         WaitActivity => "wait",
         InquireActivity => "inquire",
         TravelActivity => "travel",
@@ -57,7 +60,7 @@ public static class RunStatsSystem
                 case CombatResolved { End: CombatEnd.Won }:
                     stats.CombatsWon++;
                     break;
-                case CombatResolved { End: CombatEnd.Fled }:
+                case CombatResolved { End: CombatEnd.Fled or CombatEnd.Yielded }:
                     stats.CombatsFled++;
                     break;
                 case CombatResolved:

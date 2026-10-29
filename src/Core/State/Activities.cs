@@ -12,6 +12,9 @@ namespace Core.State;
 [JsonDerivedType(typeof(MeditateActivity), "meditate")]
 [JsonDerivedType(typeof(BreakthroughActivity), "breakthrough")]
 [JsonDerivedType(typeof(InquireActivity), "inquire")]
+[JsonDerivedType(typeof(WorkActivity), "work")]
+[JsonDerivedType(typeof(HuntActivity), "hunt")]
+[JsonDerivedType(typeof(ArenaActivity), "arena")]
 public abstract record Activity;
 
 /// <summary>Let time pass doing nothing in particular.</summary>
@@ -19,6 +22,15 @@ public sealed record WaitActivity : Activity;
 
 /// <summary>Asking around a settlement for rumors: likelier and from better sources than just being there (D41).</summary>
 public sealed record InquireActivity : Activity;
+
+/// <summary>Hired work at a job of the current settlement (§5, §13.2).</summary>
+public sealed record WorkActivity(string JobId) : Activity;
+
+/// <summary>Hunting at a hunting ground of the current zone (§5).</summary>
+public sealed record HuntActivity(string HuntId) : Activity;
+
+/// <summary>Weekly bouts at an arena of the current zone against its rank of opponents number <paramref name="Bout"/> (§5).</summary>
+public sealed record ArenaActivity(string ArenaId, int Bout) : Activity;
 
 /// <summary>
 /// Meditation in one direction at a meditation place of the current zone (§4.2). Comprehension

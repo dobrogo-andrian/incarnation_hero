@@ -33,8 +33,12 @@ public sealed class ZoneDef : ContentDef, IValidatedDef
             yield break;
         if (LocalMap is not { Inquire: not null, Exit: not null })
             yield return "is a settlement, so it needs a local_map with inquire and exit points.";
+        if (LocalMap?.Jobs is null && db.All<JobDef>().Any(j => j.Zone == Id))
+            yield return "has jobs, so its local_map needs a jobs point (the job board).";
         var unplaced = db.All<PlaceDef>().Where(p => p.Zone == Id && p.Map is null).Select(p => p.Id)
-            .Concat(db.All<ShopDef>().Where(s => s.Zone == Id && s.Map is null).Select(s => s.Id));
+            .Concat(db.All<ShopDef>().Where(s => s.Zone == Id && s.Map is null).Select(s => s.Id))
+            .Concat(db.All<HuntDef>().Where(h => h.Zone == Id && h.Map is null).Select(h => h.Id))
+            .Concat(db.All<ArenaDef>().Where(a => a.Zone == Id && a.Map is null).Select(a => a.Id));
         foreach (string id in unplaced)
             yield return $"is a settlement, so '{id}' needs a point on its local map (map).";
     }
@@ -46,6 +50,10 @@ public sealed class MapPoint : IValidatedDef
     public double X { get; set; }
 
     public double Y { get; set; }
+
+    /// <summary>The part of a local map the point is drawn in, framed with its neighbours by what they are for.</summary>
+    [ContentRef(typeof(DistrictDef))]
+    public string? District { get; set; }
 
     public IEnumerable<string> Validate(ContentDb db)
     {
@@ -62,6 +70,9 @@ public sealed class LocalMapDef
 
     /// <summary>The way out to the region map.</summary>
     public MapPoint? Exit { get; set; }
+
+    /// <summary>The job board, where the settlement's jobs (<c>job.*</c>) are taken.</summary>
+    public MapPoint? Jobs { get; set; }
 }
 
 /// <summary>A two-way passage between zones that takes <see cref="Weeks"/> to cross (§9).</summary>
@@ -88,7 +99,7 @@ public sealed class RouteDef : ContentDef, IValidatedDef
 /// A meditation place in a zone (§4.2, §9). Its qi reserve is drained by meditation and refills by
 /// <see cref="RegenPerWeek"/> up to <see cref="Capacity"/>; spirit stones never push it higher (D19).
 /// </summary>
-public sealed class PlaceDef : ContentDef, IValidatedDef
+public sealed class PlaceDef : ContentDef, IValidatedDef, IDescribedDef
 {
     public LocalizedText Name { get; set; } = new();
 

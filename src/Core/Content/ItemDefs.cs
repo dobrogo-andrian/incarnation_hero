@@ -47,7 +47,7 @@ public sealed class PillDef
 }
 
 /// <summary>A shop in a zone (<c>shop.hub.apothecary</c>, §13.3) selling items at fixed prices in spirit stones.</summary>
-public sealed class ShopDef : ContentDef, IValidatedDef
+public sealed class ShopDef : ContentDef, IValidatedDef, IDescribedDef
 {
     public LocalizedText Name { get; set; } = new();
 

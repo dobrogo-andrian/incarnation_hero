@@ -33,3 +33,47 @@
   stats: { stat.might: 14, stat.speed: 6, stat.meridians: 8 }
   weapon_damage: 12
   injury: injury.internal
+
+# Prey of the hunting grounds (§5): beasts that fight back but rarely kill a healthy hunter.
+- id: enemy.beast.wild_boar
+  name: { uk: "Дикий кабан" }
+  stage: 0
+  stats: { stat.might: 7, stat.endurance: 6, stat.speed: 5 }
+  weapon_damage: 6
+
+- id: enemy.beast.red_fox
+  name: { uk: "Руда лисиця" }
+  stage: 0
+  stats: { stat.might: 2, stat.endurance: 3, stat.speed: 12 }
+  weapon_damage: 3
+
+- id: enemy.beast.mist_leopard
+  name: { uk: "Туманний леопард" }
+  stage: 1
+  stats: { stat.might: 10, stat.endurance: 8, stat.speed: 16, stat.meridians: 2 }
+  weapon_damage: 9
+
+# Arena fighters (§5): people who fight for prize money, by rank. Bouts end when the player yields.
+- id: enemy.human.arena_novice
+  name: { uk: "Новачок арени" }
+  stage: 0
+  stats: { stat.might: 7, stat.endurance: 7, stat.speed: 7 }
+  weapon_damage: 7
+
+- id: enemy.human.arena_brawler
+  name: { uk: "Боєць арени" }
+  stage: 0
+  stats: { stat.might: 12, stat.endurance: 10, stat.speed: 10 }
+  weapon_damage: 9
+
+- id: enemy.human.arena_adept
+  name: { uk: "Адепт арени" }
+  stage: 1
+  stats: { stat.might: 14, stat.endurance: 12, stat.speed: 12, stat.meridians: 6 }
+  weapon_damage: 10
+
+- id: enemy.human.arena_champion
+  name: { uk: "Чемпіон арени" }
+  stage: 2
+  stats: { stat.might: 18, stat.endurance: 14, stat.speed: 14, stat.meridians: 10 }
+  weapon_damage: 12

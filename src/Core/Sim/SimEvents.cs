@@ -99,7 +99,8 @@ public sealed record ResourceChanged(string ResourceId, double Amount) : SimEven
 /// <summary>Items were gained (positive) or lost (negative).</summary>
 public sealed record ItemsChanged(string ItemId, int Count) : SimEvent;
 
-public sealed record StonesChanged(int Amount) : SimEvent;
+/// <summary>Stones gained or spent; a routine change (a weekly wage or arena fee) stays out of the journal.</summary>
+public sealed record StonesChanged(int Amount, bool Routine = false) : SimEvent;
 
 /// <summary>A cultivation buff was gained or topped up by <paramref name="Points"/>.</summary>
 public sealed record BuffGained(BuffKind Kind, double Points) : SimEvent;

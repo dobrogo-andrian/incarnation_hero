@@ -51,6 +51,17 @@ public static class StatSystem
         return StateNumbers.Round(after - position);
     }
 
+    /// <summary>
+    /// Points earned by practice (meditation's side gains, training): a stat with a diminish scale
+    /// gains less the higher it is.
+    /// </summary>
+    public static void Gain(PlayerState player, SimContext ctx, string statId, double gain, List<SimEvent> events)
+    {
+        if (ctx.Content.Get<StatDef>(statId).DiminishScale is double scale)
+            gain /= 1 + player.Stats.First(s => s.StatId == statId).Base / scale;
+        Change(player, ctx, statId, gain, events);
+    }
+
     /// <summary>A stat without overflow moves within its whole range; its rank is the scale it lands on.</summary>
     private static double Move(StatValue value, StatProgressDef progress, ContentDb db, double amount, List<SimEvent> events)
     {

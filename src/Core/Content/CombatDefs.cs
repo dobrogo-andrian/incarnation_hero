@@ -158,6 +158,9 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     public double FleeChanceMin { get; set; }
     public double FleeChanceMax { get; set; }
 
+    /// <summary>Hunting and the arena (§5) take no one below this share of maximum health: a spent body stops them.</summary>
+    public double FightMinHealthShare { get; set; }
+
     /// <summary>A fight still undecided after this many rounds ends with the player withdrawing.</summary>
     public int MaxRounds { get; set; }
 
@@ -173,7 +176,7 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
         if (WeaponDamage <= 0 || MaxRounds < 1)
             yield return "needs a positive weapon_damage and max_rounds.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
-            || ShieldBreakChance is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
-            yield return "damage_spread, flee_health_share, insight_fled_share, shield_break_chance and the flee chance bounds must be fractions.";
+            || ShieldBreakChance is < 0 or > 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
+            yield return "damage_spread, flee_health_share, insight_fled_share, shield_break_chance, fight_min_health_share and the flee chance bounds must be fractions.";
     }
 }

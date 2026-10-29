@@ -28,6 +28,9 @@ public enum CombatEnd
     Won,
     Fled,
     Died,
+
+    /// <summary>An arena bout given up (§5): the player yields where they would flee, and a deadly blow is stopped.</summary>
+    Yielded,
 }
 
 /// <summary>What the fight left of the player: the numbers to write back, and injury points per scale in ID order.</summary>
@@ -37,12 +40,16 @@ public sealed record CombatResult(CombatEnd End, int Rounds, double Health, doub
 /// The stage 1 formula resolver (D42) behind the combat interface: abstract rounds without a grid.
 /// Turn order by reaction; the player hits the weakest enemy, enemies hit the player; hits break
 /// the qi shield first, then health, and health damage leaves injuries; shields refill from the
-/// qi pool at the end of each round. Below a share of health the player tries to escape. The hex
+/// qi pool at the end of each round. Below a share of health the player tries to escape, or in a
+/// bout that <c>yields</c> gives up at once, and a blow that would kill ends the bout instead. The hex
 /// combat of stage 2 replaces this class and keeps its inputs and result.
 /// </summary>
 public static class FormulaResolver
 {
     public const string PlayerId = "player";
+
+    /// <summary>What a yielding player is left with when the blow that would have killed is stopped.</summary>
+    private const double YieldedHealth = 1;
 
     private sealed class Fighter(Combatant c)
     {
@@ -53,7 +60,7 @@ public static class FormulaResolver
         public bool Down => Health <= 0;
     }
 
-    public static CombatResult Resolve(Combatant player, IReadOnlyList<Combatant> foes, CombatConfigDef config, Xoshiro256StarStar rng)
+    public static CombatResult Resolve(Combatant player, IReadOnlyList<Combatant> foes, CombatConfigDef config, Xoshiro256StarStar rng, bool yields = false)
     {
         var me = new Fighter(player);
         var enemies = foes.Select(f => new Fighter(f)).ToList();
@@ -74,6 +81,11 @@ public static class FormulaResolver
                 if (actor != me)
                 {
                     Hit(actor, me, config, rng, injuries);
+                    if (me.Down && yields)
+                    {
+                        me.Health = YieldedHealth;
+                        return Result(CombatEnd.Yielded, round);
+                    }
                     if (me.Down)
                         return Result(CombatEnd.Died, round);
                     continue;
@@ -82,6 +94,8 @@ public static class FormulaResolver
                 // Escaping is the turn's action: a failed attempt costs the attack.
                 if (me.Health <= config.FleeHealthShare * me.Def.MaxHealth)
                 {
+                    if (yields)
+                        return Result(CombatEnd.Yielded, round);
                     if (rng.Chance(FleeChance(me, enemies, config)))
                         return Result(CombatEnd.Fled, round);
                     continue;

@@ -81,7 +81,7 @@ public sealed class RunRecorder
                     _combat[fight.GroupId] = fight.End switch
                     {
                         CombatEnd.Won => counts with { Won = counts.Won + 1 },
-                        CombatEnd.Fled => counts with { Fled = counts.Fled + 1 },
+                        CombatEnd.Fled or CombatEnd.Yielded => counts with { Fled = counts.Fled + 1 },
                         _ => counts with { Died = counts.Died + 1 },
                     };
                     break;

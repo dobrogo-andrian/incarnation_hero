@@ -1,0 +1,83 @@
+# Training activities (§5): hired work, hunting grounds and the arena. Draft numbers until Sim.Cli
+# reports. Gains are points a week on the stats' scales (D48): a start-of-run stat sits at 10 of 12
+# with a breakthrough of 2 in overflow that fades 5% a week, so 0.1 a week settles at 2 of overflow
+# and 0.15 breaks through rank I; rank II needs more than 0.15.
+
+# Hired work (§13.2): small guaranteed pay, no rare finds. Taken at the hub's job board.
+- id: job.hub.porter
+  name: { uk: "Вантажник" }
+  zone: zone.hub
+  pay: 1
+  gains: { stat.might: 0.15, stat.endurance: 0.05 }
+
+- id: job.hub.courier
+  name: { uk: "Гонець" }
+  zone: zone.hub
+  pay: 1
+  gains: { stat.speed: 0.15, stat.endurance: 0.05 }
+
+- id: job.hub.apothecary_helper
+  name: { uk: "Помічник аптекаря" }
+  zone: zone.hub
+  pay: 1
+  gains: { stat.perception: 0.1 }
+
+# Hunting grounds: weekly chance of prey; a lost fight can kill outside the settlement's woods.
+- id: hunt.hub.woods
+  name: { uk: "Угіддя за частоколом" }
+  description: { uk: "Рідкий ліс і чагарники за частоколом поселення. Тут ставлять сильця на зайців, а смільчаки виходять із рогатиною на кабана." }
+  zone: zone.hub
+  map: { x: 34, y: 14, district: district.hub.outskirts }
+  encounter_chance: 0.35
+  groups: { grp.beast.wild_boar: 2, grp.beast.red_foxes: 3 }
+  gains: { stat.speed: 0.1, stat.perception: 0.05 }
+
+- id: hunt.bamboo_grove.thicket
+  name: { uk: "Бамбукові хащі" }
+  description: { uk: "Хащі, де бамбук росте так густо, що звір чує тебе раніше, ніж ти його бачиш. Сліди вовків тут свіжі." }
+  zone: zone.bamboo_grove
+  encounter_chance: 0.3
+  groups: { grp.beast.lone_wolf: 3, grp.beast.wild_boar: 2, grp.beast.grey_wolves: 1 }
+  gains: { stat.speed: 0.15, stat.perception: 0.05 }
+
+- id: hunt.river_valley.reeds
+  name: { uk: "Очерети над річкою" }
+  description: { uk: "Високі очерети вздовж ріки. Кабани приходять сюди на водопій, а у глибокій воді ворушиться щось набагато більше." }
+  zone: zone.river_valley
+  encounter_chance: 0.3
+  groups: { grp.beast.wild_boar: 3, grp.beast.grey_wolves: 1, grp.beast.river_serpent: 1 }
+  gains: { stat.might: 0.1, stat.speed: 0.1 }
+
+- id: hunt.misty_hills.ridges
+  name: { uk: "Туманні гребені" }
+  description: { uk: "Кам'янисті гребені, де туман ховає і здобич, і мисливця. Плямисту шкуру леопарда тут цінують на вагу каменів." }
+  zone: zone.misty_hills
+  encounter_chance: 0.25
+  groups: { grp.beast.mist_leopard: 2, grp.beast.grey_wolves: 1 }
+  gains: { stat.speed: 0.2, stat.perception: 0.05 }
+
+# The arena: a fee before every weekly bout, a prize for a win; bouts end in yielding, not death.
+- id: arena.hub
+  name: { uk: "Арена Кривавого Піску" }
+  description: { uk: "Кругла яма, засипана піском, і дерев'яні лави навколо. Тут б'ються за гроші й славу, а розпорядник зупиняє бій, щойно хтось здається." }
+  zone: zone.hub
+  map: { x: 16, y: 66, district: district.hub.arena }
+  gains: { stat.might: 0.15, stat.speed: 0.1 }
+  bouts:
+    - { group: grp.arena.novices, fee: 2, prize: 6 }
+    - { group: grp.arena.brawlers, fee: 5, prize: 15 }
+    - { group: grp.arena.adepts, fee: 10, prize: 30 }
+    - { group: grp.arena.champion, fee: 20, prize: 60 }
+
+# Districts of the hub's local map: points grouped by what they are for.
+- id: district.hub.outskirts
+  name: { uk: "Околиця" }
+  zone: zone.hub
+
+- id: district.hub.market
+  name: { uk: "Ринок" }
+  zone: zone.hub
+
+- id: district.hub.arena
+  name: { uk: "Арена й біржа праці" }
+  zone: zone.hub

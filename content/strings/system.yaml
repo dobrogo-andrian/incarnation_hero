@@ -648,3 +648,55 @@
 
 - id: str.need.age_years
   text: { uk: "вік (роки)" }
+
+# Training (§5): hired work, hunting, the arena.
+- id: str.reject.not_here
+  text: { uk: "Цього тут немає." }
+
+- id: str.reject.too_wounded
+  text: { uk: "Надто мало здоров'я для бою: спершу відпочиньте." }
+
+- id: str.activity.work
+  text: { uk: "Робота: {job}" }
+
+- id: str.activity.hunt
+  text: { uk: "Полювання: {hunt}" }
+
+- id: str.activity.arena
+  text: { uk: "Бої на арені: {arena}" }
+
+- id: str.view.job
+  text: { uk: "{job}. Плата за тиждень у каменях: {pay}" }
+
+- id: str.view.hunt
+  text: { uk: "Шанс натрапити на звіра за тиждень: {chance}%. Можлива здобич: {groups}. Поразка поза поселенням може коштувати життя." }
+
+- id: str.view.bout
+  text: { uk: "{group}: внесок {fee}, приз за перемогу {prize}" }
+
+- id: str.view.trains
+  text: { uk: "Тренує: {stats}" }
+
+- id: str.event.combat_yielded
+  text: { uk: "Ви здалися на арені: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
+
+- id: str.ui.jobs
+  text: { uk: "Біржа праці" }
+
+- id: str.ui.jobs_hint
+  text: { uk: "Дошка з оголошеннями під навісом біля арени. Купцям потрібні вантажники й гонці, аптекарю — пара уважних рук. Платять мало, зате щотижня." }
+
+- id: str.ui.work_start
+  text: { uk: "Працювати" }
+
+- id: str.ui.hunt_start
+  text: { uk: "Полювати" }
+
+- id: str.ui.arena_start
+  text: { uk: "Битися" }
+
+- id: str.ui.bout
+  text: { uk: "Суперник:" }
+
+- id: str.ui.hunts_here
+  text: { uk: "Мисливські угіддя:" }

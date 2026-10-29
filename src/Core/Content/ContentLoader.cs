@@ -49,6 +49,10 @@ public static class ContentLoader
         ["enemy"] = typeof(EnemyDef),
         ["rumor"] = typeof(RumorDef),
         ["source"] = typeof(RumorSourceDef),
+        ["job"] = typeof(JobDef),
+        ["hunt"] = typeof(HuntDef),
+        ["arena"] = typeof(ArenaDef),
+        ["district"] = typeof(DistrictDef),
     };
 
     /// <summary>Objects whose type is not their kind's: one-off configs. Checked before <see cref="TypesByKind"/>.</summary>

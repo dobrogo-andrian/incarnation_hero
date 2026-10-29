@@ -18,7 +18,10 @@
   danger: 0
   settlement: true
   map: { x: 50, y: 88 }
-  local_map: { inquire: { x: 30, y: 62 }, exit: { x: 50, y: 92 } }
+  local_map:
+    inquire: { x: 78, y: 54, district: district.hub.market }
+    jobs: { x: 40, y: 66, district: district.hub.arena }
+    exit: { x: 50, y: 92 }
 
 - id: zone.bamboo_grove
   name: { uk: "Бамбуковий гай" }
@@ -97,7 +100,7 @@
   name: { uk: "Тихий двір" }
   description: { uk: "Вимощений камінням двір за стіною поселення. Стара сосна, кам'яна лава й тиша, яку порушують хіба що горобці. Ці тут ледь відчутна, зате ніхто не заважає." }
   zone: zone.hub
-  map: { x: 50, y: 22 }
+  map: { x: 12, y: 14, district: district.hub.outskirts }
   density: 1
   capacity: 8
   regen_per_week: 0.25

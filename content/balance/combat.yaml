@@ -28,6 +28,7 @@ flee_chance_base: 0.5
 flee_chance_per_point: 0.03       # per point of agility over the fastest enemy's reaction
 flee_chance_min: 0.15
 flee_chance_max: 0.9
+fight_min_health_share: 0.5       # hunting and the arena need half of maximum health (§5)
 max_rounds: 30                    # still undecided: the player withdraws
 
 insight_per_difficulty: 25        # an even fight gives 25 points of combat insight

@@ -80,6 +80,13 @@ public static class SimText
     private static readonly LocKey Wait = new("str.activity.wait");
     private static readonly LocKey TravelTo = new("str.activity.travel");
     private static readonly LocKey Meditate = new("str.activity.meditate");
+    private static readonly LocKey Work = new("str.activity.work");
+    private static readonly LocKey Hunt = new("str.activity.hunt");
+    private static readonly LocKey Arena = new("str.activity.arena");
+    private static readonly LocKey JobLine = new("str.view.job");
+    private static readonly LocKey HuntLine = new("str.view.hunt");
+    private static readonly LocKey BoutLine = new("str.view.bout");
+    private static readonly LocKey TrainsLine = new("str.view.trains");
 
     private static readonly LocKey OldAge = new("str.end.old_age");
 
@@ -109,6 +116,7 @@ public static class SimText
     private static readonly LocKey RevealedLine = new("str.event.revealed");
     private static readonly LocKey CombatWon = new("str.event.combat_won");
     private static readonly LocKey CombatFled = new("str.event.combat_fled");
+    private static readonly LocKey CombatYielded = new("str.event.combat_yielded");
     private static readonly LocKey CombatDied = new("str.event.combat_died");
     private static readonly LocKey CombatDeath = new("str.end.combat_death");
     private static readonly LocKey OptionCombat = new("str.dialog.option_combat");
@@ -505,6 +513,27 @@ public static class SimText
         _ => NeedRange with { Args = [new("what", what), new("min", range.Min ?? 0), new("max", range.Max ?? 0)] },
     };
 
+    /// <summary>A job's offer: its weekly pay.</summary>
+    public static LocKey JobText(JobDef job) => JobLine with { Args = [new("job", Name(job.Id)), new("pay", job.Pay)] };
+
+    /// <summary>A hunting ground: the chance of prey a week and the beasts it may be.</summary>
+    public static LocKey HuntText(HuntDef hunt) => HuntLine with
+    {
+        Args = [new("chance", Number(hunt.EncounterChance * 100)), new("groups", hunt.Groups.Keys.Order(StringComparer.Ordinal).Select(Name).ToList())],
+    };
+
+    /// <summary>One rank of arena opponents with its fee and prize.</summary>
+    public static LocKey BoutText(ArenaBoutDef bout) => BoutLine with
+    {
+        Args = [new("group", Name(bout.Group)), new("fee", bout.Fee), new("prize", bout.Prize)],
+    };
+
+    /// <summary>What a training activity trains, by stat name.</summary>
+    public static LocKey TrainsText(TrainingDef def) => TrainsLine with
+    {
+        Args = [new("stats", def.Gains.Keys.Order(StringComparer.Ordinal).Select(Name).ToList())],
+    };
+
     /// <summary>A line for the player about <paramref name="e"/>, or null for routine events like a passing week.</summary>
     public static LocKey? Describe(SimEvent e) => e switch
     {
@@ -533,12 +562,13 @@ public static class SimText
         StatRankChanged r => StatRankChangedLine with { Args = [new("stat", Name(r.StatId)), new("rank", Name(r.RankId))] },
         ResourceChanged r => ResourceChangedLine with { Args = [new("resource", Name(r.ResourceId)), new("amount", Signed(r.Amount))] },
         ItemsChanged i => ItemsChangedLine with { Args = [new("item", Name(i.ItemId)), new("amount", Signed(i.Count))] },
+        StonesChanged { Routine: true } => null,
         StonesChanged s => StonesChangedLine with { Args = [new("amount", Signed(s.Amount))] },
         BuffGained b => BuffGainedLine with { Args = [new("buff", BuffName(b.Kind)), new("points", Number(b.Points))] },
         ReputationChanged r => ReputationChangedLine with { Args = [new("sect", Name(r.SectId)), new("amount", Signed(r.Amount))] },
         Revealed r => RevealedLine with { Args = [new("place", Name(r.Id))] },
         RumorHeard r => Heard with { Args = [new("rumor", Name(r.RumorId))] },
-        CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, _ => CombatDied }) with
+        CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, CombatEnd.Yielded => CombatYielded, _ => CombatDied }) with
         {
             Args = [new("group", Name(c.GroupId)), new("rounds", c.Rounds), new("health", Number(c.HealthLost)), new("qi", Number(c.QiSpent))],
         },
@@ -610,6 +640,9 @@ public static class SimText
         },
         MeditateActivity m => Meditate with { Args = [new("direction", Name(m.DirectionId)), new("place", Name(m.PlaceId))] },
         BreakthroughActivity b => Seclusion with { Args = [new("place", Name(b.PlaceId))] },
+        WorkActivity w => Work with { Args = [new("job", Name(w.JobId))] },
+        HuntActivity h => Hunt with { Args = [new("hunt", Name(h.HuntId))] },
+        ArenaActivity a => Arena with { Args = [new("arena", Name(a.ArenaId))] },
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),
     };
 
