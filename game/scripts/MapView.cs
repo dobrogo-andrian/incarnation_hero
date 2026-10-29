@@ -7,6 +7,7 @@ using Godot;
 /// A static map screen (D44): the settlement's local map or the region map. Points are buttons
 /// anchored at their YAML position (percent of the map), so the map scales with the window; region
 /// routes are lines labelled with their weeks. Only what the PlayerView shows as known is drawn.
+/// Local points of one district are framed together under its name (D52).
 /// </summary>
 public partial class MapView : Control
 {
@@ -16,8 +17,13 @@ public partial class MapView : Control
     private static readonly Color Background = new(0.10f, 0.11f, 0.13f);
     private static readonly Color RouteColor = new(0.50f, 0.46f, 0.38f);
     private static readonly Color HereColor = new(0.95f, 0.80f, 0.35f);
+    private static readonly Color DistrictColor = new(0.45f, 0.50f, 0.58f);
+
+    /// <summary>Space between a district's frame and its points.</summary>
+    private const float DistrictPadding = 14;
 
     private readonly List<(Vector2 A, Vector2 B, string Label)> _routes = [];
+    private readonly List<(Button Point, string District)> _districtPoints = [];
 
     /// <summary>A point other than the exit was pressed.</summary>
     public event Action<MapTarget>? PointPressed;
@@ -30,7 +36,7 @@ public partial class MapView : Control
         ClipContents = true;
     }
 
-    /// <summary>The current settlement: its places, shops, the inquiry point and the exit.</summary>
+    /// <summary>The current settlement: its places, shops, hunting grounds, arenas, job board, the inquiry point and the exit.</summary>
     public void ShowLocal(UiContext ui, PlayerView view)
     {
         Clear();
@@ -38,12 +44,29 @@ public partial class MapView : Control
         var local = ui.Db.Get<ZoneDef>(zoneId).LocalMap!;
 
         foreach (var place in view.Places)
-            AddPoint(ui.Db.Get<PlaceDef>(place.PlaceId).Map!, ui.Text(SimText.Name(place.PlaceId)), () => PointPressed?.Invoke(new PlaceTarget(place.PlaceId)));
+            AddLocal(ui, ui.Db.Get<PlaceDef>(place.PlaceId).Map!, ui.Name(place.PlaceId), new PlaceTarget(place.PlaceId));
         foreach (var shop in ui.Db.All<ShopDef>().Where(s => s.Zone == zoneId))
-            AddPoint(shop.Map!, ui.Text(SimText.Name(shop.Id)), () => PointPressed?.Invoke(new ShopTarget(shop.Id)));
-        AddPoint(local.Inquire!, ui.Text("str.ui.inquire"), () => PointPressed?.Invoke(new InquireTarget()));
+            AddLocal(ui, shop.Map!, ui.Name(shop.Id), new ShopTarget(shop.Id));
+        foreach (var hunt in ui.Db.All<HuntDef>().Where(h => h.Zone == zoneId))
+            AddLocal(ui, hunt.Map!, ui.Name(hunt.Id), new HuntTarget(hunt.Id));
+        foreach (var arena in ui.Db.All<ArenaDef>().Where(a => a.Zone == zoneId))
+            AddLocal(ui, arena.Map!, ui.Name(arena.Id), new ArenaTarget(arena.Id));
+        if (local.Jobs is { } jobs)
+            AddLocal(ui, jobs, ui.Text("str.ui.jobs"), new JobsTarget());
+        AddLocal(ui, local.Inquire!, ui.Text("str.ui.inquire"), new InquireTarget());
         AddPoint(local.Exit!, ui.Text("str.ui.exit"), () => ExitPressed?.Invoke());
         QueueRedraw();
+    }
+
+    /// <summary>A local point that opens <paramref name="target"/>, remembered with its district for the frames.</summary>
+    private void AddLocal(UiContext ui, MapPoint point, string text, MapTarget target)
+    {
+        var button = AddPoint(point, text, () => PointPressed?.Invoke(target));
+        if (point.District is not { } district)
+            return;
+        _districtPoints.Add((button, ui.Name(district)));
+        // Frames follow the points' final sizes, known only after layout.
+        button.Resized += QueueRedraw;
     }
 
     /// <summary>Every known zone with the routes between known zones; the player's zone is highlighted.</summary>
@@ -76,6 +99,12 @@ public partial class MapView : Control
             DrawLine(from, to, RouteColor, 3);
             DrawString(font, (from + to) / 2 + new Vector2(-60, -6), label, HorizontalAlignment.Center, 120, fontSize, RouteColor);
         }
+        foreach (var district in _districtPoints.GroupBy(p => p.District))
+        {
+            var frame = district.Select(p => p.Point.GetRect()).Aggregate((a, b) => a.Merge(b)).Grow(DistrictPadding);
+            DrawRect(frame, DistrictColor, filled: false, width: 2);
+            DrawString(font, frame.Position + new Vector2(4, -6), district.Key, HorizontalAlignment.Left, -1, fontSize, DistrictColor);
+        }
     }
 
     public override void _Notification(int what)
@@ -87,6 +116,7 @@ public partial class MapView : Control
     private void Clear()
     {
         _routes.Clear();
+        _districtPoints.Clear();
         foreach (var child in GetChildren())
             child.QueueFree();
     }

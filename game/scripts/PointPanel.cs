@@ -6,8 +6,9 @@ using static Widgets;
 
 /// <summary>
 /// The centre panel's actions for the picked point (D44): a zone's danger and journey with "set
-/// out", the current settlement's entrance or the current wild zone's places; inside a place,
-/// meditation and refilling its reserve; in the tea house, asking around; in a shop, its offers.
+/// out", the current settlement's entrance or the current wild zone's places and hunting grounds;
+/// inside a place, meditation and refilling its reserve; in the tea house, asking around; in a
+/// shop, its offers; on a hunting ground, at the arena or the job board, training (D52).
 /// The place itself (name, description) is drawn where the map was. Rebuilt from the PlayerView on
 /// every refresh, with the player's picks kept in <see cref="Choices"/>.
 /// </summary>
@@ -60,6 +61,15 @@ public partial class PointPanel : VBoxContainer
                 AddChild(Duration(ui));
                 AddChild(Button(ui.Text("str.ui.inquire_start"), () => ui.Send(new StartActivity(new InquireActivity(), ui.Choices.ActivityWeeks)), free));
                 break;
+            case HuntTarget hunt:
+                ShowHunt(ui, ui.Db.Get<HuntDef>(hunt.HuntId), free);
+                break;
+            case ArenaTarget arena:
+                ShowArena(ui, ui.Db.Get<ArenaDef>(arena.ArenaId), free);
+                break;
+            case JobsTarget:
+                ShowJobs(ui, view, free);
+                break;
         }
     }
 
@@ -84,6 +94,45 @@ public partial class PointPanel : VBoxContainer
         AddChild(Text(ui.Text("str.ui.places_here")));
         foreach (var place in view.Places)
             AddChild(Button(ui.Name(place.PlaceId), () => TargetPicked?.Invoke(new PlaceTarget(place.PlaceId))));
+        var hunts = ui.Db.All<HuntDef>().Where(h => h.Zone == zoneId).ToList();
+        if (hunts.Count == 0)
+            return;
+        AddChild(Text(ui.Text("str.ui.hunts_here")));
+        foreach (var hunt in hunts)
+            AddChild(Button(ui.Name(hunt.Id), () => TargetPicked?.Invoke(new HuntTarget(hunt.Id))));
+    }
+
+    private void ShowHunt(UiContext ui, HuntDef hunt, bool free)
+    {
+        AddChild(Text(ui.Text(SimText.HuntText(hunt))));
+        AddChild(Text(ui.Text(SimText.TrainsText(hunt))));
+        AddChild(Duration(ui));
+        AddChild(Button(ui.Text("str.ui.hunt_start"), () => ui.Send(new StartActivity(new HuntActivity(hunt.Id), ui.Choices.ActivityWeeks)), free));
+    }
+
+    /// <summary>The ranks of opponents with fee and prize, the picked one, and the weeks of bouts.</summary>
+    private void ShowArena(UiContext ui, ArenaDef arena, bool free)
+    {
+        var choices = ui.Choices;
+        AddChild(Text(ui.Text(SimText.TrainsText(arena))));
+        var bouts = arena.Bouts.Select((b, i) => (i.ToString(), ui.Text(SimText.BoutText(b)))).ToList();
+        choices.Bout = Math.Clamp(choices.Bout, 0, bouts.Count - 1);
+        AddChild(Row(new Label { Text = ui.Text("str.ui.bout") }, Options(bouts, choices.Bout.ToString(), id => choices.Bout = int.Parse(id))));
+        AddChild(Duration(ui));
+        AddChild(Button(ui.Text("str.ui.arena_start"), () => ui.Send(new StartActivity(new ArenaActivity(arena.Id, choices.Bout), choices.ActivityWeeks)), free));
+    }
+
+    /// <summary>Every job of the settlement with its pay, what it trains, and one button each; the weeks are shared.</summary>
+    private void ShowJobs(UiContext ui, PlayerView view, bool free)
+    {
+        AddChild(Text(ui.Text(SimText.StonesText(view))));
+        AddChild(Duration(ui));
+        foreach (var job in ui.Db.All<JobDef>().Where(j => j.Zone == view.Zone.ZoneId))
+        {
+            var line = Text(ui.Text(SimText.JobText(job)) + "\n" + ui.Text(SimText.TrainsText(job)));
+            line.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            AddChild(Row(line, Button(ui.Text("str.ui.work_start"), () => ui.Send(new StartActivity(new WorkActivity(job.Id), ui.Choices.ActivityWeeks)), free)));
+        }
     }
 
     /// <summary>Meditation in a direction (comprehension also names its subject), and refilling the reserve with stones.</summary>

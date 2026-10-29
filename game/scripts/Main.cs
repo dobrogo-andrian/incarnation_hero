@@ -218,7 +218,7 @@ public partial class Main : Control
         }
 
         // Stepping into a place swaps the map for the place itself; a zone picked on the region map keeps the map.
-        bool inside = _target is PlaceTarget or ShopTarget or InquireTarget;
+        bool inside = _target is PlaceTarget or ShopTarget or InquireTarget or HuntTarget or ArenaTarget or JobsTarget;
         _map.Visible = !inside;
         _location.Visible = inside;
         if (inside)

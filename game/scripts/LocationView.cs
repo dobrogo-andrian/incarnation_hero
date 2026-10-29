@@ -10,6 +10,8 @@ public partial class LocationView : PanelContainer
     private static readonly Color PlaceTint = new(0.10f, 0.17f, 0.13f);
     private static readonly Color ShopTint = new(0.20f, 0.14f, 0.09f);
     private static readonly Color InquireTint = new(0.09f, 0.15f, 0.18f);
+    private static readonly Color HuntTint = new(0.12f, 0.15f, 0.08f);
+    private static readonly Color ArenaTint = new(0.20f, 0.10f, 0.09f);
 
     /// <summary>"Back to the map" was pressed.</summary>
     public event Action? LeavePressed;
@@ -23,6 +25,9 @@ public partial class LocationView : PanelContainer
         {
             PlaceTarget p => (ui.Name(p.PlaceId), DescriptionOf(ui, p.PlaceId), PlaceTint),
             ShopTarget s => (ui.Name(s.ShopId), DescriptionOf(ui, s.ShopId), ShopTint),
+            HuntTarget h => (ui.Name(h.HuntId), DescriptionOf(ui, h.HuntId), HuntTint),
+            ArenaTarget a => (ui.Name(a.ArenaId), DescriptionOf(ui, a.ArenaId), ArenaTint),
+            JobsTarget => (ui.Text("str.ui.jobs"), ui.Text("str.ui.jobs_hint"), ArenaTint),
             _ => (ui.Text("str.ui.inquire"), ui.Text("str.ui.inquire_hint"), InquireTint),
         };
         AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = tint });
@@ -44,9 +49,7 @@ public partial class LocationView : PanelContainer
     }
 
     private static string DescriptionOf(UiContext ui, string contentId) =>
-        ui.Db.Get<Core.Content.ContentDef>(contentId) switch
-        {
-            Core.Content.PlaceDef { Description: not null } or Core.Content.ShopDef { Description: not null } => ui.Text(Core.Sim.SimText.Description(contentId)),
-            _ => "",
-        };
+        ui.Db.Get<Core.Content.ContentDef>(contentId) is Core.Content.IDescribedDef { Description: not null }
+            ? ui.Text(Core.Sim.SimText.Description(contentId))
+            : "";
 }

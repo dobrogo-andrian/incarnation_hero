@@ -41,6 +41,9 @@ public sealed class Choices
 
     public bool AcceptDeathRisk { get; set; }
 
+    /// <summary>The picked rank of arena opponents, by its index in the arena's bouts.</summary>
+    public int Bout { get; set; }
+
     /// <summary>The picked activity length: null runs until the activity ends or is interrupted.</summary>
     public int? ActivityWeeks => UntilDone ? null : Weeks;
 }
@@ -55,3 +58,10 @@ public sealed record PlaceTarget(string PlaceId) : MapTarget;
 public sealed record ShopTarget(string ShopId) : MapTarget;
 
 public sealed record InquireTarget : MapTarget;
+
+public sealed record HuntTarget(string HuntId) : MapTarget;
+
+public sealed record ArenaTarget(string ArenaId) : MapTarget;
+
+/// <summary>The settlement's job board, with every job of the zone.</summary>
+public sealed record JobsTarget : MapTarget;
