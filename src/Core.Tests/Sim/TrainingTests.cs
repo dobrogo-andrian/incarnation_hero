@@ -60,7 +60,7 @@ public sealed class TrainingTests
 
         Assert.True(outcome.Accepted);
         Assert.Equal(stones + 4, sim.State.Player.Stones);
-        Assert.Equal(might + 4 * 0.15, Base(sim, "stat.might"), 6);
+        Assert.Equal(might + 4 * 0.17, Base(sim, "stat.might"), 6);
         Assert.All(outcome.Events.OfType<StonesChanged>(), s => Assert.Null(SimText.Describe(s)));
         Assert.Equal(4, sim.State.Stats.ActivityWeeks.Single(t => t.Key == "job.hub.porter").Weeks);
     }
@@ -134,6 +134,41 @@ public sealed class TrainingTests
 
         Assert.Equal(RejectReasons.NotEnoughStones, sim.Execute(new StartActivity(new ArenaActivity("arena.test", 0), 1)).RejectReason);
         Assert.Equal(RejectReasons.InvalidActivity, sim.Execute(new StartActivity(new ArenaActivity("arena.test", 5), 1)).RejectReason);
+    }
+
+    [Fact]
+    public void SteadyTraining_BreaksThroughARank()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+
+        sim.Execute(new StartActivity(new WorkActivity("job.hub.courier"), 40));
+
+        Assert.Equal(1, sim.State.Player.Stats.First(s => s.StatId == "stat.speed").Rank);
+    }
+
+    /// <summary>
+    /// A steady gain g levels off at g / decay of overflow and only approaches it, so a level equal
+    /// to a rank's breakthrough shows a full bar that never breaks through. Keep every training gain clear of them.
+    /// </summary>
+    [Fact]
+    public void TrainingGains_DoNotLevelOffAtABreakthrough()
+    {
+        var db = TestContent.Repo;
+        var stuck = new List<string>();
+        foreach (var def in db.All<TrainingDef>())
+        {
+            foreach (var (statId, gain) in def.Gains)
+            {
+                if (db.Get<StatDef>(statId).Progress is not { } progressId
+                    || db.Get<StatProgressDef>(progressId) is not { OverflowDecayPerWeek: { } decay } progress)
+                    continue;
+                double level = gain / decay;
+                var near = progress.Ranks.Select(db.Get<StatRankDef>).Where(r => r.Breakthrough is { } b && Math.Abs(level - b) < 0.1 * b);
+                stuck.AddRange(near.Select(r => $"{def.Id} {statId}: {level} ~ {r.Breakthrough}"));
+            }
+        }
+
+        Assert.Empty(stuck);
     }
 
     [Fact]

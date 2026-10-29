@@ -1,20 +1,21 @@
 # Training activities (§5): hired work, hunting grounds and the arena. Draft numbers until Sim.Cli
-# reports. Gains are points a week on the stats' scales (D48): a start-of-run stat sits at 10 of 12
-# with a breakthrough of 2 in overflow that fades 5% a week, so 0.1 a week settles at 2 of overflow
-# and 0.15 breaks through rank I; rank II needs more than 0.15.
+# reports. Gains are points a week on the stats' scales (D48). Overflow fades 5% a week, so a steady
+# gain g levels off at 20 × g of overflow and never quite reaches it: g must keep 20 × g clear of a
+# rank's breakthrough (2, 3, 4, 5, 6), or the bar looks full and never breaks through. 0.12 levels off
+# at 2.4 (through rank I, stops in rank II), 0.17 at 3.4 (through II), 0.225 at 4.5 (through III, halfway to IV).
 
 # Hired work (§13.2): small guaranteed pay, no rare finds. Taken at the hub's job board.
 - id: job.hub.porter
   name: { uk: "Вантажник" }
   zone: zone.hub
   pay: 1
-  gains: { stat.might: 0.15, stat.endurance: 0.05 }
+  gains: { stat.might: 0.17, stat.endurance: 0.05 }
 
 - id: job.hub.courier
   name: { uk: "Гонець" }
   zone: zone.hub
   pay: 1
-  gains: { stat.speed: 0.15, stat.endurance: 0.05 }
+  gains: { stat.speed: 0.17, stat.endurance: 0.05 }
 
 - id: job.hub.apothecary_helper
   name: { uk: "Помічник аптекаря" }
@@ -30,7 +31,7 @@
   map: { x: 34, y: 14, district: district.hub.outskirts }
   encounter_chance: 0.35
   groups: { grp.beast.wild_boar: 2, grp.beast.red_foxes: 3 }
-  gains: { stat.speed: 0.1, stat.perception: 0.05 }
+  gains: { stat.speed: 0.12, stat.perception: 0.05 }
 
 - id: hunt.bamboo_grove.thicket
   name: { uk: "Бамбукові хащі" }
@@ -38,7 +39,7 @@
   zone: zone.bamboo_grove
   encounter_chance: 0.3
   groups: { grp.beast.lone_wolf: 3, grp.beast.wild_boar: 2, grp.beast.grey_wolves: 1 }
-  gains: { stat.speed: 0.15, stat.perception: 0.05 }
+  gains: { stat.speed: 0.17, stat.perception: 0.05 }
 
 - id: hunt.river_valley.reeds
   name: { uk: "Очерети над річкою" }
@@ -46,7 +47,7 @@
   zone: zone.river_valley
   encounter_chance: 0.3
   groups: { grp.beast.wild_boar: 3, grp.beast.grey_wolves: 1, grp.beast.river_serpent: 1 }
-  gains: { stat.might: 0.1, stat.speed: 0.1 }
+  gains: { stat.might: 0.12, stat.speed: 0.12 }
 
 - id: hunt.misty_hills.ridges
   name: { uk: "Туманні гребені" }
@@ -54,7 +55,7 @@
   zone: zone.misty_hills
   encounter_chance: 0.25
   groups: { grp.beast.mist_leopard: 2, grp.beast.grey_wolves: 1 }
-  gains: { stat.speed: 0.2, stat.perception: 0.05 }
+  gains: { stat.speed: 0.225, stat.perception: 0.05 }
 
 # The arena: a fee before every weekly bout, a prize for a win; bouts end in yielding, not death.
 - id: arena.hub
@@ -62,7 +63,7 @@
   description: { uk: "Кругла яма, засипана піском, і дерев'яні лави навколо. Тут б'ються за гроші й славу, а розпорядник зупиняє бій, щойно хтось здається." }
   zone: zone.hub
   map: { x: 16, y: 66, district: district.hub.arena }
-  gains: { stat.might: 0.15, stat.speed: 0.1 }
+  gains: { stat.might: 0.17, stat.speed: 0.12 }
   bouts:
     - { group: grp.arena.novices, fee: 2, prize: 6 }
     - { group: grp.arena.brawlers, fee: 5, prize: 15 }
