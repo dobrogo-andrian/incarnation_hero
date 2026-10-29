@@ -1,0 +1,116 @@
+using Core.Combat;
+using Core.Content;
+using Core.Rng;
+using Core.Sim;
+
+namespace Core.Tests.Combat;
+
+public class BattleTests
+{
+    private static CombatConfigDef Config => TestContent.Repo.Get<CombatConfigDef>(CombatConfigDef.CombatId);
+
+    private static Combatant Fighter(string id, double reaction = 10, double health = 100, double shield = 0, double maxShield = 0,
+        double qiPool = 0, double shieldRefill = 0, double energy = 100, double energyRefill = 5, double energyCapacity = 15) =>
+        new(id, 0, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energy, energyRefill, energyCapacity, "injury.body");
+
+    private static Battle Start(IReadOnlyList<Combatant> side0, IReadOnlyList<Combatant> side1) =>
+        Battle.Start(side0, side1, Config, Xoshiro256StarStar.FromSeed(7));
+
+    private static List<string> WaitTurns(Battle battle, int turns)
+    {
+        var acted = new List<string>();
+        for (int i = 0; i < turns; i++)
+        {
+            acted.Add(battle.Active!.Id);
+            Assert.True(battle.Execute(new WaitTurn()).Accepted);
+        }
+        return acted;
+    }
+
+    [Fact]
+    public void Sides_deploy_on_opposite_halves_on_distinct_hexes()
+    {
+        var battle = Start([Fighter("player")], [Fighter("wolf#1"), Fighter("wolf#2"), Fighter("wolf#3")]);
+        var hexes = battle.Fighters.Select(f => f.Position).ToList();
+        Assert.Equal(hexes.Count, hexes.Distinct().Count());
+        Assert.All(hexes, h => Assert.True(battle.Field.Contains(h)));
+        Assert.All(battle.Fighters.Where(f => f.Side == 0), f => Assert.True(f.Position.R > 0));
+        Assert.All(battle.Fighters.Where(f => f.Side == 1), f => Assert.True(f.Position.R < 0));
+        Assert.Equal(new Hex(0, 3), battle.Fighters[0].Position);
+    }
+
+    [Fact]
+    public void Faster_fighters_act_more_often()
+    {
+        var battle = Start([Fighter("player", reaction: 10)], [Fighter("wolf", reaction: 15)]);
+        var acted = WaitTurns(battle, 50);
+        Assert.Equal(30, acted.Count(id => id == "wolf"));
+        Assert.Equal(20, acted.Count(id => id == "player"));
+        Assert.Equal("wolf", acted[0]);
+    }
+
+    [Fact]
+    public void Ties_go_to_the_quicker_reaction_then_the_id()
+    {
+        // 10.4 and 10 both fill 10 a tick; the higher reaction still goes first.
+        var battle = Start([Fighter("b", reaction: 10)], [Fighter("a", reaction: 10), Fighter("c", reaction: 10.4)]);
+        Assert.Equal(["c", "a", "b", "c", "a", "b"], WaitTurns(battle, 6));
+    }
+
+    [Fact]
+    public void Forecast_matches_the_turns_that_follow()
+    {
+        var battle = Start([Fighter("player", reaction: 11)], [Fighter("wolf#1", reaction: 13), Fighter("bandit#1", reaction: 8)]);
+        var forecast = battle.Forecast(12).Select(f => f.Id).ToList();
+        battle.Execute(new WaitTurn());
+        Assert.Equal(forecast, WaitTurns(battle, 12));
+    }
+
+    [Fact]
+    public void Turn_end_refills_the_shield_from_the_pool()
+    {
+        var battle = Start([Fighter("player", reaction: 20, shield: 10, maxShield: 50, qiPool: 3, shieldRefill: 5)], [Fighter("wolf")]);
+        var me = battle.Fighters[0];
+
+        var outcome = battle.Execute(new WaitTurn());
+
+        // The pool holds only 3; energy starts full, so none flows.
+        Assert.Equal(new BattleTurnEnded("player", 3, 0), Assert.Single(outcome.Events.OfType<BattleTurnEnded>()));
+        Assert.Equal(13, me.Shield);
+        Assert.Equal(0, me.QiPool);
+        Assert.Equal(15, me.Energy);
+        Assert.Equal(100, me.EnergyReserve);
+    }
+
+    [Theory]
+    [InlineData(100, 4, 30, 5)]     // full health: the whole output
+    [InlineData(50, 4, 30, 2.5)]    // half health: half of it
+    [InlineData(10, 4, 30, 2)]      // never under the minimum
+    [InlineData(100, 4, 1, 2)]      // a near-empty reserve still gives the minimum
+    [InlineData(100, 14, 30, 1)]    // energy stops at its capacity of 15
+    public void Energy_flows_by_output_and_health_within_the_minimum_and_capacity(double health, double energy, double reserve, double expected)
+    {
+        Assert.Equal(expected, CombatMath.EnergyRefill(Fighter("player"), health, energy, reserve, Config.EnergyRefillMin), 9);
+    }
+
+    [Fact]
+    public void A_fight_with_one_side_down_is_over_and_takes_no_commands()
+    {
+        var battle = Start([Fighter("player")], [Fighter("wolf", health: 0)]);
+        Assert.True(battle.IsOver);
+        Assert.Equal(0, battle.Winner);
+        Assert.Empty(battle.Forecast(3));
+        Assert.Equal(RejectReasons.BattleOver, battle.Execute(new WaitTurn()).RejectReason);
+    }
+
+    [Fact]
+    public void Player_snapshot_carries_energy_from_the_body()
+    {
+        var sim = Simulation.NewGame(TestContent.Repo, 1);
+        var ctx = new SimContext(sim.Content, RngStreams.FromStates(sim.State.RngStates));
+        var player = CombatSystem.Snapshot(sim.State.Player, ctx);
+        Assert.Equal(100, player.Energy);
+        Assert.Equal(5, player.EnergyRefill);
+        Assert.Equal(15, player.EnergyCapacity);
+    }
+}

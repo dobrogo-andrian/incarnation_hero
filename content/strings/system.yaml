@@ -4,6 +4,9 @@
 - id: str.reject.wrong_mode
   text: { uk: "Зараз ця дія недоступна." }
 
+- id: str.reject.battle_over
+  text: { uk: "Бій уже скінчився." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 

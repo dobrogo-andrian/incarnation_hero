@@ -174,10 +174,32 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>The hex battlefield reaches this many steps from its centre (D56).</summary>
     public int FieldRadius { get; set; }
 
+    /// <summary>CTB (D53): a fighter acts when its gauge reaches this; the gauge fills by reaction × <see cref="InitiativePerReaction"/> a tick.</summary>
+    public int InitiativeThreshold { get; set; }
+    public double InitiativePerReaction { get; set; }
+
+    /// <summary>The body's energy reserve (D55); it does not come back during a fight.</summary>
+    [ContentRef(typeof(ResourceDef))]
+    public string EnergyResource { get; set; } = "";
+
+    /// <summary>Energy flows from the reserve by this aspect × <see cref="EnergyRefillPerOutput"/> × the share of health left, at the end of each own turn.</summary>
+    [ContentRef(typeof(AspectDef))]
+    public string EnergyOutputAspect { get; set; } = "";
+
+    public double EnergyRefillPerOutput { get; set; }
+
+    /// <summary>What flows every turn whatever the body's state, even from an empty reserve.</summary>
+    public double EnergyRefillMin { get; set; }
+
+    /// <summary>Energy ready to spend holds at most output × this (and never less than the minimum refill).</summary>
+    public double EnergyCapacityPerOutput { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (WeaponDamage <= 0 || MaxRounds < 1 || FieldRadius < 1)
             yield return "needs a positive weapon_damage, max_rounds and field_radius.";
+        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0)
+            yield return "needs a positive initiative_threshold, initiative_per_reaction and energy_capacity_per_output, and energy refills of zero or more.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
             || ShieldBreakChance is < 0 or > 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
             yield return "damage_spread, flee_health_share, insight_fled_share, shield_break_chance, fight_min_health_share and the flee chance bounds must be fractions.";

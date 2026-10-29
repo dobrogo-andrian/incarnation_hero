@@ -33,10 +33,10 @@
   aspects: [aspect.speed.reaction, aspect.speed.agility]
 
 - id: aspect.speed.reaction
-  name: { uk: "Реакція" }       # initiative and movement points
+  name: { uk: "Реакція" }       # initiative (D53)
 
 - id: aspect.speed.agility
-  name: { uk: "Верткість" }     # escape chance and range
+  name: { uk: "Верткість" }     # movement points in combat (D56)
 
 - id: stat.meridians
   name: { uk: "Сила меридіан" }

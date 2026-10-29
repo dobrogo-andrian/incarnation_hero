@@ -17,6 +17,9 @@ public sealed record Combatant(
     double Reaction,
     double Agility,
     double Resilience,
+    double Energy,
+    double EnergyRefill,
+    double EnergyCapacity,
     string InjuryId)
 {
     /// <summary>How dangerous it is: what it takes to bring down times what it deals. Difficulty compares these.</summary>
@@ -107,9 +110,7 @@ public static class FormulaResolver
 
             foreach (var fighter in order.Where(f => !f.Down))
             {
-                double refill = Math.Min(fighter.Def.ShieldRefill, Math.Min(fighter.Def.MaxShield - fighter.Shield, fighter.QiPool));
-                if (refill <= 0)
-                    continue;
+                double refill = CombatMath.ShieldRefill(fighter.Def, fighter.Shield, fighter.QiPool);
                 fighter.Shield += refill;
                 fighter.QiPool -= refill;
             }

@@ -114,6 +114,9 @@ public static class CombatSystem
             Reaction: Value(config.ReactionAspect),
             Agility: Value(config.AgilityAspect),
             Resilience: Value(config.ResilienceAspect),
+            Energy: current(config.EnergyResource),
+            EnergyRefill: Value(config.EnergyOutputAspect) * config.EnergyRefillPerOutput,
+            EnergyCapacity: Math.Max(config.EnergyRefillMin, Value(config.EnergyOutputAspect) * config.EnergyCapacityPerOutput),
             injuryId);
     }
 
