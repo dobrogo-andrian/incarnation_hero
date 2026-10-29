@@ -12,9 +12,10 @@ public static class CombatMath
     /// <summary>
     /// One hit (§7.4, §8): the attacker's damage with its spread breaks the qi shield first; a hit
     /// that breaks it may hurt the meridians; the rest goes to health and leaves injuries of the
-    /// attacker's kind over the target's resilience. The RNG is drawn in this order every time.
+    /// attacker's kind over the target's resilience; <paramref name="bodyShare"/> of it lands when the
+    /// target guards. The RNG is drawn in this order every time.
     /// </summary>
-    public static HitResult Hit(Combatant attacker, Combatant target, double targetShield, CombatConfigDef config, Xoshiro256StarStar rng)
+    public static HitResult Hit(Combatant attacker, Combatant target, double targetShield, CombatConfigDef config, Xoshiro256StarStar rng, double bodyShare = 1)
     {
         double damage = attacker.Damage * (1 + config.DamageSpread * (2 * rng.NextDouble() - 1));
         double absorbed = Math.Min(targetShield, damage);
@@ -22,7 +23,7 @@ public static class CombatMath
         if (targetShield > 0 && targetShield - absorbed <= 0 && rng.Chance(config.ShieldBreakChance))
             injuries.Add((config.ShieldBreakInjury, config.ShieldBreakAmount));
 
-        double toHealth = Math.Max(0, damage - absorbed);
+        double toHealth = Math.Max(0, damage - absorbed) * bodyShare;
         if (toHealth > 0)
             injuries.Add((attacker.InjuryId, toHealth / Math.Max(1, target.Resilience) * config.InjuryPerResilience));
         return new HitResult(damage, absorbed, toHealth, injuries);

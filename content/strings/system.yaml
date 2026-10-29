@@ -22,6 +22,12 @@
 - id: str.reject.unreachable
   text: { uk: "Туди цього ходу не дійти." }
 
+- id: str.reject.not_on_edge
+  text: { uk: "Втекти можна лише з краю поля." }
+
+- id: str.reject.enemy_adjacent
+  text: { uk: "Ворог поруч не дасть утекти: спершу відійдіть." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 

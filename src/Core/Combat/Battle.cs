@@ -13,6 +13,15 @@ public sealed record EndTurn : BattleCommand;
 /// <summary>The basic weapon attack on an adjacent enemy, for body energy (D56).</summary>
 public sealed record Attack(string TargetId) : BattleCommand;
 
+/// <summary>An action for extra movement points: as many again as the turn gives (D56).</summary>
+public sealed record Dash : BattleCommand;
+
+/// <summary>An action: until the fighter's next turn, hits that get through the shield hurt the body less (D56).</summary>
+public sealed record Guard : BattleCommand;
+
+/// <summary>An action on a rim hex with no enemy next to it: the fighter leaves the fight (§7.6, D56).</summary>
+public sealed record Flee : BattleCommand;
+
 /// <summary>Walk to a hex within the movement points left, by the path <see cref="Battle.Reachable"/> gives.</summary>
 public sealed record Move(Hex To) : BattleCommand;
 
@@ -33,6 +42,12 @@ public sealed record BattleTurnEnded(string FighterId, double ShieldRefilled, do
 public sealed record FighterWaited(string FighterId) : SimEvent;
 
 public sealed record FighterHit(string AttackerId, string TargetId, double Damage, double Absorbed, double ToHealth) : SimEvent;
+
+public sealed record FighterDashed(string FighterId, int MovePoints) : SimEvent;
+
+public sealed record FighterGuarded(string FighterId) : SimEvent;
+
+public sealed record FighterFled(string FighterId) : SimEvent;
 
 /// <summary>The fighter has no health left and is out of the fight.</summary>
 public sealed record FighterDown(string FighterId) : SimEvent;
@@ -69,6 +84,9 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
 
     /// <summary>The main action of the current turn is spent (D56).</summary>
     public bool ActionTaken { get; internal set; }
+
+    /// <summary>Guarding since its last turn: hits through the shield land at <c>guard_body_share</c>.</summary>
+    public bool Guarding { get; internal set; }
 
     /// <summary>Steps left this turn, before or after the action (D56).</summary>
     public int MovePoints { get; internal set; }
@@ -170,19 +188,41 @@ public sealed class Battle
                 return CommandOutcome.Accept(events);
 
             case Attack attack:
-                if (actor.ActionTaken)
-                    return CommandOutcome.Reject(RejectReasons.ActionTaken);
                 if (_fighters.FirstOrDefault(f => f.Id == attack.TargetId) is not { InFight: true } target || target.Side == actor.Side)
                     return CommandOutcome.Reject(RejectReasons.InvalidTarget);
                 if (actor.Position.DistanceTo(target.Position) != 1)
                     return CommandOutcome.Reject(RejectReasons.OutOfReach);
-                if (actor.Energy < _config.AttackEnergy)
-                    return CommandOutcome.Reject(RejectReasons.NotEnoughEnergy);
-                actor.Energy -= _config.AttackEnergy;
-                actor.ActionTaken = true;
+                if (TakeAction(actor, _config.AttackEnergy) is { } attackRejected)
+                    return CommandOutcome.Reject(attackRejected);
                 Strike(actor, target, events);
                 if (OneSideLeft())
                     Active = null;
+                return CommandOutcome.Accept(events);
+
+            case Dash:
+                if (TakeAction(actor, _config.DashEnergy) is { } dashRejected)
+                    return CommandOutcome.Reject(dashRejected);
+                actor.MovePoints += MovePointsOf(actor.Def);
+                events.Add(new FighterDashed(actor.Id, actor.MovePoints));
+                return CommandOutcome.Accept(events);
+
+            case Guard:
+                if (TakeAction(actor, _config.GuardEnergy) is { } guardRejected)
+                    return CommandOutcome.Reject(guardRejected);
+                actor.Guarding = true;
+                events.Add(new FighterGuarded(actor.Id));
+                return CommandOutcome.Accept(events);
+
+            case Flee:
+                if (!Field.IsEdge(actor.Position))
+                    return CommandOutcome.Reject(RejectReasons.NotOnEdge);
+                if (_fighters.Any(f => f.InFight && f.Side != actor.Side && f.Position.DistanceTo(actor.Position) == 1))
+                    return CommandOutcome.Reject(RejectReasons.EnemyAdjacent);
+                if (TakeAction(actor, _config.FleeEnergy) is { } fleeRejected)
+                    return CommandOutcome.Reject(fleeRejected);
+                actor.Fled = true;
+                events.Add(new FighterFled(actor.Id));
+                events.AddRange(NextTurn());
                 return CommandOutcome.Accept(events);
 
             case Move move:
@@ -262,10 +302,22 @@ public sealed class Battle
         }
     }
 
+    /// <summary>Spends the turn's one action and its energy, or says why it cannot be taken.</summary>
+    private Loc.LocKey? TakeAction(BattleFighter actor, double energy)
+    {
+        if (actor.ActionTaken)
+            return RejectReasons.ActionTaken;
+        if (actor.Energy < energy)
+            return RejectReasons.NotEnoughEnergy;
+        actor.Energy -= energy;
+        actor.ActionTaken = true;
+        return null;
+    }
+
     /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>
     private void Strike(BattleFighter attacker, BattleFighter target, List<SimEvent> events)
     {
-        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, _config, Rng);
+        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, _config, Rng, target.Guarding ? _config.GuardBodyShare : 1);
         target.Shield -= hit.Absorbed;
         target.Health = Math.Max(0, target.Health - hit.ToHealth);
         foreach (var (injuryId, amount) in hit.Injuries)
@@ -304,6 +356,7 @@ public sealed class Battle
             inFight[i].Initiative = gauges[i];
         Active = inFight[next];
         Active.ActionTaken = false;
+        Active.Guarding = false;
         Active.MovePoints = MovePointsOf(Active.Def);
         Active.FreeAttackers.Clear();
         return [new BattleTurnStarted(Active.Id, Active.MovePoints)];
