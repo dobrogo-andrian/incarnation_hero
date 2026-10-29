@@ -43,8 +43,8 @@ public class ActionTests
         Assert.False(me.ActionTaken);
         Assert.Equal(15, me.Energy);
 
-        // Far from the wolf: the attack has no target; after a dash the action itself is spent.
-        Assert.Equal(RejectReasons.NoTarget, battle.SkillUnavailable(null));
+        // Far from the wolf the attack can still be picked; after a dash the action itself is spent.
+        Assert.Null(battle.SkillUnavailable(null));
         battle.Execute(new Dash());
         Assert.Equal(RejectReasons.ActionTaken, battle.SkillUnavailable(null));
         Assert.Equal(RejectReasons.ActionTaken, battle.WhyNot(new Guard()));

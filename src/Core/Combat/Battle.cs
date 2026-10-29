@@ -192,30 +192,21 @@ public sealed class Battle
     public Loc.LocKey? WhyNot(BattleCommand command) => Check(command).Refusal;
 
     /// <summary>
-    /// Why the active fighter cannot use <paramref name="techniqueId"/> (null: the basic attack) at
-    /// any target this turn, or null when some target is open: its own limits first (the action
-    /// spent, energy, qi), else that no target fits.
+    /// Why the active fighter cannot use <paramref name="techniqueId"/> (null: the basic attack) this
+    /// turn whatever it aims at — the action spent, too little energy or qi — or null when it can be
+    /// picked. The same check opens <see cref="Execute"/> for an attack or a technique.
     /// </summary>
-    public Loc.LocKey? SkillUnavailable(string? techniqueId)
-    {
-        if (Active is not { } actor)
-            return RejectReasons.BattleOver;
-        var tries = techniqueId is null
-            ? _fighters.Where(f => f.InFight && f.Side != actor.Side).Select(f => (BattleCommand)new Attack(f.Id))
-            : Field.Hexes().Select(h => (BattleCommand)new UseTechnique(techniqueId, h));
-        foreach (var command in tries)
-        {
-            var refusal = WhyNot(command);
-            if (refusal is null)
-                return null;
-            if (!IsTargetRefusal(refusal))
-                return refusal;
-        }
-        return RejectReasons.NoTarget;
-    }
+    public Loc.LocKey? SkillUnavailable(string? techniqueId) =>
+        Active is not { } actor ? RejectReasons.BattleOver : SkillRefusal(actor, techniqueId);
 
-    private static bool IsTargetRefusal(Loc.LocKey refusal) =>
-        refusal == RejectReasons.InvalidTarget || refusal == RejectReasons.OutOfReach || refusal == RejectReasons.NoRoom;
+    private Loc.LocKey? SkillRefusal(BattleFighter actor, string? techniqueId)
+    {
+        if (techniqueId is null)
+            return ActionRefusal(actor, _config.AttackEnergy);
+        if (actor.Def.Techniques.FirstOrDefault(t => t.Id == techniqueId) is not { } technique)
+            return RejectReasons.UnknownTechnique;
+        return ActionRefusal(actor, 0) ?? (actor.Shield < technique.Combat.Qi ? RejectReasons.NotEnoughQi : null);
+    }
 
     /// <summary>What a command needs once it is allowed: the target, the technique and its plan, or the walk.</summary>
     private sealed record Checked(Loc.LocKey? Refusal, BattleFighter? Target = null, CombatTechnique? Technique = null, TechniquePlan? Plan = null, Reach? Reach = null);
@@ -234,7 +225,7 @@ public sealed class Battle
                 return new(null);
 
             case Attack attack:
-                if (ActionRefusal(actor, _config.AttackEnergy) is { } attackRefused)
+                if (SkillRefusal(actor, null) is { } attackRefused)
                     return new(attackRefused);
                 if (_fighters.FirstOrDefault(f => f.Id == attack.TargetId) is not { InFight: true } target || target.Side == actor.Side)
                     return new(RejectReasons.InvalidTarget);
@@ -243,12 +234,9 @@ public sealed class Battle
                 return new(null, Target: target);
 
             case UseTechnique use:
-                if (actor.Def.Techniques.FirstOrDefault(t => t.Id == use.TechniqueId) is not { } technique)
-                    return new(RejectReasons.UnknownTechnique);
-                if (ActionRefusal(actor, 0) is { } techniqueRefused)
+                if (SkillRefusal(actor, use.TechniqueId) is { } techniqueRefused)
                     return new(techniqueRefused);
-                if (actor.Shield < technique.Combat.Qi)
-                    return new(RejectReasons.NotEnoughQi);
+                var technique = actor.Def.Techniques.First(t => t.Id == use.TechniqueId);
                 if (Plan(actor, actor.Position, technique.Combat, use.Target) is not { } plan)
                     return new(RejectReasons.InvalidTarget);
                 if (plan.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat)
@@ -400,16 +388,20 @@ public sealed class Battle
         }
     }
 
-    /// <summary>Where a technique moves the fighter and whom it strikes: steps before the strike, the targets, and where a retreat lands.</summary>
-    public sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
+    /// <summary>
+    /// Where a technique moves the fighter and what it strikes: steps before the strike, the hexes it
+    /// strikes (on the field), the enemies on them — none for a strike into the ground — and where a retreat lands.
+    /// </summary>
+    public sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<Hex> Area, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
 
     /// <summary>
     /// The plan for a technique used from <paramref name="from"/> (where the actor stands, or where the
-    /// AI considers walking) aimed at <paramref name="target"/>; null when the shape does not fit or strikes no enemy.
+    /// AI considers walking) aimed at <paramref name="target"/>, a hex on the field; null when the
+    /// shape does not fit. It need not strike anyone: a technique may hit the ground.
     /// </summary>
     internal TechniquePlan? Plan(BattleFighter actor, Hex from, TechniqueCombatDef combat, Hex target)
     {
-        if (from.StraightTo(target) is not var (direction, steps))
+        if (!Field.Contains(target) || from.StraightTo(target) is not var (direction, steps))
             return null;
         BattleFighter? FighterOn(Hex hex) => _fighters.FirstOrDefault(f => f.InFight && f != actor && f.Position == hex);
         List<Hex> struck;
@@ -440,8 +432,9 @@ public sealed class Battle
             default:
                 return null;
         }
-        var targets = struck.Select(FighterOn).OfType<BattleFighter>().Where(f => f.Side != actor.Side).ToList();
-        return targets.Count == 0 ? null : new TechniquePlan(approach, targets, landing);
+        var area = struck.Where(Field.Contains).ToList();
+        var targets = area.Select(FighterOn).OfType<BattleFighter>().Where(f => f.Side != actor.Side).ToList();
+        return new TechniquePlan(approach, area, targets, landing);
     }
 
     /// <summary>

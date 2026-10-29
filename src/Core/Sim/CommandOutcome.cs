@@ -17,7 +17,6 @@ public static class RejectReasons
     public static readonly LocKey UnknownTechnique = new("str.reject.unknown_technique");
     public static readonly LocKey NotEnoughQi = new("str.reject.not_enough_qi");
     public static readonly LocKey NoRoom = new("str.reject.no_room");
-    public static readonly LocKey NoTarget = new("str.reject.no_target");
     public static readonly LocKey InvalidActivity = new("str.reject.invalid_activity");
     public static readonly LocKey UnknownZone = new("str.reject.unknown_zone");
     public static readonly LocKey AlreadyThere = new("str.reject.already_there");

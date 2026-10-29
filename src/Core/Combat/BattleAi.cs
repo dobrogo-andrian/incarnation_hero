@@ -80,7 +80,8 @@ public static class BattleAi
             {
                 foreach (var aim in Aims(from, technique.Combat.Range + 1))
                 {
-                    if (battle.Plan(me, from, technique.Combat, aim) is not { } p
+                    // The AI spends qi only on strikes that reach someone.
+                    if (battle.Plan(me, from, technique.Combat, aim) is not { Targets.Count: > 0 } p
                         || (p.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat))
                         continue;
                     var end = p.Landing ?? (p.Approach.Count > 0 ? p.Approach[^1] : from);

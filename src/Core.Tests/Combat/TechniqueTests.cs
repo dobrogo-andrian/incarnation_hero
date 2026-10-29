@@ -49,7 +49,9 @@ public class TechniqueTests
         var battle = Start(Field(1), Player(Known(Arc)), wolves: 3);
         var plan = battle.Preview(Arc, new Hex(1, -1))!;
         Assert.Equal(["wolf#1", "wolf#2", "wolf#3"], plan.Targets.Select(t => t.Id).Order().ToList());
+        Assert.Equal([new Hex(0, -1), new Hex(1, -1), new Hex(1, 0)], plan.Area.Order().ToList());
         Assert.Null(battle.Preview(Arc, new Hex(0, 0)));
+        Assert.Null(battle.Preview(Arc, new Hex(2, -1)));   // not beside the fighter
         Assert.Null(battle.Preview(Line, new Hex(1, -1)));   // not known
         var hits = battle.Execute(new UseTechnique(Arc, new Hex(1, -1))).Events.OfType<FighterHit>();
         Assert.Equal(plan.Targets.Select(t => t.Id).Order(), hits.Select(h => h.TargetId).Order());
@@ -85,6 +87,20 @@ public class TechniqueTests
     }
 
     [Fact]
+    public void A_technique_may_strike_the_ground_spending_the_action_and_qi()
+    {
+        // Radius 1: the wolf at (1,0); the arc aimed the other way strikes no one.
+        var battle = Start(Field(1), Player(Known(Arc)));
+        double shield = battle.Fighters[0].Shield;
+        var outcome = battle.Execute(new UseTechnique(Arc, new Hex(-1, 1)));
+        Assert.True(outcome.Accepted);
+        Assert.Contains(outcome.Events, e => e is TechniqueUsed);
+        Assert.Empty(outcome.Events.OfType<FighterHit>());
+        Assert.Equal(shield - 10, battle.Fighters[0].Shield, 9);
+        Assert.Equal(RejectReasons.ActionTaken, battle.SkillUnavailable(Arc));
+    }
+
+    [Fact]
     public void Retreat_strikes_then_leaps_away_without_a_free_attack()
     {
         var battle = Start(Field(1), Player(Known(Retreat)));
@@ -96,11 +112,12 @@ public class TechniqueTests
     }
 
     [Fact]
-    public void Techniques_need_to_be_known_aimed_at_an_enemy_and_paid_in_combat_qi()
+    public void Techniques_need_to_be_known_fit_their_shape_and_be_paid_in_combat_qi()
     {
         var battle = Start(Field(1), Player(Known(Arc)));
         Assert.Equal(RejectReasons.UnknownTechnique, battle.Execute(new UseTechnique(Line, new Hex(1, 0))).RejectReason);
-        Assert.Equal(RejectReasons.InvalidTarget, battle.Execute(new UseTechnique(Arc, new Hex(-1, 1))).RejectReason);
+        Assert.Equal(RejectReasons.InvalidTarget, battle.Execute(new UseTechnique(Arc, new Hex(-1, 2))).RejectReason);
+        Assert.Null(battle.SkillUnavailable(Arc));
 
         var empty = Start(Field(1), Fighter("player", reaction: 20, shield: 5, techniques: Known(Arc)));
         Assert.Equal(RejectReasons.NotEnoughQi, empty.Execute(new UseTechnique(Arc, new Hex(1, 0))).RejectReason);
