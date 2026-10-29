@@ -11,9 +11,9 @@
   members: [ { enemy: enemy.beast.grey_wolf, count: 3 } ]
   loot: { stones_min: 4, stones_max: 10 }       # pelts sold in the settlement
 
-- id: grp.undead.battlefield_ghosts
-  name: { uk: "Неспокійні духи поля бою" }
-  members: [ { enemy: enemy.undead.battlefield_ghost, count: 2 } ]
+- id: grp.human.relic_hunters
+  name: { uk: "Шукачі реліквій" }
+  members: [ { enemy: enemy.human.relic_hunter, count: 2 } ]
   loot: { stones_min: 6, stones_max: 14 }       # fragments of old weapons
 
 - id: grp.beast.river_serpent
@@ -21,9 +21,9 @@
   members: [ { enemy: enemy.beast.river_serpent } ]
   loot: { stones_min: 12, stones_max: 24 }      # scales
 
-- id: grp.undead.tomb_guardian
-  name: { uk: "Вартовий гробниці" }
-  members: [ { enemy: enemy.undead.tomb_guardian } ]
+- id: grp.human.tomb_keeper
+  name: { uk: "Сторож гробниці" }
+  members: [ { enemy: enemy.human.tomb_keeper } ]
 
 # Hunting prey (§5): the loot is what pelts and meat fetch in the settlement.
 - id: grp.beast.wild_boar
