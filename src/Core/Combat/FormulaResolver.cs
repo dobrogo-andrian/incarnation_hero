@@ -22,7 +22,8 @@ public sealed record Combatant(
     double EnergyCapacity,
     string InjuryId,
     double WeaponDamage,
-    IReadOnlyList<CombatTechnique> Techniques)
+    IReadOnlyList<CombatTechnique> Techniques,
+    AiArchetypeDef Ai)
 {
     /// <summary>How dangerous it is: what it takes to bring down times what it deals. Difficulty compares these.</summary>
     public double Threat => (MaxHealth + MaxShield) * Damage;

@@ -11,10 +11,12 @@ public sealed class TrainingTests
     private static readonly ContentDb Content = TestContent.Quiet(TestContent.WithExtra("""
         - id: enemy.test.glass
           name: { uk: "Скляний" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 0.5 }
           weapon_damage: 300
         - id: enemy.test.killer
           name: { uk: "Убивця" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 100000, stat.speed: 100 }
           weapon_damage: 100000
         - id: grp.test.weak

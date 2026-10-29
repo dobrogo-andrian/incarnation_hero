@@ -15,7 +15,7 @@ public class ActionTests
     }
 
     private static Combatant Fighter(string id, double reaction = 10) =>
-        new(id, 0, 100, 100, 0, 0, 0, 0, 10, reaction, 10, 10, 100, 5, 15, "injury.body", 10, []);
+        new(id, 0, 100, 100, 0, 0, 0, 0, 10, reaction, 10, 10, 100, 5, 15, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     private static Battle Start(CombatConfigDef config, double playerReaction = 20, double wolfReaction = 10) =>
         Battle.Start([Fighter("player", playerReaction)], [Fighter("wolf", wolfReaction)], config, Xoshiro256StarStar.FromSeed(5));

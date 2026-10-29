@@ -76,7 +76,7 @@ public static class CombatSystem
     {
         int technique = player.Knowledge.Where(k => ctx.Content.Get<KnowledgeDef>(k.KnowledgeId).IsTechnique).Select(k => k.Level).DefaultIfEmpty(0).Max();
         var techniques = player.Knowledge.Where(k => k.Level > 0).Select(k => (k.KnowledgeId, k.Level));
-        return Fighter(FormulaResolver.PlayerId, player, ctx, QiStage(player), ctx.Combat.WeaponDamage, technique, techniques, ctx.Combat.BodyInjury,
+        return Fighter(FormulaResolver.PlayerId, player, ctx, QiStage(player), ctx.Combat.WeaponDamage, technique, techniques, ctx.Combat.PlayerAi, ctx.Combat.BodyInjury,
             id => player.Resources.First(r => r.ResourceId == id).Current);
     }
 
@@ -92,14 +92,14 @@ public static class CombatSystem
             for (int i = 1; i <= member.Count; i++)
             {
                 foes.Add(Fighter($"{def.Id}#{i}", body, ctx, def.Stage, def.WeaponDamage ?? config.WeaponDamage, def.TechniqueLevel,
-                    def.Techniques.Select(t => (t.Key, t.Value)), def.Injury ?? config.BodyInjury, id => ctx.Rules.Value(body, id)));
+                    def.Techniques.Select(t => (t.Key, t.Value)), def.Ai, def.Injury ?? config.BodyInjury, id => ctx.Rules.Value(body, id)));
             }
         }
         return foes;
     }
 
     private static Combatant Fighter(string id, ICharacter c, SimContext ctx, int stage, double weapon, int technique,
-        IEnumerable<(string Id, int Level)> known, string injuryId, Func<string, double> current)
+        IEnumerable<(string Id, int Level)> known, string aiId, string injuryId, Func<string, double> current)
     {
         var config = ctx.Combat;
         double Value(string valueId) => ctx.Rules.Value(c, valueId);
@@ -128,7 +128,8 @@ public static class CombatSystem
             EnergyCapacity: Math.Max(config.EnergyRefillMin, Value(config.EnergyOutputAspect) * config.EnergyCapacityPerOutput),
             injuryId,
             weaponDamage,
-            techniques);
+            techniques,
+            ctx.Content.Get<AiArchetypeDef>(aiId));
     }
 
     private static int QiStage(PlayerState player) => player.Tracks.First(t => t.VectorId == Simulation.QiVectorId).StageIndex;

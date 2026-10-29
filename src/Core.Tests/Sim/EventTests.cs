@@ -13,10 +13,12 @@ public sealed class EventTests
     private static readonly ContentDb Content = TestContent.WithExtra("""
         - id: enemy.test.weak
           name: { uk: "Слабкий" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 0.1 }
           weapon_damage: 0.1
         - id: enemy.test.wall
           name: { uk: "Непробивний" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 100000 }
           weapon_damage: 0.1
         - id: grp.test.weak

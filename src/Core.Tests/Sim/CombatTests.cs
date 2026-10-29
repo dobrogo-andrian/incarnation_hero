@@ -17,18 +17,22 @@ public sealed class CombatTests
     private static readonly ContentDb Content = TestContent.WithExtra("""
         - id: enemy.test.glass
           name: { uk: "Скляний" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 0.5 }
           weapon_damage: 300
         - id: enemy.test.wall
           name: { uk: "Непробивний" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 100000 }
           weapon_damage: 0.1
         - id: enemy.test.killer
           name: { uk: "Убивця" }
+          ai: ai.beast_aggressive
           stats: { stat.might: 100000, stat.speed: 100 }
           weapon_damage: 100000
         - id: enemy.test.adept
           name: { uk: "Адепт" }
+          ai: ai.beast_aggressive
           stage: 1
           stats: { stat.might: 6 }
         - id: grp.test.weak
@@ -82,7 +86,7 @@ public sealed class CombatTests
     private static Combatant Fighter(string id, double health, double damage = 10, double reaction = 10, double shield = 0,
         double pool = 0, double refill = 0, double maxShield = -1) =>
         new(id, 0, health, MaxHealth: 100, shield, maxShield < 0 ? shield : maxShield, pool, refill, damage, reaction,
-            Agility: 10, Resilience: 10, Energy: 0, EnergyRefill: 0, EnergyCapacity: 0, "injury.body", WeaponDamage: damage, Techniques: []);
+            Agility: 10, Resilience: 10, Energy: 0, EnergyRefill: 0, EnergyCapacity: 0, "injury.body", WeaponDamage: damage, Techniques: [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     private static CombatResult Resolve(Combatant player, CombatConfigDef config, params Combatant[] foes) =>
         FormulaResolver.Resolve(player, foes, config, Xoshiro256StarStar.FromSeed(7));

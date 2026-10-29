@@ -49,4 +49,6 @@ dash_energy: 4                    # dash: as many movement points again
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half
 guard_body_share: 0.5
 flee_energy: 4                    # escape from a rim hex with no enemy next to it (§7.6)
+max_turns: 200                    # an undecided hex fight: side 0 is taken to have withdrawn (D59)
+player_ai: ai.cultivator_cautious # who plays the player in arena runs and auto-resolve
 attack_energy: 4                  # the basic attack: a fresh body (5 a turn) keeps it up, an empty reserve (2) every other turn

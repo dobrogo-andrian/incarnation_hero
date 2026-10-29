@@ -29,6 +29,10 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     [ContentRef(typeof(KnowledgeDef))]
     public Dictionary<string, int> Techniques { get; set; } = [];
 
+    /// <summary>How it fights on the hex field (D59): beasts are aggressive, people cautious.</summary>
+    [ContentRef(typeof(AiArchetypeDef))]
+    public string Ai { get; set; } = "";
+
     /// <summary>The injury scale its hits leave; <c>config.combat.body_injury</c> when not given.</summary>
     [ContentRef(typeof(InjuryDef))]
     public string? Injury { get; set; }
@@ -37,8 +41,53 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     {
         if (Stage < 0 || TechniqueLevel < 0 || WeaponDamage <= 0 || Stats.Values.Any(v => v < 0))
             yield return "needs a stage, technique level and stats of zero or more and a positive weapon_damage.";
+        if (Ai.Length == 0)
+            yield return "needs an ai archetype.";
         if (Techniques.Any(t => t.Value < 1 || db.Get<KnowledgeDef>(t.Key).Combat is null))
             yield return "techniques need a level of at least 1 and a combat block.";
+    }
+}
+
+/// <summary>
+/// A utility AI archetype for the hex battle (tech 4.1, D59): the weights that score each plan
+/// of a turn (<c>BattleAi</c>). Below <see cref="FleeHealthShare"/> of health the fighter makes
+/// for the rim and escapes; 0 means it never does (beasts fight to the end).
+/// </summary>
+public sealed class AiArchetypeDef : ContentDef, IValidatedDef
+{
+    public LocalizedText Name { get; set; } = new();
+
+    /// <summary>Per point of expected damage dealt, up to what the target has left.</summary>
+    public double Damage { get; set; }
+
+    /// <summary>For a strike expected to bring its target down.</summary>
+    public double Kill { get; set; }
+
+    /// <summary>Per point of damage the enemies in reach of the hex it ends on could deal next turn.</summary>
+    public double Risk { get; set; }
+
+    /// <summary>Per point of damage of the free attacks the walk provokes (D54).</summary>
+    public double FreeAttack { get; set; }
+
+    /// <summary>Per point of combat qi and body energy spent.</summary>
+    public double Qi { get; set; }
+    public double Energy { get; set; }
+
+    /// <summary>Per hex between the hex it ends on and the nearest enemy.</summary>
+    public double Approach { get; set; }
+
+    public double FleeHealthShare { get; set; }
+
+    /// <summary>When fleeing: per hex left to the rim, and for the escape itself.</summary>
+    public double Flee { get; set; }
+
+    /// <summary>Each plan's score gets a uniform 0..noise from the <c>ai</c> stream, so equal plans do not always go the same way.</summary>
+    public double Noise { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (new[] { Damage, Kill, Risk, FreeAttack, Qi, Energy, Approach, Flee, Noise }.Any(w => w < 0) || FleeHealthShare is < 0 or > 1)
+            yield return "weights and noise must be zero or more, flee_health_share a fraction.";
     }
 }
 
@@ -171,6 +220,13 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>A fight still undecided after this many rounds ends with the player withdrawing.</summary>
     public int MaxRounds { get; set; }
 
+    /// <summary>The hex fight's limit: after this many turns side 0 is taken to have withdrawn (D59).</summary>
+    public int MaxTurns { get; set; }
+
+    /// <summary>The archetype that plays the player's side when the AI does (arena runs, auto-resolve).</summary>
+    [ContentRef(typeof(AiArchetypeDef))]
+    public string PlayerAi { get; set; } = "";
+
     /// <summary>Combat insight = difficulty × this, at most <see cref="InsightMax"/>; difficulty is the enemies' threat over the player's.</summary>
     public double InsightPerDifficulty { get; set; }
     public double InsightMax { get; set; }
@@ -217,8 +273,8 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
 
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (WeaponDamage <= 0 || MaxRounds < 1 || FieldRadius < 1)
-            yield return "needs a positive weapon_damage, max_rounds and field_radius.";
+        if (WeaponDamage <= 0 || MaxRounds < 1 || MaxTurns < 1 || FieldRadius < 1)
+            yield return "needs a positive weapon_damage, max_rounds, max_turns and field_radius.";
         if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || AttackEnergy < 0 || DashEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
             yield return "needs a positive initiative_threshold, initiative_per_reaction, energy_capacity_per_output and move_points_per_agility, and energy refills and costs of zero or more.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1

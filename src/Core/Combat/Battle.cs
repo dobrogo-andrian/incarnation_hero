@@ -54,6 +54,9 @@ public sealed record FighterGuarded(string FighterId) : SimEvent;
 
 public sealed record FighterFled(string FighterId) : SimEvent;
 
+/// <summary>The fight ran out of turns: side 0 is taken to have withdrawn (D59).</summary>
+public sealed record BattleTimedOut(int Turns) : SimEvent;
+
 /// <summary>The fighter has no health left and is out of the fight.</summary>
 public sealed record FighterDown(string FighterId) : SimEvent;
 
@@ -129,6 +132,11 @@ public sealed class Battle
 
     /// <summary>The fight's own stream (a subseed of <c>combat</c>), for damage rolls.</summary>
     internal Xoshiro256StarStar Rng { get; }
+
+    internal CombatConfigDef Config => _config;
+
+    /// <summary>Turns begun so far; at <c>max_turns</c> the fight ends as side 0's withdrawal.</summary>
+    public int Turns { get; private set; }
 
     /// <summary>What happened as the fight began: the first turn.</summary>
     public IReadOnlyList<SimEvent> Opening { get; }
@@ -207,7 +215,7 @@ public sealed class Battle
             case UseTechnique use:
                 if (actor.Def.Techniques.FirstOrDefault(t => t.Id == use.TechniqueId) is not { } technique)
                     return CommandOutcome.Reject(RejectReasons.UnknownTechnique);
-                if (Plan(actor, technique.Combat, use.Target) is not { } plan)
+                if (Plan(actor, actor.Position, technique.Combat, use.Target) is not { } plan)
                     return CommandOutcome.Reject(RejectReasons.InvalidTarget);
                 if (plan.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat)
                     return CommandOutcome.Reject(RejectReasons.NoRoom);
@@ -327,14 +335,17 @@ public sealed class Battle
     }
 
     /// <summary>Where a technique moves the fighter and whom it strikes: steps before the strike, the targets, and where a retreat lands.</summary>
-    private sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
+    internal sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
 
-    /// <summary>The plan for a technique aimed at <paramref name="target"/>, or null when the shape does not fit it or strikes no enemy.</summary>
-    private TechniquePlan? Plan(BattleFighter actor, TechniqueCombatDef combat, Hex target)
+    /// <summary>
+    /// The plan for a technique used from <paramref name="from"/> (where the actor stands, or where the
+    /// AI considers walking) aimed at <paramref name="target"/>; null when the shape does not fit or strikes no enemy.
+    /// </summary>
+    internal TechniquePlan? Plan(BattleFighter actor, Hex from, TechniqueCombatDef combat, Hex target)
     {
-        if (actor.Position.StraightTo(target) is not var (direction, steps))
+        if (from.StraightTo(target) is not var (direction, steps))
             return null;
-        Hex from = actor.Position;
+        BattleFighter? FighterOn(Hex hex) => _fighters.FirstOrDefault(f => f.InFight && f != actor && f.Position == hex);
         List<Hex> struck;
         List<Hex> approach = [];
         Hex? landing = null;
@@ -367,8 +378,6 @@ public sealed class Battle
         return targets.Count == 0 ? null : new TechniquePlan(approach, targets, landing);
     }
 
-    private BattleFighter? FighterOn(Hex hex) => _fighters.FirstOrDefault(f => f.InFight && f.Position == hex);
-
     /// <summary>Moves (no free attacks: the technique carries the fighter, D54), strikes each target, then lands.</summary>
     private void Perform(BattleFighter actor, CombatTechnique technique, TechniquePlan plan, List<SimEvent> events)
     {
@@ -377,7 +386,7 @@ public sealed class Battle
             events.Add(new FighterMoved(actor.Id, actor.Position, to));
             actor.Position = to;
         }
-        double damage = actor.Def.WeaponDamage * (1 + technique.Level * _config.TechniqueBonusPerLevel) * technique.Combat.Damage;
+        double damage = TechniqueDamage(actor, technique);
         foreach (var target in plan.Targets)
             Strike(actor, target, damage, events);
         if (plan.Landing is { } landing)
@@ -386,6 +395,10 @@ public sealed class Battle
             actor.Position = landing;
         }
     }
+
+    /// <summary>A technique's damage before the spread: weapon × (1 + level × bonus) × its multiplier (D58).</summary>
+    internal double TechniqueDamage(BattleFighter actor, CombatTechnique technique) =>
+        actor.Def.WeaponDamage * (1 + technique.Level * _config.TechniqueBonusPerLevel) * technique.Combat.Damage;
 
     /// <summary>Spends the turn's one action and its energy, or says why it cannot be taken.</summary>
     private Loc.LocKey? TakeAction(BattleFighter actor, double energy)
@@ -435,6 +448,14 @@ public sealed class Battle
             Active = null;
             return [];
         }
+        if (Turns >= _config.MaxTurns)
+        {
+            foreach (var f in inFight.Where(f => f.Side == 0))
+                f.Fled = true;
+            Active = null;
+            return [new BattleTimedOut(Turns)];
+        }
+        Turns++;
         var gauges = inFight.Select(f => f.Initiative).ToArray();
         int next = Initiative.Advance(inFight, gauges, _config.InitiativeThreshold);
         for (int i = 0; i < inFight.Count; i++)
@@ -448,7 +469,7 @@ public sealed class Battle
     }
 
     /// <summary>Movement points a turn: agility × <c>move_points_per_agility</c>, rounded down, at least 1.</summary>
-    private int MovePointsOf(Combatant c) => Math.Max(1, (int)Math.Floor(c.Agility * _config.MovePointsPerAgility));
+    internal int MovePointsOf(Combatant c) => Math.Max(1, (int)Math.Floor(c.Agility * _config.MovePointsPerAgility));
 
     /// <summary>End of an own turn: qi flows from the pool into the shield, and energy from the reserve (D55).</summary>
     private void FinishTurn(BattleFighter f, List<SimEvent> events)

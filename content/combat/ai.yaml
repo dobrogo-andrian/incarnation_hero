@@ -1,0 +1,30 @@
+# Utility AI archetypes for the hex battle (tech 4.1, D59). Each plan of a turn scores
+# damage × dealt + kill per likely kill − risk × damage in reach of the end hex − free_attack ×
+# provoked free attacks − qi/energy × spent − approach × hexes to the nearest enemy; below
+# flee_health_share (0 = never) the fighter heads for the rim instead and escapes. Draft numbers.
+
+- id: ai.beast_aggressive
+  name: { uk: "Агресивний звір" }
+  damage: 1
+  kill: 25
+  risk: 0.2
+  free_attack: 0.5
+  qi: 0.2
+  energy: 0.1
+  approach: 3                   # closes in whatever it costs
+  flee_health_share: 0          # beasts fight to the end (D59)
+  flee: 0
+  noise: 0.5
+
+- id: ai.cultivator_cautious
+  name: { uk: "Обережний культиватор" }
+  damage: 1
+  kill: 20
+  risk: 0.6
+  free_attack: 1
+  qi: 0.3
+  energy: 0.2
+  approach: 0.5
+  flee_health_share: 0.35       # withdraws once a third of health is gone
+  flee: 10
+  noise: 0.5
