@@ -171,10 +171,13 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>Share of the insight an escape still gives.</summary>
     public double InsightFledShare { get; set; }
 
+    /// <summary>The hex battlefield reaches this many steps from its centre (D56).</summary>
+    public int FieldRadius { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (WeaponDamage <= 0 || MaxRounds < 1)
-            yield return "needs a positive weapon_damage and max_rounds.";
+        if (WeaponDamage <= 0 || MaxRounds < 1 || FieldRadius < 1)
+            yield return "needs a positive weapon_damage, max_rounds and field_radius.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
             || ShieldBreakChance is < 0 or > 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
             yield return "damage_spread, flee_health_share, insight_fled_share, shield_break_chance, fight_min_health_share and the flee chance bounds must be fractions.";
