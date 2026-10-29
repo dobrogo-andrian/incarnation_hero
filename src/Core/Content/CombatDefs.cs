@@ -22,7 +22,12 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     /// <summary>Damage of its weapon, claws or fangs; <c>config.combat.weapon_damage</c> when not given.</summary>
     public double? WeaponDamage { get; set; }
 
+    /// <summary>The technique level the formula resolver adds to damage (D42); the hex battle uses <see cref="Techniques"/>.</summary>
     public int TechniqueLevel { get; set; }
+
+    /// <summary>Techniques it fights with on the hex field, by level (D56): cultivators have them, beasts do not.</summary>
+    [ContentRef(typeof(KnowledgeDef))]
+    public Dictionary<string, int> Techniques { get; set; } = [];
 
     /// <summary>The injury scale its hits leave; <c>config.combat.body_injury</c> when not given.</summary>
     [ContentRef(typeof(InjuryDef))]
@@ -32,6 +37,8 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     {
         if (Stage < 0 || TechniqueLevel < 0 || WeaponDamage <= 0 || Stats.Values.Any(v => v < 0))
             yield return "needs a stage, technique level and stats of zero or more and a positive weapon_damage.";
+        if (Techniques.Any(t => t.Value < 1 || db.Get<KnowledgeDef>(t.Key).Combat is null))
+            yield return "techniques need a level of at least 1 and a combat block.";
     }
 }
 

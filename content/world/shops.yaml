@@ -13,4 +13,4 @@
   description: { uk: "Полиці до стелі, заставлені сувоями й зшитками. Старий книжник дрімає над лампою, але щойно торкнешся фоліанта, розплющує одне око." }
   zone: zone.hub
   map: { x: 90, y: 34, district: district.hub.market }
-  prices: { item.folio.piercing_dragon: 20, item.folio.fire: 20, item.folio.azure_breath: 40 }
+  prices: { item.folio.piercing_dragon: 20, item.folio.wind_step: 20, item.folio.crane_retreat: 20, item.folio.fire: 20, item.folio.azure_breath: 40 }

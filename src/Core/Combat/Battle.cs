@@ -22,6 +22,9 @@ public sealed record Guard : BattleCommand;
 /// <summary>An action on a rim hex with no enemy next to it: the fighter leaves the fight (§7.6, D56).</summary>
 public sealed record Flee : BattleCommand;
 
+/// <summary>A technique the fighter knows, aimed at a hex: the adjacent hex its line or arc starts from, or the enemy it strikes (D56).</summary>
+public sealed record UseTechnique(string TechniqueId, Hex Target) : BattleCommand;
+
 /// <summary>Walk to a hex within the movement points left, by the path <see cref="Battle.Reachable"/> gives.</summary>
 public sealed record Move(Hex To) : BattleCommand;
 
@@ -42,6 +45,8 @@ public sealed record BattleTurnEnded(string FighterId, double ShieldRefilled, do
 public sealed record FighterWaited(string FighterId) : SimEvent;
 
 public sealed record FighterHit(string AttackerId, string TargetId, double Damage, double Absorbed, double ToHealth) : SimEvent;
+
+public sealed record TechniqueUsed(string FighterId, string TechniqueId, Hex Target) : SimEvent;
 
 public sealed record FighterDashed(string FighterId, int MovePoints) : SimEvent;
 
@@ -194,7 +199,26 @@ public sealed class Battle
                     return CommandOutcome.Reject(RejectReasons.OutOfReach);
                 if (TakeAction(actor, _config.AttackEnergy) is { } attackRejected)
                     return CommandOutcome.Reject(attackRejected);
-                Strike(actor, target, events);
+                Strike(actor, target, actor.Def.WeaponDamage, events);
+                if (OneSideLeft())
+                    Active = null;
+                return CommandOutcome.Accept(events);
+
+            case UseTechnique use:
+                if (actor.Def.Techniques.FirstOrDefault(t => t.Id == use.TechniqueId) is not { } technique)
+                    return CommandOutcome.Reject(RejectReasons.UnknownTechnique);
+                if (Plan(actor, technique.Combat, use.Target) is not { } plan)
+                    return CommandOutcome.Reject(RejectReasons.InvalidTarget);
+                if (plan.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat)
+                    return CommandOutcome.Reject(RejectReasons.NoRoom);
+                if (actor.ActionTaken)
+                    return CommandOutcome.Reject(RejectReasons.ActionTaken);
+                if (actor.Shield < technique.Combat.Qi)
+                    return CommandOutcome.Reject(RejectReasons.NotEnoughQi);
+                TakeAction(actor, 0);
+                actor.Shield -= technique.Combat.Qi;
+                events.Add(new TechniqueUsed(actor.Id, technique.Id, use.Target));
+                Perform(actor, technique, plan, events);
                 if (OneSideLeft())
                     Active = null;
                 return CommandOutcome.Accept(events);
@@ -284,7 +308,7 @@ public sealed class Battle
             {
                 mover.FreeAttackers.Add(enemy.Id);
                 events.Add(new FreeAttackProvoked(enemy.Id, mover.Id));
-                Strike(enemy, mover, events);
+                Strike(enemy, mover, enemy.Def.WeaponDamage, events);
                 if (mover.Down)
                     break;
             }
@@ -302,6 +326,67 @@ public sealed class Battle
         }
     }
 
+    /// <summary>Where a technique moves the fighter and whom it strikes: steps before the strike, the targets, and where a retreat lands.</summary>
+    private sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
+
+    /// <summary>The plan for a technique aimed at <paramref name="target"/>, or null when the shape does not fit it or strikes no enemy.</summary>
+    private TechniquePlan? Plan(BattleFighter actor, TechniqueCombatDef combat, Hex target)
+    {
+        if (actor.Position.StraightTo(target) is not var (direction, steps))
+            return null;
+        Hex from = actor.Position;
+        List<Hex> struck;
+        List<Hex> approach = [];
+        Hex? landing = null;
+        switch (combat.Shape)
+        {
+            case TechniqueCombatDef.Line when steps == 1:
+                struck = Enumerable.Range(1, combat.Range).Select(k => from + Hex.Directions[direction] * k).ToList();
+                break;
+            case TechniqueCombatDef.Arc when steps == 1:
+                struck = new[] { -1, 0, 1 }.Select(turn => from + Hex.Directions[(direction + turn + 6) % 6]).ToList();
+                break;
+            case TechniqueCombatDef.Charge when steps <= combat.Range + 1:
+                approach = Enumerable.Range(1, steps - 1).Select(k => from + Hex.Directions[direction] * k).ToList();
+                if (approach.Any(h => FighterOn(h) is not null))
+                    return null;
+                struck = [target];
+                break;
+            case TechniqueCombatDef.Retreat when steps == 1:
+                struck = [target];
+                landing = Enumerable.Range(1, combat.Range).Reverse()
+                    .Select(k => from + Hex.Directions[(direction + 3) % 6] * k)
+                    .Where(h => Field.Contains(h) && FighterOn(h) is null)
+                    .Select(h => (Hex?)h)
+                    .FirstOrDefault();
+                break;
+            default:
+                return null;
+        }
+        var targets = struck.Select(FighterOn).OfType<BattleFighter>().Where(f => f.Side != actor.Side).ToList();
+        return targets.Count == 0 ? null : new TechniquePlan(approach, targets, landing);
+    }
+
+    private BattleFighter? FighterOn(Hex hex) => _fighters.FirstOrDefault(f => f.InFight && f.Position == hex);
+
+    /// <summary>Moves (no free attacks: the technique carries the fighter, D54), strikes each target, then lands.</summary>
+    private void Perform(BattleFighter actor, CombatTechnique technique, TechniquePlan plan, List<SimEvent> events)
+    {
+        foreach (var to in plan.Approach)
+        {
+            events.Add(new FighterMoved(actor.Id, actor.Position, to));
+            actor.Position = to;
+        }
+        double damage = actor.Def.WeaponDamage * (1 + technique.Level * _config.TechniqueBonusPerLevel) * technique.Combat.Damage;
+        foreach (var target in plan.Targets)
+            Strike(actor, target, damage, events);
+        if (plan.Landing is { } landing)
+        {
+            events.Add(new FighterMoved(actor.Id, actor.Position, landing));
+            actor.Position = landing;
+        }
+    }
+
     /// <summary>Spends the turn's one action and its energy, or says why it cannot be taken.</summary>
     private Loc.LocKey? TakeAction(BattleFighter actor, double energy)
     {
@@ -315,9 +400,9 @@ public sealed class Battle
     }
 
     /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>
-    private void Strike(BattleFighter attacker, BattleFighter target, List<SimEvent> events)
+    private void Strike(BattleFighter attacker, BattleFighter target, double damage, List<SimEvent> events)
     {
-        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, _config, Rng, target.Guarding ? _config.GuardBodyShare : 1);
+        var hit = CombatMath.Hit(damage, attacker.Def, target.Def, target.Shield, _config, Rng, target.Guarding ? _config.GuardBodyShare : 1);
         target.Shield -= hit.Absorbed;
         target.Health = Math.Max(0, target.Health - hit.ToHealth);
         foreach (var (injuryId, amount) in hit.Injuries)

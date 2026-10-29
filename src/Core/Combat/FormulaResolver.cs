@@ -20,11 +20,16 @@ public sealed record Combatant(
     double Energy,
     double EnergyRefill,
     double EnergyCapacity,
-    string InjuryId)
+    string InjuryId,
+    double WeaponDamage,
+    IReadOnlyList<CombatTechnique> Techniques)
 {
     /// <summary>How dangerous it is: what it takes to bring down times what it deals. Difficulty compares these.</summary>
     public double Threat => (MaxHealth + MaxShield) * Damage;
 }
+
+/// <summary>A technique a fighter knows, at its level, with what it does on the hex field.</summary>
+public sealed record CombatTechnique(string Id, int Level, TechniqueCombatDef Combat);
 
 public enum CombatEnd
 {
@@ -131,7 +136,7 @@ public static class FormulaResolver
     /// <summary>One hit through the shared pipeline; injuries are counted only where <paramref name="injuries"/> is given (the player).</summary>
     private static void Hit(Fighter attacker, Fighter target, CombatConfigDef config, Xoshiro256StarStar rng, SortedDictionary<string, double>? injuries)
     {
-        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, config, rng);
+        var hit = CombatMath.Hit(attacker.Def.Damage, attacker.Def, target.Def, target.Shield, config, rng);
         target.Shield -= hit.Absorbed;
         target.Health -= hit.ToHealth;
         foreach (var (injuryId, amount) in hit.Injuries)

@@ -28,6 +28,15 @@
 - id: str.reject.enemy_adjacent
   text: { uk: "Ворог поруч не дасть утекти: спершу відійдіть." }
 
+- id: str.reject.unknown_technique
+  text: { uk: "Ця техніка вам невідома." }
+
+- id: str.reject.not_enough_qi
+  text: { uk: "Бракує бойової ці." }
+
+- id: str.reject.no_room
+  text: { uk: "Немає куди відскочити." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 

@@ -4,6 +4,14 @@
   name: { uk: "Фоліант «Пронизливий дракон»" }
   folio: { subject: tech.spear.piercing_dragon, max_level: 3, speed: 1 }
 
+- id: item.folio.wind_step
+  name: { uk: "Фоліант «Крок вітру»" }
+  folio: { subject: tech.movement.wind_step, max_level: 3, speed: 1 }
+
+- id: item.folio.crane_retreat
+  name: { uk: "Фоліант «Відступ журавля»" }
+  folio: { subject: tech.movement.crane_retreat, max_level: 3, speed: 1 }
+
 - id: item.folio.fire
   name: { uk: "Фоліант стихії вогню" }
   folio: { subject: element.fire, max_level: 3, speed: 1.2 }

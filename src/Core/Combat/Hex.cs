@@ -32,6 +32,19 @@ public readonly record struct Hex(int Q, int R) : IComparable<Hex>
         return Directions.Select(d => self + d);
     }
 
+    /// <summary>The direction (index into <see cref="Directions"/>) and steps of <paramref name="to"/> when it lies straight along one of the six axes.</summary>
+    public (int Direction, int Steps)? StraightTo(Hex to)
+    {
+        var offset = to - this;
+        int steps = offset.Length;
+        for (int d = 0; d < Directions.Count && steps > 0; d++)
+        {
+            if (Directions[d] * steps == offset)
+                return (d, steps);
+        }
+        return null;
+    }
+
     /// <summary>The hexes a straight line from here to <paramref name="to"/> crosses, both ends included.</summary>
     public IReadOnlyList<Hex> LineTo(Hex to)
     {

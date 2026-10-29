@@ -1,9 +1,24 @@
-# Techniques (§6). Only their level exists for now; combat gives them effects later.
+# Techniques (§6). On the hex field (D56) each has a shape from a fixed set and its numbers:
+# damage = weapon × (1 + level × technique_bonus_per_level) × damage × qi density; qi comes out
+# of combat qi, the same qi that holds the shield. Draft numbers.
 
 - id: tech.spear.piercing_dragon
   name: { uk: "Пронизливий дракон" }
   tags: [weapon:spear]
+  combat: { shape: line, range: 2, damage: 1.3, qi: 10 }   # pierces two hexes in a row
 
 - id: tech.sword.flowing_cut
   name: { uk: "Плинний розтин" }
   tags: [weapon:sword]
+  combat: { shape: arc, damage: 1.0, qi: 10 }              # three hexes in front
+
+# Movement techniques: no weapon, they carry the fighter without drawing free attacks (D54).
+- id: tech.movement.wind_step
+  name: { uk: "Крок вітру" }
+  tags: [school:movement]
+  combat: { shape: charge, range: 3, damage: 1.1, qi: 8 }  # up to 3 hexes straight in, then a strike
+
+- id: tech.movement.crane_retreat
+  name: { uk: "Відступ журавля" }
+  tags: [school:movement]
+  combat: { shape: retreat, range: 2, damage: 0.8, qi: 6 } # a strike, then a leap 2 hexes back

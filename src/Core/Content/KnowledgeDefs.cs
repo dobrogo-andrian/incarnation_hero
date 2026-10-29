@@ -23,13 +23,51 @@ public sealed class KnowledgeDef : ContentDef, IValidatedDef
     /// <summary>Required on a cultivation method, forbidden elsewhere.</summary>
     public MethodDef? Method { get; set; }
 
+    /// <summary>What the technique does on the hex field (D56); only techniques have it.</summary>
+    public TechniqueCombatDef? Combat { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if ((Method is null) == IsMethod)
             yield return IsMethod ? "a cultivation method needs a method block." : "only a cultivation method has a method block.";
+        if (Combat is not null && !IsTechnique)
+            yield return "only a technique has a combat block.";
+        if (Combat is { } c && (!TechniqueCombatDef.Shapes.Contains(c.Shape) || c.Range < 1 || c.Damage <= 0 || c.Qi < 0))
+            yield return $"combat needs a shape ({string.Join(", ", TechniqueCombatDef.Shapes)}), a range of at least 1, positive damage and qi of zero or more.";
         if (Method is { } m && (m.QualityCeiling <= 0 || m.QualityCeilingPerLevel < 0 || m.PurityCap < 0 || m.PurityCapPerLevel < 0))
             yield return "method needs a positive quality_ceiling and non-negative per-level growth and purity cap.";
     }
+}
+
+/// <summary>
+/// A technique on the hex field (D56): one of a fixed set of shapes, each a branch in C#
+/// (<c>Battle</c>), with its numbers here. Damage = weapon × (1 + level × technique bonus) ×
+/// <see cref="Damage"/> × qi density; the cost comes out of combat qi, the same qi that holds the shield.
+/// </summary>
+public sealed class TechniqueCombatDef
+{
+    public const string Line = "line";
+    public const string Arc = "arc";
+    public const string Charge = "charge";
+    public const string Retreat = "retreat";
+
+    /// <summary>
+    /// <c>line</c>: every enemy on <see cref="Range"/> hexes straight out from an adjacent hex;
+    /// <c>arc</c>: the adjacent hex and its two neighbours beside the fighter;
+    /// <c>charge</c>: a dash up to <see cref="Range"/> free hexes along a straight line to strike the enemy at its end;
+    /// <c>retreat</c>: strike an adjacent enemy, then leap up to <see cref="Range"/> hexes straight away from it.
+    /// Charge and retreat move without drawing free attacks (D54).
+    /// </summary>
+    public static readonly IReadOnlyList<string> Shapes = [Line, Arc, Charge, Retreat];
+
+    public string Shape { get; set; } = "";
+    public int Range { get; set; } = 1;
+
+    /// <summary>Multiplier on the technique's damage.</summary>
+    public double Damage { get; set; } = 1;
+
+    /// <summary>Combat qi it costs.</summary>
+    public double Qi { get; set; }
 }
 
 /// <summary>
