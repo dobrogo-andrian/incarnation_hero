@@ -185,11 +185,103 @@ public sealed class Battle
         }
     }
 
-    public CommandOutcome Execute(BattleCommand command)
+    /// <summary>
+    /// Why the active fighter cannot do <paramref name="command"/> now, or null when it can: the very
+    /// check <see cref="Execute"/> makes, so the UI greys out exactly what Core would refuse.
+    /// </summary>
+    public Loc.LocKey? WhyNot(BattleCommand command) => Check(command).Refusal;
+
+    /// <summary>
+    /// Why the active fighter cannot use <paramref name="techniqueId"/> (null: the basic attack) at
+    /// any target this turn, or null when some target is open: its own limits first (the action
+    /// spent, energy, qi), else that no target fits.
+    /// </summary>
+    public Loc.LocKey? SkillUnavailable(string? techniqueId)
     {
         if (Active is not { } actor)
-            return CommandOutcome.Reject(RejectReasons.BattleOver);
+            return RejectReasons.BattleOver;
+        var tries = techniqueId is null
+            ? _fighters.Where(f => f.InFight && f.Side != actor.Side).Select(f => (BattleCommand)new Attack(f.Id))
+            : Field.Hexes().Select(h => (BattleCommand)new UseTechnique(techniqueId, h));
+        foreach (var command in tries)
+        {
+            var refusal = WhyNot(command);
+            if (refusal is null)
+                return null;
+            if (!IsTargetRefusal(refusal))
+                return refusal;
+        }
+        return RejectReasons.NoTarget;
+    }
 
+    private static bool IsTargetRefusal(Loc.LocKey refusal) =>
+        refusal == RejectReasons.InvalidTarget || refusal == RejectReasons.OutOfReach || refusal == RejectReasons.NoRoom;
+
+    /// <summary>What a command needs once it is allowed: the target, the technique and its plan, or the walk.</summary>
+    private sealed record Checked(Loc.LocKey? Refusal, BattleFighter? Target = null, CombatTechnique? Technique = null, TechniquePlan? Plan = null, Reach? Reach = null);
+
+    /// <summary>
+    /// Validates a command for the active fighter without changing anything. The fighter's own limits
+    /// come before the target's, so a skill out of energy or qi is refused the same way for every target.
+    /// </summary>
+    private Checked Check(BattleCommand command)
+    {
+        if (Active is not { } actor)
+            return new(RejectReasons.BattleOver);
+        switch (command)
+        {
+            case EndTurn:
+                return new(null);
+
+            case Attack attack:
+                if (ActionRefusal(actor, _config.AttackEnergy) is { } attackRefused)
+                    return new(attackRefused);
+                if (_fighters.FirstOrDefault(f => f.Id == attack.TargetId) is not { InFight: true } target || target.Side == actor.Side)
+                    return new(RejectReasons.InvalidTarget);
+                if (actor.Position.DistanceTo(target.Position) != 1)
+                    return new(RejectReasons.OutOfReach);
+                return new(null, Target: target);
+
+            case UseTechnique use:
+                if (actor.Def.Techniques.FirstOrDefault(t => t.Id == use.TechniqueId) is not { } technique)
+                    return new(RejectReasons.UnknownTechnique);
+                if (ActionRefusal(actor, 0) is { } techniqueRefused)
+                    return new(techniqueRefused);
+                if (actor.Shield < technique.Combat.Qi)
+                    return new(RejectReasons.NotEnoughQi);
+                if (Plan(actor, actor.Position, technique.Combat, use.Target) is not { } plan)
+                    return new(RejectReasons.InvalidTarget);
+                if (plan.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat)
+                    return new(RejectReasons.NoRoom);
+                return new(null, Technique: technique, Plan: plan);
+
+            case Dash:
+                return new(ActionRefusal(actor, _config.DashEnergy));
+
+            case Guard:
+                return new(ActionRefusal(actor, _config.GuardEnergy));
+
+            case Flee:
+                if (!Field.IsEdge(actor.Position))
+                    return new(RejectReasons.NotOnEdge);
+                if (_fighters.Any(f => f.InFight && f.Side != actor.Side && f.Position.DistanceTo(actor.Position) == 1))
+                    return new(RejectReasons.EnemyAdjacent);
+                return new(ActionRefusal(actor, _config.FleeEnergy));
+
+            case Move move:
+                return Reachable().FirstOrDefault(r => r.To == move.To) is { } reach ? new(null, Reach: reach) : new(RejectReasons.Unreachable);
+
+            default:
+                throw new ArgumentException($"Unknown battle command {command.GetType().Name}.", nameof(command));
+        }
+    }
+
+    public CommandOutcome Execute(BattleCommand command)
+    {
+        var check = Check(command);
+        if (check.Refusal is { } refusal)
+            return CommandOutcome.Reject(refusal);
+        var actor = Active!;
         var events = new List<SimEvent>();
         switch (command)
         {
@@ -198,74 +290,48 @@ public sealed class Battle
                     events.Add(new FighterWaited(actor.Id));
                 FinishTurn(actor, events);
                 events.AddRange(NextTurn());
-                return CommandOutcome.Accept(events);
+                break;
 
-            case Attack attack:
-                if (_fighters.FirstOrDefault(f => f.Id == attack.TargetId) is not { InFight: true } target || target.Side == actor.Side)
-                    return CommandOutcome.Reject(RejectReasons.InvalidTarget);
-                if (actor.Position.DistanceTo(target.Position) != 1)
-                    return CommandOutcome.Reject(RejectReasons.OutOfReach);
-                if (TakeAction(actor, _config.AttackEnergy) is { } attackRejected)
-                    return CommandOutcome.Reject(attackRejected);
-                Strike(actor, target, actor.Def.WeaponDamage, events);
+            case Attack:
+                SpendAction(actor, _config.AttackEnergy);
+                Strike(actor, check.Target!, actor.Def.WeaponDamage, events);
                 if (OneSideLeft())
                     Active = null;
-                return CommandOutcome.Accept(events);
+                break;
 
             case UseTechnique use:
-                if (actor.Def.Techniques.FirstOrDefault(t => t.Id == use.TechniqueId) is not { } technique)
-                    return CommandOutcome.Reject(RejectReasons.UnknownTechnique);
-                if (Plan(actor, actor.Position, technique.Combat, use.Target) is not { } plan)
-                    return CommandOutcome.Reject(RejectReasons.InvalidTarget);
-                if (plan.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat)
-                    return CommandOutcome.Reject(RejectReasons.NoRoom);
-                if (actor.ActionTaken)
-                    return CommandOutcome.Reject(RejectReasons.ActionTaken);
-                if (actor.Shield < technique.Combat.Qi)
-                    return CommandOutcome.Reject(RejectReasons.NotEnoughQi);
-                TakeAction(actor, 0);
-                actor.Shield -= technique.Combat.Qi;
-                events.Add(new TechniqueUsed(actor.Id, technique.Id, use.Target));
-                Perform(actor, technique, plan, events);
+                SpendAction(actor, 0);
+                actor.Shield -= check.Technique!.Combat.Qi;
+                events.Add(new TechniqueUsed(actor.Id, check.Technique.Id, use.Target));
+                Perform(actor, check.Technique, check.Plan!, events);
                 if (OneSideLeft())
                     Active = null;
-                return CommandOutcome.Accept(events);
+                break;
 
             case Dash:
-                if (TakeAction(actor, _config.DashEnergy) is { } dashRejected)
-                    return CommandOutcome.Reject(dashRejected);
+                SpendAction(actor, _config.DashEnergy);
                 actor.MovePoints += MovePointsOf(actor.Def);
                 events.Add(new FighterDashed(actor.Id, actor.MovePoints));
-                return CommandOutcome.Accept(events);
+                break;
 
             case Guard:
-                if (TakeAction(actor, _config.GuardEnergy) is { } guardRejected)
-                    return CommandOutcome.Reject(guardRejected);
+                SpendAction(actor, _config.GuardEnergy);
                 actor.Guarding = true;
                 events.Add(new FighterGuarded(actor.Id));
-                return CommandOutcome.Accept(events);
+                break;
 
             case Flee:
-                if (!Field.IsEdge(actor.Position))
-                    return CommandOutcome.Reject(RejectReasons.NotOnEdge);
-                if (_fighters.Any(f => f.InFight && f.Side != actor.Side && f.Position.DistanceTo(actor.Position) == 1))
-                    return CommandOutcome.Reject(RejectReasons.EnemyAdjacent);
-                if (TakeAction(actor, _config.FleeEnergy) is { } fleeRejected)
-                    return CommandOutcome.Reject(fleeRejected);
+                SpendAction(actor, _config.FleeEnergy);
                 actor.Fled = true;
                 events.Add(new FighterFled(actor.Id));
                 events.AddRange(NextTurn());
-                return CommandOutcome.Accept(events);
+                break;
 
-            case Move move:
-                if (Reachable().FirstOrDefault(r => r.To == move.To) is not { } reach)
-                    return CommandOutcome.Reject(RejectReasons.Unreachable);
-                Walk(actor, reach.Path, events);
-                return CommandOutcome.Accept(events);
-
-            default:
-                throw new ArgumentException($"Unknown battle command {command.GetType().Name}.", nameof(command));
+            case Move:
+                Walk(actor, check.Reach!.Path, events);
+                break;
         }
+        return CommandOutcome.Accept(events);
     }
 
     /// <summary>
@@ -409,16 +475,15 @@ public sealed class Battle
     internal double TechniqueDamage(BattleFighter actor, CombatTechnique technique) =>
         actor.Def.WeaponDamage * (1 + technique.Level * _config.TechniqueBonusPerLevel) * technique.Combat.Damage;
 
-    /// <summary>Spends the turn's one action and its energy, or says why it cannot be taken.</summary>
-    private Loc.LocKey? TakeAction(BattleFighter actor, double energy)
+    /// <summary>Why the turn's one action, costing <paramref name="energy"/>, cannot be taken; null when it can.</summary>
+    private static Loc.LocKey? ActionRefusal(BattleFighter actor, double energy) =>
+        actor.ActionTaken ? RejectReasons.ActionTaken : actor.Energy < energy ? RejectReasons.NotEnoughEnergy : null;
+
+    /// <summary>Spends the turn's one action and its energy; <see cref="Check"/> has allowed it.</summary>
+    private static void SpendAction(BattleFighter actor, double energy)
     {
-        if (actor.ActionTaken)
-            return RejectReasons.ActionTaken;
-        if (actor.Energy < energy)
-            return RejectReasons.NotEnoughEnergy;
         actor.Energy -= energy;
         actor.ActionTaken = true;
-        return null;
     }
 
     /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>

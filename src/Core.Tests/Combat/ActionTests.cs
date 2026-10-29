@@ -33,6 +33,33 @@ public class ActionTests
     }
 
     [Fact]
+    public void WhyNot_tells_what_Execute_would_refuse_and_changes_nothing()
+    {
+        var battle = Start(Field(4));
+        var me = battle.Active!;
+        Assert.Null(battle.WhyNot(new Dash()));
+        Assert.Equal(RejectReasons.NotOnEdge, battle.WhyNot(new Flee()));
+        Assert.Equal(RejectReasons.OutOfReach, battle.WhyNot(new Attack("wolf")));
+        Assert.False(me.ActionTaken);
+        Assert.Equal(15, me.Energy);
+
+        // Far from the wolf: the attack has no target; after a dash the action itself is spent.
+        Assert.Equal(RejectReasons.NoTarget, battle.SkillUnavailable(null));
+        battle.Execute(new Dash());
+        Assert.Equal(RejectReasons.ActionTaken, battle.SkillUnavailable(null));
+        Assert.Equal(RejectReasons.ActionTaken, battle.WhyNot(new Guard()));
+        Assert.Null(battle.WhyNot(new EndTurn()));
+    }
+
+    [Fact]
+    public void A_skill_with_a_target_in_reach_is_available()
+    {
+        var battle = Start(Field(1));
+        Assert.Null(battle.SkillUnavailable(null));
+        Assert.Equal(RejectReasons.UnknownTechnique, battle.SkillUnavailable("tech.sword.flowing_cut"));
+    }
+
+    [Fact]
     public void Guard_lets_half_of_a_hit_reach_the_body_until_the_next_own_turn()
     {
         // Equal reactions: the player goes first by ID, then the wolf strikes with the same roll either way.

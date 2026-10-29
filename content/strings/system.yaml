@@ -37,6 +37,9 @@
 - id: str.reject.no_room
   text: { uk: "Немає куди відскочити." }
 
+- id: str.reject.no_target
+  text: { uk: "Немає цілі в досяжності." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 
@@ -812,13 +815,19 @@
   text: { uk: "Кінець ходу" }
 
 - id: str.ui.battle_cancel
-  text: { uk: "Скасувати техніку" }
+  text: { uk: "Скасувати навичку (Esc)" }
 
 - id: str.ui.battle_technique
-  text: { uk: "{name} (ці: {qi})" }
+  text: { uk: "{key}  {name}\nці: {qi}" }
+
+- id: str.ui.battle_attack
+  text: { uk: "Атака\nенергія: {energy}" }
+
+- id: str.ui.battle_aim_attack
+  text: { uk: "Оберіть сусіднього ворога для удару." }
 
 - id: str.ui.battle_hint
-  text: { uk: "Клік по підсвіченому гексу — крок; по сусідньому ворогу — удар. Гекси з рамкою провокують вільний удар." }
+  text: { uk: "Клік по підсвіченому гексу — крок; по сусідньому ворогу — удар. Навички внизу: клавіші 1–5, Esc — скасувати. Жовтуваті гекси провокують вільний удар." }
 
 - id: str.ui.battle_aim
   text: { uk: "Оберіть ціль техніки: підсвічено гекси, куди її можна спрямувати." }
