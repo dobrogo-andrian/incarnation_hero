@@ -1,5 +1,6 @@
 # Utility AI archetypes for the hex battle (tech 4.1, D59). Each plan of a turn scores
-# damage × dealt + kill per likely kill − risk × damage in reach of the end hex − free_attack ×
+# damage × dealt + kill per likely kill − risk × damage in reach of the end hex + opportunity ×
+# own weapon when an enemy is in its reach next turn − free_attack ×
 # provoked free attacks − qi/energy × spent − approach × hexes to the nearest enemy; below
 # flee_health_share (0 = never) the fighter heads for the rim instead and escapes. Draft numbers.
 
@@ -8,6 +9,7 @@
   damage: 1
   kill: 25
   risk: 0.2
+  opportunity: 0.3
   free_attack: 0.5
   qi: 0.2
   energy: 0.1
@@ -20,7 +22,8 @@
   name: { uk: "Обережний культиватор" }
   damage: 1
   kill: 20
-  risk: 0.6
+  risk: 0.5
+  opportunity: 0.5
   free_attack: 1
   qi: 0.3
   energy: 0.2

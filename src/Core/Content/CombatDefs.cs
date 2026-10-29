@@ -66,6 +66,9 @@ public sealed class AiArchetypeDef : ContentDef, IValidatedDef
     /// <summary>Per point of damage the enemies in reach of the hex it ends on could deal next turn.</summary>
     public double Risk { get; set; }
 
+    /// <summary>Per point of its own weapon when an enemy is in its reach next turn: what makes a cautious fighter close in at all.</summary>
+    public double Opportunity { get; set; }
+
     /// <summary>Per point of damage of the free attacks the walk provokes (D54).</summary>
     public double FreeAttack { get; set; }
 
@@ -86,7 +89,7 @@ public sealed class AiArchetypeDef : ContentDef, IValidatedDef
 
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (new[] { Damage, Kill, Risk, FreeAttack, Qi, Energy, Approach, Flee, Noise }.Any(w => w < 0) || FleeHealthShare is < 0 or > 1)
+        if (new[] { Damage, Kill, Risk, Opportunity, FreeAttack, Qi, Energy, Approach, Flee, Noise }.Any(w => w < 0) || FleeHealthShare is < 0 or > 1)
             yield return "weights and noise must be zero or more, flee_health_share a fraction.";
     }
 }

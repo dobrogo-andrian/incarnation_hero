@@ -3,6 +3,7 @@ using Core.Loc;
 using Core.Save;
 using Core.Sim;
 using Core.State;
+using Sim.Cli.Arena;
 using Sim.Cli.Bots;
 using Sim.Cli.Runs;
 
@@ -11,6 +12,7 @@ return args switch
     ["validate", string contentDir] => Validate(contentDir),
     ["run", .. var options] when options.Contains("--bot") => RunBots(options),
     ["run", .. var options] => Run(options),
+    ["arena", .. var options] => Arena(options),
     _ => Usage(),
 };
 
@@ -89,6 +91,39 @@ static int RunBots(string[] options)
     foreach (var summary in summaries)
         output.WriteLine(BotRunner.ToJsonLine(summary));
     Console.Error.WriteLine($"{runs} runs of {bot} in {clock.Elapsed.TotalSeconds:F1} s.");
+    return 0;
+}
+
+/// <summary>Fights --n hex battles of side --a against side --b, both played by the AI, and prints the summary.</summary>
+static int Arena(string[] options)
+{
+    if (!TryParseOptions(options, out var values)
+        || values.GetValueOrDefault("--a") is not { } sideA || values.GetValueOrDefault("--b") is not { } sideB
+        || !int.TryParse(values.GetValueOrDefault("--n", "2000"), out int fights) || fights < 1
+        || !ulong.TryParse(values.GetValueOrDefault("--seed-from", "1"), out ulong seedFrom))
+        return Usage();
+
+    var db = LoadContent(values.GetValueOrDefault("--content", "content"));
+    if (db is null)
+        return 1;
+    if (ArenaRunner.Side(db, sideA, "a") is not { } a || ArenaRunner.Side(db, sideB, "b") is not { } b)
+    {
+        Console.Error.WriteLine($"A side is a group (grp.*) or {ArenaRunner.PlayerSide}.");
+        return 2;
+    }
+
+    var clock = System.Diagnostics.Stopwatch.StartNew();
+    var results = ArenaRunner.FightMany(db, a, b, seedFrom, fights);
+    if (values.TryGetValue("--out", out string? outPath))
+    {
+        using var file = new StreamWriter(outPath);
+        foreach (var fight in results)
+            file.WriteLine(ArenaRunner.ToJsonLine(fight));
+    }
+    Console.WriteLine($"{sideA} vs {sideB}");
+    foreach (string line in ArenaRunner.Report(results))
+        Console.WriteLine(line);
+    Console.Error.WriteLine($"{fights} fights in {clock.Elapsed.TotalSeconds:F1} s.");
     return 0;
 }
 
@@ -196,6 +231,10 @@ static int Usage()
             Plays one run and writes every command with its events, one JSON line each, to the
             trace file (default trace-<bot>-<seed>.jsonl); the summary goes to stdout, the final
             state hash to stderr.
+          sim arena --a <grp.* | player> --b <grp.* | player> [--n <N>] [--seed-from <N>] [--out <file.jsonl>] [--content <dir>]
+            Fights N hex battles (default 2000), the AI playing both sides; player is the hero as a
+            run starts. Prints win shares, how fights ended, their length and side A's losses; --out
+            writes one JSON line per fight.
         """);
     return 2;
 }

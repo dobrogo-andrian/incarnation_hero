@@ -102,14 +102,18 @@ public static class BattleAi
     private static double Strikes(AiArchetypeDef ai, double damage, IEnumerable<BattleFighter> targets) =>
         targets.Sum(t => ai.Damage * Math.Min(damage, t.Shield + t.Health) + (damage >= t.Shield + t.Health ? ai.Kill : 0));
 
-    /// <summary>How good a hex is to end the turn on: the danger in reach of it and the way to the enemy, or, when fleeing, to the rim.</summary>
+    /// <summary>
+    /// How good a hex is to end the turn on: the danger in reach of it against the chance to strike
+    /// from it next turn, and the way to the enemy, or, when fleeing, to the rim.
+    /// </summary>
     private static double Position(Battle battle, BattleFighter me, AiArchetypeDef ai, Hex hex)
     {
         double risk = ai.Risk * Incoming(battle, me, hex);
         if (Fleeing(me, ai))
             return -risk - ai.Flee * (battle.Field.Radius - hex.Length);
         int nearest = Enemies(battle, me).Select(e => e.Position.DistanceTo(hex)).DefaultIfEmpty(0).Min();
-        return -risk - ai.Approach * nearest;
+        bool canStrike = me.Def.EnergyCapacity >= battle.Config.AttackEnergy && nearest <= battle.MovePointsOf(me.Def) + 1;
+        return -risk + (canStrike ? ai.Opportunity * me.Def.WeaponDamage : 0) - ai.Approach * nearest;
     }
 
     /// <summary>Damage the enemies could deal on <paramref name="hex"/> next turn: those whose movement reaches its side.</summary>
