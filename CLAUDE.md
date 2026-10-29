@@ -17,7 +17,7 @@ If code contradicts the docs, or a task touches an open question (Q*), point it 
 1. **Start of session:** read `docs/progress.md`. Items marked done there are trusted: don't re-verify earlier steps or stages unless something is actually broken. Take the next step from it, and read only the GDD/tech sections that step needs.
 2. **Clarify before building, not during.** Before starting a step, list every question whose answer would change what gets built (design rules, data shape, module boundaries, anything the docs leave open) and ask the user then, in one batch. Never invent a significant design decision to fill a gap. Before any larger module, agree its scope and key details with the user first. Once the step is underway, finish it: questions that come up mid-step and don't block it get a reasonable, easily reversible default, are noted in `docs/progress.md`, and are raised at the end of the session. Stop mid-step only if a question truly blocks the work.
 3. **One small step at a time**, inside the current stage (tech 9). A step is one checklist item or a clear part of one. Don't build ahead for later stages.
-4. **Verified means:** `dotnet build IncarnationHero.sln` has no errors and `dotnet test IncarnationHero.sln` is fully green. New Core logic comes with tests (fixed seeds). Changes in `game/` additionally need the user to confirm they run in the Godot editor, because Claude can't see the game window.
+4. **Verified means:** `dotnet build IncarnationHero.sln` has no errors and `dotnet test IncarnationHero.sln` is fully green. New Core logic comes with tests (fixed seeds). Changes in `game/` are first checked by Claude with UI screenshots (see "UI screenshots"), then additionally need the user to confirm they run in the Godot editor, since the shots cover only scripted paths.
 5. **After a verified step:** update `docs/progress.md` (checklist, next step, gotchas, one log line), commit to `main` and push to `origin main`. Docs and code go in the same commit. Never commit or push a red build. Never force-push. Work directly in the main checkout on `main`: no worktrees, no feature branches (background sessions are configured for this in `.claude/settings.json`). If the push is rejected, `git pull --rebase`, re-run the tests, then push.
 6. **Stage done:** when every "Готово, коли" criterion of the stage in tech 9 is met, mark the stage done in `docs/progress.md` and set up the next stage's checklist there.
 
@@ -42,6 +42,7 @@ dotnet test IncarnationHero.sln
 dotnet test src/Core.Tests --filter "FullyQualifiedName~RngTests"   # single test class/method
 dotnet run --project src/Sim.Cli -- <args>
 powershell -File tools/export-windows.ps1 -Godot <path to Godot .NET exe>   # release exe + zip in build/ (D51)
+powershell -File tools/ui-shots.ps1 -Godot <path to Godot .NET _console.exe> [-Scenario ...] [-Hero ...]   # UI screenshots + layout audit in build/shots/, see "UI screenshots" below
 py -3.12 -m venv analysis/.venv && analysis/.venv/Scripts/pip install -r analysis/requirements.txt   # once
 analysis/.venv/Scripts/jupyter nbconvert --to html --execute --output-dir analysis/out analysis/01_bots.ipynb   # or open in Jupyter
 ```
@@ -51,6 +52,21 @@ Notebooks run Sim.Cli themselves (`analysis/simruns.py`, 1000 runs per bot, ≈ 
 The game reads content embedded in Core (`ContentFiles.Embedded`), so a YAML change shows up in Godot only after a build, which the editor runs before every play. Export templates for 4.7.2 .NET must be installed in the editor.
 
 `IncarnationHero.sln` (root) contains all projects. `game/incarnation_hero.sln` is Godot's own solution, which the editor uses to build. Leave it alone: the Godot project already pulls in Core through `ProjectReference`. The Godot project only has `Debug`/`ExportDebug`/`ExportRelease` configurations, so the root solution maps `Release` to `Debug` for it.
+
+### UI screenshots (how Claude sees the game)
+
+`tools/ui-shots.ps1` lets Claude open the game, drive it and look at the result without the user at the window. Use it after every change in `game/` (and whenever tuning layout), read the PNGs with the Read tool, fix what is wrong, and only then ask the user to confirm in the editor. The code is `game/scripts/UiShot.cs` (dev-only, enabled solely by the `--shot` user argument; a normal run is unaffected).
+
+```
+powershell -File tools/ui-shots.ps1 -Godot C:\tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe
+powershell -File tools/ui-shots.ps1 -Godot <exe> -Hero profile.sandbox.stage_2 -Scenario "main;click:Тестовий бій;click:Почати бій;idle;key:Key1;hover:hex:0:-2;shot:aim;key:Escape;click:hex:0:1;idle"
+```
+
+- **What it does:** builds the solution (Godot does not build C# itself), empties `build/shots/`, then per scenario launches the game borderless at `-Size` (default 1920x1080) on a throwaway run with a fixed `-Seed` (save `user://shot_run.json`; the real save is never touched), stages the scenario, plays the steps as real input, takes the final shot and quits. Exit code 1 (and a thrown error) if a scenario or step fails, e.g. `no visible enabled button '…'`. Without `-Scenario` it shoots the main screen, fights 1×1 and 1×3, 1×3 after 3 AI hero turns, and an event dialog.
+- **Scenarios** (`-Scenario`, comma-separated; a comma only starts a new scenario before `main|battle|event`): `main`; `battle:<grp.*>[:<hero turns played by BattleAi>]`; `event:<evt.*>` (opened via `EventSystem.Start`). `-Hero current|profile.*` picks the hero for both `battle:` and the sandbox picker.
+- **Steps**, appended with `;`: `click:<target>`, `hover:<target>` (target = button text, exact or else first containing match; `@x:y` window pixels; `hex:q:r` axial hex on the battle field), `key:<Godot Key name>` (`Key1`, `Space`, `Escape`), `idle` (wait until week or enemy-turn playback ends; the screens ignore input meanwhile, so put `idle` after anything that starts playback), `wait:<seconds>` (e.g. for tooltips), `shot[:<label>]` (extra shot on the way).
+- **Output** in `build/shots/` (git-ignored), named `<NN>_<scenario>[.<label>]`: `.png` (look at it), `.json` (layout issues: `text_cut` text wider than its clipping control, `collapsed` text control under 8 px, `offscreen` innermost controls outside the window, `clipped` overflowing a clipping non-scroll parent, `overlap` labels/buttons overlapping outside containers, `size_mismatch`), `.tree.txt` (every visible control with type, text and global rect, to locate what the PNG shows).
+- **Limits:** picking an item in an `OptionButton` dropdown is not supported yet (use `-Hero`); the window pops up for a few seconds per scenario and real mouse moves over it reach the game; the audit is a hint, the PNG is the judge. A new screen worth shooting gets a scenario kind in `Main.StageScenario`, not a parallel tool.
 
 ## Layout
 

@@ -8,7 +8,8 @@ using Godot;
 /// The stage 1 playtest screen (D44): a slim status bar on top; side tabs on the left; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
-/// player steps into one; the run's summary in the centre once it is over. All rules, saving
+/// player steps into one; the run's summary in the centre once it is over; the test fight (D56) over
+/// everything when opened from the status bar. All rules, saving
 /// included, stay in Core; this node loads content, owns the run session, sends commands and
 /// redraws every part from the new PlayerView.
 /// <para>
@@ -34,6 +35,7 @@ public partial class Main : Control
     private readonly MapView _map = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly LocationView _location = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly RunSummary _summary = new();
+    private readonly BattleScreen _battle = new();
     private readonly Control _blocker = new() { MouseFilter = MouseFilterEnum.Stop, Visible = false };
 
     /// <summary>Events of the last command not yet shown; empty when nothing is being played back.</summary>
@@ -59,19 +61,63 @@ public partial class Main : Control
             return;
         }
 
+        // A UI shot plays on a fresh throwaway run with a fixed seed and never touches the real save.
+        var shot = UiShot.FromArgs();
+        Func<ulong> newSeed = shot is null ? NewSeed : () => shot.Seed;
         _ui = new UiContext(loaded.Db, loc, Send);
-        BuildLayout();
+        BuildLayout(newSeed);
 
-        var store = new SaveStore(ProjectSettings.GlobalizePath("user://run.json"));
-        _session = RunSession.OpenOrStart(store, loaded.Db, NewSeed);
+        string savePath = ProjectSettings.GlobalizePath(shot is null ? "user://run.json" : "user://shot_run.json");
+        if (shot is not null)
+            File.Delete(savePath);
+        _session = RunSession.OpenOrStart(new SaveStore(savePath), loaded.Db, newSeed);
         if (_session.Notice is { } notice)
             _journal.Add(_ui.Text(notice));
         Refresh();
+        if (shot is not null)
+            Stage(shot);
     }
 
-    private void BuildLayout()
+    /// <summary>Opens what a UI shot asks for (see <see cref="UiShot"/>), then lets it take the picture.</summary>
+    private void Stage(UiShot shot)
     {
-        _status.Setup(_ui, FinishPlayback);
+        try
+        {
+            StageScenario(shot);
+        }
+        catch (Exception e)
+        {
+            GD.PushError($"UI shot {shot.Scenario} failed: {e}");
+            GetTree().Quit(1);
+            return;
+        }
+        Refresh();
+        AddChild(shot);
+    }
+
+    private void StageScenario(UiShot shot)
+    {
+        shot.Busy = () => _playback.Count > 0 || _battle.Playing;
+        _battle.Preselect(shot.Hero);
+        switch (shot.Kind)
+        {
+            case "main":
+                break;
+            case "event":
+                EventSystem.Start(_session.Sim.State, _ui.Db.Get<EventDef>(shot.Args[0]), []);
+                break;
+            case "battle":
+                _battle.Stage(shot.Args[0], shot.Args.Length > 1 ? int.Parse(shot.Args[1]) : 0);
+                break;
+            default:
+                throw new ArgumentException($"Unknown UI shot scenario: {shot.Scenario}");
+        }
+    }
+
+    private void BuildLayout(Func<ulong> newSeed)
+    {
+        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); });
+        _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Refresh, newSeed);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
         _map.ExitPressed += () => { _regionMap = true; Pick(null); };
@@ -100,9 +146,11 @@ public partial class Main : Control
         columns.AddChild(right);
 
         // The blocker lies over the columns while weeks are played back; the status bar stays live for "skip".
+        // The test fight covers the columns too, leaving the status bar in sight.
         var stack = new MarginContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         stack.AddChild(columns);
         stack.AddChild(_blocker);
+        stack.AddChild(_battle);
 
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 12);
@@ -233,10 +281,10 @@ public partial class Main : Control
         _panel.Visible = view.Event is null && view.EndCause is null;
         _panel.Refresh(_ui, view, _target);
         _dialog.Refresh(_ui, view);
-        _status.Refresh(view, playing: false);
+        _status.Refresh(view, playing: false, fighting: _battle.Visible);
         _tabs.Refresh(_ui, view);
     }
 
-    /// <summary>The run seed comes from the shell; Core itself never reads the clock or OS randomness.</summary>
+    /// <summary>Run and fight seeds come from the shell; Core itself never reads the clock or OS randomness.</summary>
     private static ulong NewSeed() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
 }

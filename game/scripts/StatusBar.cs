@@ -4,7 +4,7 @@ using Godot;
 
 /// <summary>
 /// The top bar (D44): week, age, life left, zone, stones and stage scale on one line; resting; the
-/// interrupt settings; how fast weeks are shown (D47), and skipping the weeks being shown; quitting the
+/// interrupt settings; the stage 2 test fight (D56); how fast weeks are shown (D47), and skipping the weeks being shown; quitting the
 /// game at the far right, which loses nothing since every command is already saved.
 /// </summary>
 public partial class StatusBar : HBoxContainer
@@ -15,6 +15,7 @@ public partial class StatusBar : HBoxContainer
     private readonly Button _restWeek = new();
     private readonly Button _restOpen = new();
     private readonly Button _interrupts = new();
+    private readonly Button _sandbox = new();
     private readonly InterruptsPopup _popup = new();
     private readonly Label _speedText = new() { CustomMinimumSize = new Vector2(190, 0) };
     private readonly HSlider _speed = new() { MinValue = 0, Step = 1, CustomMinimumSize = new Vector2(110, 0), SizeFlagsVertical = SizeFlags.ShrinkCenter };
@@ -25,18 +26,20 @@ public partial class StatusBar : HBoxContainer
     private PlayerView? _view;
 
     /// <summary>Labels the controls and wires them to <paramref name="ui"/>; called once before the first <see cref="Refresh"/>.</summary>
-    public void Setup(UiContext ui, Action skip)
+    public void Setup(UiContext ui, Action skip, Action sandbox)
     {
         _ui = ui;
         AddThemeConstantOverride("separation", 8);
         _restWeek.Text = ui.Text("str.shell.wait_week");
         _restOpen.Text = ui.Text("str.shell.wait_until_interrupt");
         _interrupts.Text = ui.Text("str.ui.interrupts");
+        _sandbox.Text = ui.Text("str.ui.sandbox");
         _skip.Text = ui.Text("str.ui.skip");
         _quit.Text = ui.Text("str.ui.quit");
         _restWeek.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), 1));
         _restOpen.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), null));
         _interrupts.Pressed += OpenInterrupts;
+        _sandbox.Pressed += sandbox;
         _skip.Pressed += skip;
         _quit.Pressed += () => GetTree().Quit();
 
@@ -49,12 +52,15 @@ public partial class StatusBar : HBoxContainer
         };
         ShowSpeed();
 
-        foreach (var node in new Node[] { _info, _restWeek, _restOpen, _interrupts, _speedText, _speed, _skip, _quit, _popup })
+        foreach (var node in new Node[] { _info, _restWeek, _restOpen, _interrupts, _sandbox, _speedText, _speed, _skip, _quit, _popup })
             AddChild(node);
     }
 
-    /// <summary>Redraws from <paramref name="view"/>; while weeks are being shown only skipping is offered.</summary>
-    public void Refresh(PlayerView view, bool playing)
+    /// <summary>
+    /// Redraws from <paramref name="view"/>; while weeks are being shown only skipping is offered, and
+    /// while the test fight is open nothing that moves the run on.
+    /// </summary>
+    public void Refresh(PlayerView view, bool playing, bool fighting = false)
     {
         _view = view;
         var parts = SimText.TimeLines(view, _ui.Db)
@@ -65,9 +71,10 @@ public partial class StatusBar : HBoxContainer
         _info.Text = string.Join(Separator, parts.Select(_ui.Text));
 
         bool over = view.Mode == GameMode.RunEnd;
-        _restWeek.Disabled = _restOpen.Disabled = playing || view.Mode != GameMode.Overworld;
+        _restWeek.Disabled = _restOpen.Disabled = playing || fighting || view.Mode != GameMode.Overworld;
         _restWeek.Visible = _restOpen.Visible = !over;
         _interrupts.Disabled = playing;
+        _sandbox.Disabled = playing || fighting;
         _skip.Visible = playing;
     }
 
