@@ -42,7 +42,7 @@
 | [09-roadmap.md](tech/09-roadmap.md) | 9 етапи 0–5 з критеріями готовності |
 | [10-risks.md](tech/10-risks.md) | 10 реєстр ризиків R1–R12 |
 | [decisions.md](tech/decisions.md) | 11 ухвалені рішення D1–D41; 12 робочі припущення A1–A11 |
-| [open-questions.md](tech/open-questions.md) | 13 відкриті питання Q2–Q12 |
+| [open-questions.md](tech/open-questions.md) | 13 відкриті питання Q4–Q12 |
 | [14-deferred.md](tech/14-deferred.md) | 14 відкладене за межі демо |
 
 Субагент-дизайнер для сесій над GDD: `.claude/agents/game-designer.md`. Оригінали .docx: `sources/archive/` (не редагувати).
