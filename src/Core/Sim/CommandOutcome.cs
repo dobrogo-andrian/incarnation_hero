@@ -11,6 +11,7 @@ public static class RejectReasons
     public static readonly LocKey InvalidTarget = new("str.reject.invalid_target");
     public static readonly LocKey OutOfReach = new("str.reject.out_of_reach");
     public static readonly LocKey NotEnoughEnergy = new("str.reject.not_enough_energy");
+    public static readonly LocKey Unreachable = new("str.reject.unreachable");
     public static readonly LocKey InvalidActivity = new("str.reject.invalid_activity");
     public static readonly LocKey UnknownZone = new("str.reject.unknown_zone");
     public static readonly LocKey AlreadyThere = new("str.reject.already_there");

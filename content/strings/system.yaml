@@ -19,6 +19,9 @@
 - id: str.reject.not_enough_energy
   text: { uk: "Бракує енергії тіла." }
 
+- id: str.reject.unreachable
+  text: { uk: "Туди цього ходу не дійти." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 

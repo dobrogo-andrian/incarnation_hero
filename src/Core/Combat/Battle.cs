@@ -13,7 +13,19 @@ public sealed record EndTurn : BattleCommand;
 /// <summary>The basic weapon attack on an adjacent enemy, for body energy (D56).</summary>
 public sealed record Attack(string TargetId) : BattleCommand;
 
-public sealed record BattleTurnStarted(string FighterId) : SimEvent;
+/// <summary>Walk to a hex within the movement points left, by the path <see cref="Battle.Reachable"/> gives.</summary>
+public sealed record Move(Hex To) : BattleCommand;
+
+/// <summary>A hex the active fighter can walk to this turn: the path there (without the start) and how many free attacks it provokes (D54).</summary>
+public sealed record Reach(Hex To, IReadOnlyList<Hex> Path, int FreeAttacks);
+
+public sealed record BattleTurnStarted(string FighterId, int MovePoints) : SimEvent;
+
+/// <summary>One step of a walk.</summary>
+public sealed record FighterMoved(string FighterId, Hex From, Hex To) : SimEvent;
+
+/// <summary>The mover left a hex next to this enemy, which strikes for free (D54); a <see cref="FighterHit"/> follows.</summary>
+public sealed record FreeAttackProvoked(string AttackerId, string MoverId) : SimEvent;
 
 /// <summary>The turn is over: qi flowed into the shield and energy out of the reserve (D55).</summary>
 public sealed record BattleTurnEnded(string FighterId, double ShieldRefilled, double EnergyRefilled) : SimEvent;
@@ -57,6 +69,12 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
 
     /// <summary>The main action of the current turn is spent (D56).</summary>
     public bool ActionTaken { get; internal set; }
+
+    /// <summary>Steps left this turn, before or after the action (D56).</summary>
+    public int MovePoints { get; internal set; }
+
+    /// <summary>Enemies that already struck this fighter for free this turn: each does so once (D54).</summary>
+    internal HashSet<string> FreeAttackers { get; } = new(StringComparer.Ordinal);
 
     public bool Fled { get; internal set; }
     public bool Down => Health <= 0;
@@ -167,8 +185,80 @@ public sealed class Battle
                     Active = null;
                 return CommandOutcome.Accept(events);
 
+            case Move move:
+                if (Reachable().FirstOrDefault(r => r.To == move.To) is not { } reach)
+                    return CommandOutcome.Reject(RejectReasons.Unreachable);
+                Walk(actor, reach.Path, events);
+                return CommandOutcome.Accept(events);
+
             default:
                 throw new ArgumentException($"Unknown battle command {command.GetType().Name}.", nameof(command));
+        }
+    }
+
+    /// <summary>
+    /// Every hex the active fighter can walk to with the movement points left, in hex order. Paths
+    /// do not pass through other fighters; of the paths that fit, the one that provokes the fewest
+    /// free attacks wins, then the shorter one. The UI highlights these and the AI picks from them.
+    /// </summary>
+    public IReadOnlyList<Reach> Reachable()
+    {
+        if (Active is not { } mover)
+            return [];
+        var best = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)>();
+        var layer = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)> { [mover.Position] = ([], []) };
+        for (int step = 1; step <= mover.MovePoints; step++)
+        {
+            var next = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)>();
+            foreach (var (hex, (path, provoked)) in layer)
+            {
+                var leaving = new HashSet<string>(provoked, StringComparer.Ordinal);
+                leaving.UnionWith(Provokers(mover, hex).Select(f => f.Id));
+                foreach (var n in hex.Neighbors().Where(n => Field.Contains(n) && _fighters.All(f => !f.InFight || f.Position != n)))
+                {
+                    if (next.TryGetValue(n, out var known) && known.Provoked.Count <= leaving.Count)
+                        continue;
+                    next[n] = ([.. path, n], leaving);
+                }
+            }
+            foreach (var (hex, entry) in next)
+            {
+                if (hex != mover.Position && (!best.TryGetValue(hex, out var known) || entry.Provoked.Count < known.Provoked.Count))
+                    best[hex] = entry;
+            }
+            layer = next;
+        }
+        return best.Select(b => new Reach(b.Key, b.Value.Path, b.Value.Provoked.Count)).ToList();
+    }
+
+    /// <summary>Enemies next to <paramref name="hex"/> that would strike <paramref name="mover"/> for leaving it, in fighter order.</summary>
+    private IEnumerable<BattleFighter> Provokers(BattleFighter mover, Hex hex) =>
+        _fighters.Where(f => f.InFight && f.Side != mover.Side && f.Position.DistanceTo(hex) == 1 && !mover.FreeAttackers.Contains(f.Id));
+
+    /// <summary>Step by step: leaving a hex next to an enemy draws its free attack first (D54); a mover brought down stops there.</summary>
+    private void Walk(BattleFighter mover, IReadOnlyList<Hex> path, List<SimEvent> events)
+    {
+        foreach (var to in path)
+        {
+            foreach (var enemy in Provokers(mover, mover.Position).ToList())
+            {
+                mover.FreeAttackers.Add(enemy.Id);
+                events.Add(new FreeAttackProvoked(enemy.Id, mover.Id));
+                Strike(enemy, mover, events);
+                if (mover.Down)
+                    break;
+            }
+            if (mover.Down)
+            {
+                if (OneSideLeft())
+                    Active = null;
+                else
+                    events.AddRange(NextTurn());
+                return;
+            }
+            events.Add(new FighterMoved(mover.Id, mover.Position, to));
+            mover.Position = to;
+            mover.MovePoints--;
         }
     }
 
@@ -214,8 +304,13 @@ public sealed class Battle
             inFight[i].Initiative = gauges[i];
         Active = inFight[next];
         Active.ActionTaken = false;
-        return [new BattleTurnStarted(Active.Id)];
+        Active.MovePoints = MovePointsOf(Active.Def);
+        Active.FreeAttackers.Clear();
+        return [new BattleTurnStarted(Active.Id, Active.MovePoints)];
     }
+
+    /// <summary>Movement points a turn: agility × <c>move_points_per_agility</c>, rounded down, at least 1.</summary>
+    private int MovePointsOf(Combatant c) => Math.Max(1, (int)Math.Floor(c.Agility * _config.MovePointsPerAgility));
 
     /// <summary>End of an own turn: qi flows from the pool into the shield, and energy from the reserve (D55).</summary>
     private void FinishTurn(BattleFighter f, List<SimEvent> events)
