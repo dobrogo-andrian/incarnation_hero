@@ -44,3 +44,4 @@ energy_output_aspect: aspect.endurance.output
 energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share flows from the reserve (D55)
 energy_refill_min: 2              # flows even from an empty reserve
 energy_capacity_per_output: 1.5   # energy ready to spend holds output × 1.5
+attack_energy: 4                  # the basic attack: a fresh body (5 a turn) keeps it up, an empty reserve (2) every other turn

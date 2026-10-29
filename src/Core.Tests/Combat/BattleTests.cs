@@ -13,8 +13,18 @@ public class BattleTests
         double qiPool = 0, double shieldRefill = 0, double energy = 100, double energyRefill = 5, double energyCapacity = 15) =>
         new(id, 0, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energy, energyRefill, energyCapacity, "injury.body");
 
-    private static Battle Start(IReadOnlyList<Combatant> side0, IReadOnlyList<Combatant> side1) =>
-        Battle.Start(side0, side1, Config, Xoshiro256StarStar.FromSeed(7));
+    /// <summary>A field of radius 1: the second side deploys next to the first, so fighters can hit without moving.</summary>
+    private static readonly CombatConfigDef Close = CloseConfig();
+
+    private static CombatConfigDef CloseConfig()
+    {
+        var config = TestContent.WithExtra("- id: str.test.close\n  text: { uk: \"x\" }").Get<CombatConfigDef>(CombatConfigDef.CombatId);
+        config.FieldRadius = 1;
+        return config;
+    }
+
+    private static Battle Start(IReadOnlyList<Combatant> side0, IReadOnlyList<Combatant> side1, CombatConfigDef? config = null) =>
+        Battle.Start(side0, side1, config ?? Config, Xoshiro256StarStar.FromSeed(7));
 
     private static List<string> WaitTurns(Battle battle, int turns)
     {
@@ -22,9 +32,93 @@ public class BattleTests
         for (int i = 0; i < turns; i++)
         {
             acted.Add(battle.Active!.Id);
-            Assert.True(battle.Execute(new WaitTurn()).Accepted);
+            Assert.True(battle.Execute(new EndTurn()).Accepted);
         }
         return acted;
+    }
+
+    [Fact]
+    public void Attack_breaks_the_shield_first_then_health_and_leaves_injuries()
+    {
+        var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf", shield: 4, maxShield: 4)], Close);
+        var me = battle.Fighters[0];
+        var wolf = battle.Fighters[1];
+        Assert.Equal(1, me.Position.DistanceTo(wolf.Position));
+
+        var outcome = battle.Execute(new Attack("wolf"));
+
+        Assert.True(outcome.Accepted);
+        var hit = Assert.Single(outcome.Events.OfType<FighterHit>());
+        Assert.InRange(hit.Damage, 8, 12);
+        Assert.Equal(4, hit.Absorbed);
+        Assert.Equal(hit.Damage - 4, hit.ToHealth, 9);
+        Assert.Equal(0, wolf.Shield);
+        Assert.Equal(100 - hit.ToHealth, wolf.Health, 9);
+        Assert.Equal(hit.ToHealth / 10, wolf.Injuries["injury.body"], 9);
+        Assert.Equal(15 - Close.AttackEnergy, me.Energy);
+        Assert.Same(me, battle.Active);
+    }
+
+    [Fact]
+    public void One_action_a_turn_and_ending_after_it_is_no_wait()
+    {
+        var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf")], Close);
+        battle.Execute(new Attack("wolf"));
+        Assert.Equal(RejectReasons.ActionTaken, battle.Execute(new Attack("wolf")).RejectReason);
+
+        var ended = battle.Execute(new EndTurn());
+        Assert.Empty(ended.Events.OfType<FighterWaited>());
+        Assert.Single(ended.Events.OfType<BattleTurnEnded>());
+    }
+
+    [Fact]
+    public void Attacks_need_an_adjacent_enemy_and_the_energy()
+    {
+        var far = Start([Fighter("player", reaction: 20), Fighter("ally")], [Fighter("wolf")]);
+        Assert.Equal(RejectReasons.OutOfReach, far.Execute(new Attack("wolf")).RejectReason);
+        Assert.Equal(RejectReasons.InvalidTarget, far.Execute(new Attack("ally")).RejectReason);
+        Assert.Equal(RejectReasons.InvalidTarget, far.Execute(new Attack("nobody")).RejectReason);
+
+        var tired = Start([Fighter("player", reaction: 20, energyCapacity: 3)], [Fighter("wolf")], Close);
+        Assert.Equal(RejectReasons.NotEnoughEnergy, tired.Execute(new Attack("wolf")).RejectReason);
+    }
+
+    [Fact]
+    public void Bringing_down_the_last_enemy_ends_the_fight()
+    {
+        var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf", health: 1)], Close);
+        var outcome = battle.Execute(new Attack("wolf"));
+        Assert.Equal(new FighterDown("wolf"), Assert.Single(outcome.Events.OfType<FighterDown>()));
+        Assert.Equal(0, battle.Fighters[1].Health);
+        Assert.True(battle.IsOver);
+        Assert.Equal(0, battle.Winner);
+        Assert.Equal(RejectReasons.BattleOver, battle.Execute(new EndTurn()).RejectReason);
+    }
+
+    [Fact]
+    public void A_fighter_down_leaves_the_turn_order()
+    {
+        var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf#1", health: 1), Fighter("wolf#2")], Close);
+        Assert.True(battle.Execute(new Attack("wolf#1")).Accepted);
+        battle.Execute(new EndTurn());
+        Assert.DoesNotContain(battle.Forecast(6), f => f.Id == "wolf#1");
+        Assert.False(battle.IsOver);
+    }
+
+    [Fact]
+    public void Same_seed_and_commands_give_the_same_fight()
+    {
+        double Play()
+        {
+            var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf", shield: 5, maxShield: 5)], Close);
+            for (int i = 0; i < 6 && !battle.IsOver; i++)
+            {
+                battle.Execute(new Attack(battle.Active!.Side == 0 ? "wolf" : "player"));
+                battle.Execute(new EndTurn());
+            }
+            return battle.Fighters.Sum(f => f.Health);
+        }
+        Assert.Equal(Play(), Play());
     }
 
     [Fact]
@@ -62,7 +156,7 @@ public class BattleTests
     {
         var battle = Start([Fighter("player", reaction: 11)], [Fighter("wolf#1", reaction: 13), Fighter("bandit#1", reaction: 8)]);
         var forecast = battle.Forecast(12).Select(f => f.Id).ToList();
-        battle.Execute(new WaitTurn());
+        battle.Execute(new EndTurn());
         Assert.Equal(forecast, WaitTurns(battle, 12));
     }
 
@@ -72,7 +166,7 @@ public class BattleTests
         var battle = Start([Fighter("player", reaction: 20, shield: 10, maxShield: 50, qiPool: 3, shieldRefill: 5)], [Fighter("wolf")]);
         var me = battle.Fighters[0];
 
-        var outcome = battle.Execute(new WaitTurn());
+        var outcome = battle.Execute(new EndTurn());
 
         // The pool holds only 3; energy starts full, so none flows.
         Assert.Equal(new BattleTurnEnded("player", 3, 0), Assert.Single(outcome.Events.OfType<BattleTurnEnded>()));
@@ -100,7 +194,7 @@ public class BattleTests
         Assert.True(battle.IsOver);
         Assert.Equal(0, battle.Winner);
         Assert.Empty(battle.Forecast(3));
-        Assert.Equal(RejectReasons.BattleOver, battle.Execute(new WaitTurn()).RejectReason);
+        Assert.Equal(RejectReasons.BattleOver, battle.Execute(new EndTurn()).RejectReason);
     }
 
     [Fact]

@@ -7,8 +7,11 @@ namespace Core.Combat;
 /// <summary>A command for the fighter whose turn it is.</summary>
 public abstract record BattleCommand;
 
-/// <summary>End the turn without acting.</summary>
-public sealed record WaitTurn : BattleCommand;
+/// <summary>End the turn; without an action taken, the fighter waits.</summary>
+public sealed record EndTurn : BattleCommand;
+
+/// <summary>The basic weapon attack on an adjacent enemy, for body energy (D56).</summary>
+public sealed record Attack(string TargetId) : BattleCommand;
 
 public sealed record BattleTurnStarted(string FighterId) : SimEvent;
 
@@ -16,6 +19,11 @@ public sealed record BattleTurnStarted(string FighterId) : SimEvent;
 public sealed record BattleTurnEnded(string FighterId, double ShieldRefilled, double EnergyRefilled) : SimEvent;
 
 public sealed record FighterWaited(string FighterId) : SimEvent;
+
+public sealed record FighterHit(string AttackerId, string TargetId, double Damage, double Absorbed, double ToHealth) : SimEvent;
+
+/// <summary>The fighter has no health left and is out of the fight.</summary>
+public sealed record FighterDown(string FighterId) : SimEvent;
 
 /// <summary>A fighter on the hex field: the snapshot it came in with and what the fight has done to it since.</summary>
 public sealed class BattleFighter(Combatant def, int side, Hex position, int initiativeRate)
@@ -42,9 +50,19 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
 
     public int InitiativeRate { get; } = initiativeRate;
 
+    /// <summary>Injury points the fight has left, per scale in ID order.</summary>
+    public IReadOnlyDictionary<string, double> Injuries => _injuries;
+
+    private readonly SortedDictionary<string, double> _injuries = new(StringComparer.Ordinal);
+
+    /// <summary>The main action of the current turn is spent (D56).</summary>
+    public bool ActionTaken { get; internal set; }
+
     public bool Fled { get; internal set; }
     public bool Down => Health <= 0;
     public bool InFight => !Down && !Fled;
+
+    internal void Wound(string injuryId, double amount) => _injuries[injuryId] = _injuries.GetValueOrDefault(injuryId) + amount;
 }
 
 /// <summary>
@@ -126,16 +144,48 @@ public sealed class Battle
         var events = new List<SimEvent>();
         switch (command)
         {
-            case WaitTurn:
-                events.Add(new FighterWaited(actor.Id));
-                break;
+            case EndTurn:
+                if (!actor.ActionTaken)
+                    events.Add(new FighterWaited(actor.Id));
+                FinishTurn(actor, events);
+                events.AddRange(NextTurn());
+                return CommandOutcome.Accept(events);
+
+            case Attack attack:
+                if (actor.ActionTaken)
+                    return CommandOutcome.Reject(RejectReasons.ActionTaken);
+                if (_fighters.FirstOrDefault(f => f.Id == attack.TargetId) is not { InFight: true } target || target.Side == actor.Side)
+                    return CommandOutcome.Reject(RejectReasons.InvalidTarget);
+                if (actor.Position.DistanceTo(target.Position) != 1)
+                    return CommandOutcome.Reject(RejectReasons.OutOfReach);
+                if (actor.Energy < _config.AttackEnergy)
+                    return CommandOutcome.Reject(RejectReasons.NotEnoughEnergy);
+                actor.Energy -= _config.AttackEnergy;
+                actor.ActionTaken = true;
+                Strike(actor, target, events);
+                if (OneSideLeft())
+                    Active = null;
+                return CommandOutcome.Accept(events);
+
             default:
                 throw new ArgumentException($"Unknown battle command {command.GetType().Name}.", nameof(command));
         }
-        EndTurn(actor, events);
-        events.AddRange(NextTurn());
-        return CommandOutcome.Accept(events);
     }
+
+    /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>
+    private void Strike(BattleFighter attacker, BattleFighter target, List<SimEvent> events)
+    {
+        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, _config, Rng);
+        target.Shield -= hit.Absorbed;
+        target.Health = Math.Max(0, target.Health - hit.ToHealth);
+        foreach (var (injuryId, amount) in hit.Injuries)
+            target.Wound(injuryId, amount);
+        events.Add(new FighterHit(attacker.Id, target.Id, hit.Damage, hit.Absorbed, hit.ToHealth));
+        if (target.Down)
+            events.Add(new FighterDown(target.Id));
+    }
+
+    private bool OneSideLeft() => _fighters.Where(f => f.InFight).Select(f => f.Side).Distinct().Count() < 2;
 
     /// <summary>Who acts after the current turn, in order: the same gauge arithmetic as the real turns.</summary>
     public IReadOnlyList<BattleFighter> Forecast(int turns)
@@ -153,7 +203,7 @@ public sealed class Battle
     private IReadOnlyList<SimEvent> NextTurn()
     {
         var inFight = _fighters.Where(f => f.InFight).ToList();
-        if (inFight.Select(f => f.Side).Distinct().Count() < 2)
+        if (OneSideLeft())
         {
             Active = null;
             return [];
@@ -163,11 +213,12 @@ public sealed class Battle
         for (int i = 0; i < inFight.Count; i++)
             inFight[i].Initiative = gauges[i];
         Active = inFight[next];
+        Active.ActionTaken = false;
         return [new BattleTurnStarted(Active.Id)];
     }
 
     /// <summary>End of an own turn: qi flows from the pool into the shield, and energy from the reserve (D55).</summary>
-    private void EndTurn(BattleFighter f, List<SimEvent> events)
+    private void FinishTurn(BattleFighter f, List<SimEvent> events)
     {
         double shield = CombatMath.ShieldRefill(f.Def, f.Shield, f.QiPool);
         f.Shield += shield;

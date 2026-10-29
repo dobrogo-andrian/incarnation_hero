@@ -194,12 +194,15 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>Energy ready to spend holds at most output × this (and never less than the minimum refill).</summary>
     public double EnergyCapacityPerOutput { get; set; }
 
+    /// <summary>Body energy the basic weapon attack costs (D56).</summary>
+    public double AttackEnergy { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (WeaponDamage <= 0 || MaxRounds < 1 || FieldRadius < 1)
             yield return "needs a positive weapon_damage, max_rounds and field_radius.";
-        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0)
-            yield return "needs a positive initiative_threshold, initiative_per_reaction and energy_capacity_per_output, and energy refills of zero or more.";
+        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || AttackEnergy < 0)
+            yield return "needs a positive initiative_threshold, initiative_per_reaction and energy_capacity_per_output, and energy refills and costs of zero or more.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
             || ShieldBreakChance is < 0 or > 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
             yield return "damage_spread, flee_health_share, insight_fled_share, shield_break_chance, fight_min_health_share and the flee chance bounds must be fractions.";

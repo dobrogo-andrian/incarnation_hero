@@ -128,21 +128,14 @@ public static class FormulaResolver
         return Math.Clamp(config.FleeChanceBase + (me.Def.Agility - fastest) * config.FleeChancePerPoint, config.FleeChanceMin, config.FleeChanceMax);
     }
 
-    /// <summary>One hit: shield first, then health; injuries are counted only where <paramref name="injuries"/> is given (the player).</summary>
+    /// <summary>One hit through the shared pipeline; injuries are counted only where <paramref name="injuries"/> is given (the player).</summary>
     private static void Hit(Fighter attacker, Fighter target, CombatConfigDef config, Xoshiro256StarStar rng, SortedDictionary<string, double>? injuries)
     {
-        double damage = attacker.Def.Damage * (1 + config.DamageSpread * (2 * rng.NextDouble() - 1));
-        double absorbed = Math.Min(target.Shield, damage);
-        bool hadShield = target.Shield > 0;
-        target.Shield -= absorbed;
-        if (hadShield && target.Shield <= 0 && rng.Chance(config.ShieldBreakChance))
-            Add(injuries, config.ShieldBreakInjury, config.ShieldBreakAmount);
-
-        double toHealth = damage - absorbed;
-        if (toHealth <= 0)
-            return;
-        target.Health -= toHealth;
-        Add(injuries, attacker.Def.InjuryId, toHealth / Math.Max(1, target.Def.Resilience) * config.InjuryPerResilience);
+        var hit = CombatMath.Hit(attacker.Def, target.Def, target.Shield, config, rng);
+        target.Shield -= hit.Absorbed;
+        target.Health -= hit.ToHealth;
+        foreach (var (injuryId, amount) in hit.Injuries)
+            Add(injuries, injuryId, amount);
     }
 
     private static void Add(SortedDictionary<string, double>? injuries, string injuryId, double amount)

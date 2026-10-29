@@ -1,8 +1,33 @@
+using Core.Content;
+using Core.Rng;
+
 namespace Core.Combat;
+
+/// <summary>What one hit did: how much the shield took, how much reached health, and the injury points it left.</summary>
+public sealed record HitResult(double Damage, double Absorbed, double ToHealth, IReadOnlyList<(string InjuryId, double Amount)> Injuries);
 
 /// <summary>Combat rules shared by the formula resolver (D42) and the hex battle, so the two cannot drift apart.</summary>
 public static class CombatMath
 {
+    /// <summary>
+    /// One hit (§7.4, §8): the attacker's damage with its spread breaks the qi shield first; a hit
+    /// that breaks it may hurt the meridians; the rest goes to health and leaves injuries of the
+    /// attacker's kind over the target's resilience. The RNG is drawn in this order every time.
+    /// </summary>
+    public static HitResult Hit(Combatant attacker, Combatant target, double targetShield, CombatConfigDef config, Xoshiro256StarStar rng)
+    {
+        double damage = attacker.Damage * (1 + config.DamageSpread * (2 * rng.NextDouble() - 1));
+        double absorbed = Math.Min(targetShield, damage);
+        var injuries = new List<(string, double)>();
+        if (targetShield > 0 && targetShield - absorbed <= 0 && rng.Chance(config.ShieldBreakChance))
+            injuries.Add((config.ShieldBreakInjury, config.ShieldBreakAmount));
+
+        double toHealth = Math.Max(0, damage - absorbed);
+        if (toHealth > 0)
+            injuries.Add((attacker.InjuryId, toHealth / Math.Max(1, target.Resilience) * config.InjuryPerResilience));
+        return new HitResult(damage, absorbed, toHealth, injuries);
+    }
+
     /// <summary>What flows from the qi pool into the shield at the end of a turn: the fighter's flow, no more than the shield misses or the pool holds (§7.2).</summary>
     public static double ShieldRefill(Combatant fighter, double shield, double qiPool) =>
         Math.Max(0, Math.Min(fighter.ShieldRefill, Math.Min(fighter.MaxShield - shield, qiPool)));

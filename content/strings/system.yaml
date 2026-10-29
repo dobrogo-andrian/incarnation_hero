@@ -7,6 +7,18 @@
 - id: str.reject.battle_over
   text: { uk: "Бій уже скінчився." }
 
+- id: str.reject.action_taken
+  text: { uk: "Дію цього ходу вже виконано." }
+
+- id: str.reject.invalid_target
+  text: { uk: "Це не ворог у бою." }
+
+- id: str.reject.out_of_reach
+  text: { uk: "Ціль поза досяжністю." }
+
+- id: str.reject.not_enough_energy
+  text: { uk: "Бракує енергії тіла." }
+
 - id: str.reject.invalid_weeks
   text: { uk: "Кількість тижнів має бути додатною." }
 
