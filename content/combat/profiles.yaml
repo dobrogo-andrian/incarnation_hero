@@ -1,0 +1,26 @@
+# The player's side of the stage 2 test fight (D56): heroes written like enemies, so the snapshot
+# is built by the same rule. The current hero of the run is offered beside them. Draft numbers.
+
+- id: profile.sandbox.novice
+  name: { uk: "Новачок (усі техніки, рівень 1)" }
+  ai: ai.cultivator_cautious
+  stage: 0
+  stats: { stat.might: 10, stat.endurance: 10, stat.speed: 10, stat.meridians: 10 }
+  technique_level: 1
+  techniques: { tech.spear.piercing_dragon: 1, tech.sword.flowing_cut: 1, tech.movement.wind_step: 1, tech.movement.crane_retreat: 1 }
+
+- id: profile.sandbox.stage_1
+  name: { uk: "Етап 1 (техніки рівня 2)" }
+  ai: ai.cultivator_cautious
+  stage: 1
+  stats: { stat.might: 14, stat.endurance: 14, stat.speed: 14, stat.meridians: 14 }
+  technique_level: 2
+  techniques: { tech.spear.piercing_dragon: 2, tech.sword.flowing_cut: 2, tech.movement.wind_step: 2, tech.movement.crane_retreat: 2 }
+
+- id: profile.sandbox.stage_2
+  name: { uk: "Етап 2 (техніки рівня 3)" }
+  ai: ai.cultivator_cautious
+  stage: 2
+  stats: { stat.might: 18, stat.endurance: 18, stat.speed: 18, stat.meridians: 18 }
+  technique_level: 3
+  techniques: { tech.spear.piercing_dragon: 3, tech.sword.flowing_cut: 3, tech.movement.wind_step: 3, tech.movement.crane_retreat: 3 }

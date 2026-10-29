@@ -733,3 +733,104 @@
 
 - id: str.ui.hunts_here
   text: { uk: "Мисливські угіддя:" }
+
+# The hex battle (D56): fighters in the nominative only, numbers after a colon (A9).
+- id: str.battle.hero
+  text: { uk: "Герой" }
+
+- id: str.battle.numbered
+  text: { uk: "{name} {number}" }
+
+- id: str.battle.turn
+  text: { uk: "Хід: {who}." }
+
+- id: str.battle.hit
+  text: { uk: "{attacker} → {target}: шкода {damage}, щит поглинув {absorbed}, тілу {health}." }
+
+- id: str.battle.free_attack
+  text: { uk: "{mover} виходить із зони контролю — {attacker} б'є вільним ударом." }
+
+- id: str.battle.technique
+  text: { uk: "{who}: техніка «{technique}»." }
+
+- id: str.battle.dashed
+  text: { uk: "{who}: ривок (очок руху: {points})." }
+
+- id: str.battle.guarded
+  text: { uk: "{who}: захист до наступного ходу." }
+
+- id: str.battle.waited
+  text: { uk: "{who}: без дії." }
+
+- id: str.battle.fled
+  text: { uk: "{who} тікає з поля." }
+
+- id: str.battle.down
+  text: { uk: "{who} падає." }
+
+- id: str.battle.timed_out
+  text: { uk: "Бій затягнувся (ходів: {turns}): герой відступає." }
+
+# The test fight screen.
+- id: str.ui.sandbox
+  text: { uk: "Тестовий бій" }
+
+- id: str.ui.sandbox_hero
+  text: { uk: "Герой:" }
+
+- id: str.ui.sandbox_current_hero
+  text: { uk: "Поточний герой забігу (знімок)" }
+
+- id: str.ui.sandbox_foes
+  text: { uk: "Вороги:" }
+
+- id: str.ui.sandbox_note
+  text: { uk: "Бій поза забігом: його наслідки нікуди не записуються." }
+
+- id: str.ui.sandbox_start
+  text: { uk: "Почати бій" }
+
+- id: str.ui.sandbox_again
+  text: { uk: "Новий бій" }
+
+- id: str.ui.sandbox_back
+  text: { uk: "Повернутися до забігу" }
+
+- id: str.ui.battle_queue
+  text: { uk: "Черга:" }
+
+- id: str.ui.battle_dash
+  text: { uk: "Ривок" }
+
+- id: str.ui.battle_guard
+  text: { uk: "Захист" }
+
+- id: str.ui.battle_flee
+  text: { uk: "Втеча" }
+
+- id: str.ui.battle_end_turn
+  text: { uk: "Кінець ходу" }
+
+- id: str.ui.battle_cancel
+  text: { uk: "Скасувати техніку" }
+
+- id: str.ui.battle_technique
+  text: { uk: "{name} (ці: {qi})" }
+
+- id: str.ui.battle_hint
+  text: { uk: "Клік по підсвіченому гексу — крок; по сусідньому ворогу — удар. Гекси з рамкою провокують вільний удар." }
+
+- id: str.ui.battle_aim
+  text: { uk: "Оберіть ціль техніки: підсвічено гекси, куди її можна спрямувати." }
+
+- id: str.ui.battle_fighter
+  text: { uk: "{name}\nЗдоров'я: {health} / {max_health}\nЩит ці: {shield} / {max_shield}\nЕнергія: {energy} / {capacity}\nОчки руху: {points}" }
+
+- id: str.ui.battle_won
+  text: { uk: "Перемога." }
+
+- id: str.ui.battle_lost
+  text: { uk: "Поразка: герой упав." }
+
+- id: str.ui.battle_escaped
+  text: { uk: "Герой вийшов із бою." }

@@ -81,21 +81,17 @@ public static class CombatSystem
     }
 
     /// <summary>The group's enemies as fighters, at full health and qi; instances are numbered within the group.</summary>
-    public static IReadOnlyList<Combatant> Foes(SimContext ctx, string groupId)
+    public static IReadOnlyList<Combatant> Foes(SimContext ctx, string groupId) =>
+        ctx.Content.Get<EnemyGroupDef>(groupId).Members
+            .SelectMany(m => Enumerable.Range(1, m.Count).Select(i => FromDef(ctx, ctx.Content.Get<EnemyDef>(m.Enemy), $"{m.Enemy}#{i}")))
+            .ToList();
+
+    /// <summary>A character written in content (an enemy, or a sandbox profile of the player) as a fighter at full health and qi.</summary>
+    public static Combatant FromDef(SimContext ctx, EnemyDef def, string id)
     {
-        var config = ctx.Combat;
-        var foes = new List<Combatant>();
-        foreach (var member in ctx.Content.Get<EnemyGroupDef>(groupId).Members)
-        {
-            var def = ctx.Content.Get<EnemyDef>(member.Enemy);
-            var body = new EnemyBody(ctx, def);
-            for (int i = 1; i <= member.Count; i++)
-            {
-                foes.Add(Fighter($"{def.Id}#{i}", body, ctx, def.Stage, def.WeaponDamage ?? config.WeaponDamage, def.TechniqueLevel,
-                    def.Techniques.Select(t => (t.Key, t.Value)), def.Ai, def.Injury ?? config.BodyInjury, id => ctx.Rules.Value(body, id)));
-            }
-        }
-        return foes;
+        var body = new EnemyBody(ctx, def);
+        return Fighter(id, body, ctx, def.Stage, def.WeaponDamage ?? ctx.Combat.WeaponDamage, def.TechniqueLevel,
+            def.Techniques.Select(t => (t.Key, t.Value)), def.Ai, def.Injury ?? ctx.Combat.BodyInjury, valueId => ctx.Rules.Value(body, valueId));
     }
 
     private static Combatant Fighter(string id, ICharacter c, SimContext ctx, int stage, double weapon, int technique,

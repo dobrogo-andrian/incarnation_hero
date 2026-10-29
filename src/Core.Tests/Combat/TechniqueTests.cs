@@ -44,6 +44,18 @@ public class TechniqueTests
     }
 
     [Fact]
+    public void Preview_shows_what_the_technique_then_does()
+    {
+        var battle = Start(Field(1), Player(Known(Arc)), wolves: 3);
+        var plan = battle.Preview(Arc, new Hex(1, -1))!;
+        Assert.Equal(["wolf#1", "wolf#2", "wolf#3"], plan.Targets.Select(t => t.Id).Order().ToList());
+        Assert.Null(battle.Preview(Arc, new Hex(0, 0)));
+        Assert.Null(battle.Preview(Line, new Hex(1, -1)));   // not known
+        var hits = battle.Execute(new UseTechnique(Arc, new Hex(1, -1))).Events.OfType<FighterHit>();
+        Assert.Equal(plan.Targets.Select(t => t.Id).Order(), hits.Select(h => h.TargetId).Order());
+    }
+
+    [Fact]
     public void Arc_strikes_the_aimed_hex_and_both_beside_it()
     {
         // Radius 1: the player in the centre, wolves at (1,0), (1,-1) and (0,-1).

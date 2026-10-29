@@ -47,6 +47,7 @@ public static class ContentLoader
         ["sect"] = typeof(SectDef),
         ["grp"] = typeof(EnemyGroupDef),
         ["enemy"] = typeof(EnemyDef),
+        ["profile"] = typeof(EnemyDef),
         ["ai"] = typeof(AiArchetypeDef),
         ["rumor"] = typeof(RumorDef),
         ["source"] = typeof(RumorSourceDef),

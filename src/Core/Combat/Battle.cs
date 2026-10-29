@@ -335,7 +335,7 @@ public sealed class Battle
     }
 
     /// <summary>Where a technique moves the fighter and whom it strikes: steps before the strike, the targets, and where a retreat lands.</summary>
-    internal sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
+    public sealed record TechniquePlan(IReadOnlyList<Hex> Approach, IReadOnlyList<BattleFighter> Targets, Hex? Landing);
 
     /// <summary>
     /// The plan for a technique used from <paramref name="from"/> (where the actor stands, or where the
@@ -377,6 +377,15 @@ public sealed class Battle
         var targets = struck.Select(FighterOn).OfType<BattleFighter>().Where(f => f.Side != actor.Side).ToList();
         return targets.Count == 0 ? null : new TechniquePlan(approach, targets, landing);
     }
+
+    /// <summary>
+    /// What the active fighter's <paramref name="techniqueId"/> aimed at <paramref name="target"/> would
+    /// do, from where it stands: the same plan the technique is then performed by. Null when it does not fit.
+    /// </summary>
+    public TechniquePlan? Preview(string techniqueId, Hex target) =>
+        Active?.Def.Techniques.FirstOrDefault(t => t.Id == techniqueId) is { } technique
+            ? Plan(Active, Active.Position, technique.Combat, target)
+            : null;
 
     /// <summary>Moves (no free attacks: the technique carries the fighter, D54), strikes each target, then lands.</summary>
     private void Perform(BattleFighter actor, CombatTechnique technique, TechniquePlan plan, List<SimEvent> events)
