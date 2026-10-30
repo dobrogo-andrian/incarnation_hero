@@ -30,13 +30,14 @@ public sealed class ArenaTests
         var b = ArenaRunner.Side(Repo, "grp.human.relic_hunters", "b")!;
         var fights = ArenaRunner.FightMany(Repo, a, b, 1, 50);
         Assert.All(fights, f => Assert.Contains((f.Winner, f.End), new[] { ("a", "down"), ("a", "fled"), ("b", "down"), ("b", "fled"), ("none", "timeout") }));
-        Assert.Equal(7, ArenaRunner.Report(fights).Count());
+        Assert.Equal(9, ArenaRunner.Report(fights).Count());
     }
 
     [Fact]
-    public void Sides_are_groups_or_the_player_and_a_group_can_meet_itself()
+    public void Sides_are_groups_profiles_or_the_player_and_a_group_can_meet_itself()
     {
         Assert.Null(ArenaRunner.Side(Repo, "grp.nobody", "a"));
+        Assert.Equal("a.player", Assert.Single(ArenaRunner.Side(Repo, "profile.sandbox.novice", "a")!).Id);
         var a = ArenaRunner.Side(Repo, "grp.beast.grey_wolves", "a")!;
         var b = ArenaRunner.Side(Repo, "grp.beast.grey_wolves", "b")!;
         Assert.Empty(a.Select(f => f.Id).Intersect(b.Select(f => f.Id)));

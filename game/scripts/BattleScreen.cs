@@ -453,8 +453,16 @@ public partial class BattleScreen : PanelContainer
             new("name", FighterName(f.Id)), new("health", Math.Round(f.Health, 1)), new("max_health", Math.Round(f.Def.MaxHealth, 1)),
             new("shield", Math.Round(f.Shield, 1)), new("max_shield", Math.Round(f.Def.MaxShield, 1)), new("pool", Math.Round(f.QiPool, 1)),
             new("energy", Math.Round(f.Energy, 1)), new("capacity", Math.Round(f.Def.MaxEnergy, 1)), new("points", f.MovePoints),
+            new("injuries", Injuries(f)),
         ],
     });
+
+    /// <summary>The injuries this fight has left, scale by scale, so a hit on the body is not forgotten.</summary>
+    private string Injuries(BattleFighter f)
+    {
+        var scales = f.Injuries.Where(i => i.Value > 0).Select(i => $"{_ui.Name(i.Key)} {Math.Round(i.Value, 1)}").ToList();
+        return scales.Count == 0 ? _ui.Text("str.ui.battle_no_injuries") : string.Join(" · ", scales);
+    }
 
     private string FighterName(string fighterId) => _ui.Text(BattleText.Name(Battle, fighterId));
 

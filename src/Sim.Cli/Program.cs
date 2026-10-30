@@ -108,7 +108,7 @@ static int Arena(string[] options)
         return 1;
     if (ArenaRunner.Side(db, sideA, "a") is not { } a || ArenaRunner.Side(db, sideB, "b") is not { } b)
     {
-        Console.Error.WriteLine($"A side is a group (grp.*) or {ArenaRunner.PlayerSide}.");
+        Console.Error.WriteLine($"A side is a group (grp.*), a sandbox profile (profile.*) or {ArenaRunner.PlayerSide}.");
         return 2;
     }
 
@@ -231,7 +231,7 @@ static int Usage()
             Plays one run and writes every command with its events, one JSON line each, to the
             trace file (default trace-<bot>-<seed>.jsonl); the summary goes to stdout, the final
             state hash to stderr.
-          sim arena --a <grp.* | player> --b <grp.* | player> [--n <N>] [--seed-from <N>] [--out <file.jsonl>] [--content <dir>]
+          sim arena --a <grp.* | profile.* | player> --b <grp.* | profile.* | player> [--n <N>] [--seed-from <N>] [--out <file.jsonl>] [--content <dir>]
             Fights N hex battles (default 2000), the AI playing both sides; player is the hero as a
             run starts. Prints win shares, how fights ended, their length and side A's losses; --out
             writes one JSON line per fight.

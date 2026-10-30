@@ -40,14 +40,15 @@ field_radius: 4                   # a hexagon of 61 hexes; its 24 rim hexes are 
 initiative_threshold: 100         # CTB (D53): act when the gauge reaches 100
 initiative_per_reaction: 1        # the gauge fills by reaction a tick: 10 reaction acts every 10 ticks
 energy_output_aspect: aspect.endurance.output
-energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share comes back into the fight's pool (D55)
+energy_refill_per_output: 0.25    # end of own turn: output × 0.25 × health share comes back into the fight's pool (D55): less than a basic attack costs
 energy_refill_min: 2              # comes back whatever the body's state
 energy_capacity_per_output: 1.5   # the fight's pool holds output × 1.5 and starts full; the body never runs dry
 move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, all before the action (D56)
 step_energy: 1                    # every step costs body energy; the movement points still cap a turn's steps
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half
 guard_body_share: 0.5
+body_damage_multiplier: 1.5       # what gets through the qi shield hurts the body (and injures) 1.5 times over
 flee_energy: 4                    # escape from a rim hex with no enemy next to it (§7.6)
 max_turns: 200                    # an undecided hex fight: side 0 is taken to have withdrawn (D59)
 player_ai: ai.cultivator_cautious # who plays the player in arena runs and auto-resolve
-attack_energy: 4                  # the basic attack: a fresh body (5 a turn) keeps it up, an empty reserve (2) every other turn
+attack_energy: 5                  # the basic attack costs more than a turn gives back (output 10–18 → 2.5–4.5): energy runs out

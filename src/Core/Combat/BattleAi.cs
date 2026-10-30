@@ -53,8 +53,9 @@ public static class BattleAi
             double stepsEnergy = steps * config.StepEnergy;
             double energy = me.Energy - stepsEnergy;
             double walk = FreeAttacksCost(battle, me, ai, freeAttacks) + ai.Energy * stepsEnergy;
-            double here = Position(battle, me, ai, from) - walk;
-            yield return new Candidate(from, null, here);
+            // Where the turn ends and with what energy left: that decides whether it can strike next turn.
+            double At(Hex end, double spent) => Position(battle, me, ai, end, energy - spent) - walk;
+            yield return new Candidate(from, null, At(from, 0));
 
             if (fleeing)
             {
@@ -66,7 +67,7 @@ public static class BattleAi
             if (energy >= config.AttackEnergy)
             {
                 foreach (var enemy in Enemies(battle, me).Where(e => e.Position.DistanceTo(from) == 1))
-                    yield return new Candidate(from, new Attack(enemy.Id), here + Strikes(ai, me.Def.WeaponDamage, [enemy]) - ai.Energy * config.AttackEnergy);
+                    yield return new Candidate(from, new Attack(enemy.Id), At(from, config.AttackEnergy) + Strikes(ai, me.Def.WeaponDamage, [enemy]) - ai.Energy * config.AttackEnergy);
             }
 
             foreach (var technique in me.Def.Techniques.Where(t => me.Shield >= t.Combat.Qi && energy >= t.Combat.Energy))
@@ -78,7 +79,7 @@ public static class BattleAi
                         || (p.Landing is null && technique.Combat.Shape == TechniqueCombatDef.Retreat))
                         continue;
                     var end = p.Landing ?? (p.Approach.Count > 0 ? p.Approach[^1] : from);
-                    double score = Position(battle, me, ai, end) - walk
+                    double score = At(end, technique.Combat.Energy)
                         + Strikes(ai, battle.TechniqueDamage(me, technique), p.Targets) - ai.Qi * technique.Combat.Qi - ai.Energy * technique.Combat.Energy;
                     yield return new Candidate(from, new UseTechnique(technique.Id, aim), score);
                 }
@@ -87,7 +88,7 @@ public static class BattleAi
             if (energy >= config.GuardEnergy)
             {
                 double spared = Incoming(battle, me, from) * (1 - config.GuardBodyShare);
-                yield return new Candidate(from, new Guard(), here + ai.Risk * spared - ai.Energy * config.GuardEnergy);
+                yield return new Candidate(from, new Guard(), At(from, config.GuardEnergy) + ai.Risk * spared - ai.Energy * config.GuardEnergy);
             }
         }
     }
@@ -97,22 +98,33 @@ public static class BattleAi
         targets.Sum(t => ai.Damage * Math.Min(damage, t.Shield + t.Health) + (damage >= t.Shield + t.Health ? ai.Kill : 0));
 
     /// <summary>
-    /// How good a hex is to end the turn on: the danger in reach of it against the chance to strike
-    /// from it next turn, and the way to the enemy, or, when fleeing, to the rim.
+    /// How good a hex is to end the turn on, with <paramref name="energyLeft"/>: the danger in reach of
+    /// it against the chance to strike from it next turn — which takes the energy to walk there and
+    /// strike, after the turn's refill — and the way to the enemy, or, when fleeing, to the rim.
     /// </summary>
-    private static double Position(Battle battle, BattleFighter me, AiArchetypeDef ai, Hex hex)
+    private static double Position(Battle battle, BattleFighter me, AiArchetypeDef ai, Hex hex, double energyLeft)
     {
         double risk = ai.Risk * Incoming(battle, me, hex);
         if (Fleeing(me, ai))
             return -risk - ai.Flee * (battle.Field.Radius - hex.Length);
         int nearest = Enemies(battle, me).Select(e => e.Position.DistanceTo(hex)).DefaultIfEmpty(0).Min();
-        bool canStrike = me.Def.MaxEnergy >= battle.Config.AttackEnergy && nearest <= battle.MovePointsOf(me.Def) + 1;
+        double energyNext = energyLeft + CombatMath.EnergyRefill(me.Def, me.Health, energyLeft, battle.Config.EnergyRefillMin);
+        bool canStrike = nearest <= battle.MovePointsOf(me.Def) + 1 && energyNext >= StrikeEnergy(battle, nearest);
         return -risk + (canStrike ? ai.Opportunity * me.Def.WeaponDamage : 0) - ai.Approach * nearest;
     }
 
-    /// <summary>Damage the enemies could deal on <paramref name="hex"/> next turn: those whose movement reaches its side.</summary>
+    /// <summary>
+    /// Damage the enemies could deal on <paramref name="hex"/> next turn: those whose movement reaches
+    /// its side and whose energy pays for the walk and the strike. A spent enemy is no threat.
+    /// </summary>
     private static double Incoming(Battle battle, BattleFighter me, Hex hex) =>
-        Enemies(battle, me).Where(e => e.Position.DistanceTo(hex) <= battle.MovePointsOf(e.Def) + 1).Sum(e => e.Def.WeaponDamage);
+        Enemies(battle, me)
+            .Where(e => e.Position.DistanceTo(hex) is var d && d <= battle.MovePointsOf(e.Def) + 1 && e.Energy >= StrikeEnergy(battle, d))
+            .Sum(e => e.Def.WeaponDamage);
+
+    /// <summary>The energy to walk up to an enemy <paramref name="distance"/> hexes away and strike it.</summary>
+    private static double StrikeEnergy(Battle battle, int distance) =>
+        battle.Config.AttackEnergy + Math.Max(0, distance - 1) * battle.Config.StepEnergy;
 
     /// <summary>Provoked free attacks, each priced at the enemies' average weapon.</summary>
     private static double FreeAttacksCost(Battle battle, BattleFighter me, AiArchetypeDef ai, int freeAttacks) =>

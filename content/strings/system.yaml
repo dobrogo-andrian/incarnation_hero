@@ -765,6 +765,9 @@
 - id: str.battle.fled
   text: { uk: "{who} тікає з поля." }
 
+- id: str.battle.shield_broken
+  text: { uk: "{who}: щит ці розбито — удари йдуть у тіло." }
+
 - id: str.battle.down
   text: { uk: "{who} падає." }
 
@@ -827,7 +830,10 @@
   text: { uk: "Оберіть, куди спрямувати техніку: підсвічено всі можливі гекси, навівши — видно зону ураження. Можна вдарити й у порожнє місце." }
 
 - id: str.ui.battle_fighter
-  text: { uk: "{name}\nЗдоров'я: {health} / {max_health}\nПул ці: {pool}\nЩит ці: {shield} / {max_shield}\nЕнергія: {energy} / {capacity}\nОчки руху: {points}" }
+  text: { uk: "{name}\nЗдоров'я: {health} / {max_health}\nПул ці: {pool}\nЩит ці: {shield} / {max_shield}\nЕнергія: {energy} / {capacity}\nОчки руху: {points}\nТравми: {injuries}" }
+
+- id: str.ui.battle_no_injuries
+  text: { uk: "немає" }
 
 - id: str.ui.battle_won
   text: { uk: "Перемога." }

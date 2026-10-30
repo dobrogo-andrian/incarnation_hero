@@ -10,9 +10,12 @@ namespace Sim.Cli.Arena;
 
 /// <summary>
 /// One arena fight from side A's view: the winning side ("a", "b", or "none" when the turns ran
-/// out), how the losing side left (down, fled or timeout), the turns it took, and what A was left with.
+/// out), how the losing side left (down, fled or timeout), the turns it took, and what A was left
+/// with. The pressure A was under: the share of its turns begun without the energy for a basic
+/// attack or with the qi shield gone, and the share of the damage it took that reached the body.
 /// </summary>
-public sealed record ArenaFight(ulong Seed, string Winner, string End, int Turns, double AHealthShare, IReadOnlyDictionary<string, double> AInjuries);
+public sealed record ArenaFight(ulong Seed, string Winner, string End, int Turns, double AHealthShare, IReadOnlyDictionary<string, double> AInjuries,
+    double AEnergyShort, double AShieldDown, double ABodyShare);
 
 /// <summary>
 /// The combat arena of Sim.Cli (tech 6.1): hex fights between two sides with the AI playing both
@@ -22,7 +25,10 @@ public static class ArenaRunner
 {
     public const string PlayerSide = "player";
 
-    /// <summary>The fighters of a side, their IDs prefixed so that a group can meet itself; null for an unknown side.</summary>
+    /// <summary>
+    /// The fighters of a side — a group, <c>player</c> or a sandbox profile (<c>profile.*</c>) — their
+    /// IDs prefixed so that a side can meet itself; null for an unknown side.
+    /// </summary>
     public static IReadOnlyList<Combatant>? Side(ContentDb content, string side, string prefix)
     {
         var sim = Simulation.NewGame(content, 1);
@@ -32,6 +38,8 @@ public static class ArenaRunner
             fighters = [CombatSystem.Snapshot(sim.State.Player, ctx)];
         else if (content.All<EnemyGroupDef>().Any(g => g.Id == side))
             fighters = CombatSystem.Foes(ctx, side);
+        else if (CombatSandbox.Profiles(content).Contains(side))
+            fighters = [CombatSandbox.Profile(content, side)];
         else
             return null;
         return fighters.Select(f => f with { Id = $"{prefix}.{f.Id}" }).ToList();
@@ -43,8 +51,23 @@ public static class ArenaRunner
         var battle = Battle.Start(a, b, config, Xoshiro256StarStar.FromSeed(StableHash.Of("arena.combat", seed)));
         var ai = Xoshiro256StarStar.FromSeed(StableHash.Of("arena.ai", seed));
         bool timedOut = false;
+        int aTurns = 0, energyShort = 0, shieldDown = 0;
+        double taken = 0, toBody = 0;
         while (!battle.IsOver)
-            timedOut |= BattleAi.PlayTurn(battle, ai).Any(e => e is BattleTimedOut);
+        {
+            if (battle.Active is { Side: 0 } active)
+            {
+                aTurns++;
+                energyShort += active.Energy < config.AttackEnergy ? 1 : 0;
+                shieldDown += active.Shield <= 0 ? 1 : 0;
+            }
+            foreach (var e in BattleAi.PlayTurn(battle, ai))
+            {
+                timedOut |= e is BattleTimedOut;
+                if (e is FighterHit hit && battle.Fighters.First(f => f.Id == hit.TargetId).Side == 0)
+                    (taken, toBody) = (taken + hit.Absorbed + hit.ToHealth, toBody + hit.ToHealth);
+            }
+        }
 
         var sideA = battle.Fighters.Where(f => f.Side == 0).ToList();
         var loser = battle.Fighters.Where(f => f.Side != battle.Winner).ToList();
@@ -58,7 +81,10 @@ public static class ArenaRunner
             end,
             battle.Turns,
             Math.Round(sideA.Sum(f => f.Health) / sideA.Sum(f => f.Def.MaxHealth), 4),
-            injuries);
+            injuries,
+            Math.Round(aTurns == 0 ? 0 : (double)energyShort / aTurns, 4),
+            Math.Round(aTurns == 0 ? 0 : (double)shieldDown / aTurns, 4),
+            Math.Round(taken == 0 ? 0 : toBody / taken, 4));
     }
 
     /// <summary>Fights seeds <paramref name="seedFrom"/> on, in parallel; results stay in seed order.</summary>
@@ -87,5 +113,7 @@ public static class ArenaRunner
         yield return $"A health left: mean {Num(fights.Average(f => f.AHealthShare) * 100)}%";
         var scales = fights.SelectMany(f => f.AInjuries.Keys).Distinct().Order(StringComparer.Ordinal);
         yield return "A injuries (mean): " + string.Join(", ", scales.Select(s => $"{s} {Num(fights.Average(f => f.AInjuries.GetValueOrDefault(s)))}"));
+        yield return $"A turns begun: short of energy for an attack {Pct(fights.Average(f => f.AEnergyShort) * 100)}, shield gone {Pct(fights.Average(f => f.AShieldDown) * 100)}";
+        yield return $"A damage taken that reached the body: {Pct(fights.Average(f => f.ABodyShare) * 100)}";
     }
 }

@@ -72,6 +72,16 @@ public class AiTests
     }
 
     [Fact]
+    public void A_spent_enemy_is_no_threat_to_walk_up_to()
+    {
+        // The same cultivator, but the wolf has no energy to walk or bite: nothing keeps it away.
+        var battle = Start(Field(4), Fighter("me", Cautious, reaction: 20, energy: 2), Fighter("wolf", Beast, energy: 0));
+        int before = battle.Fighters[0].Position.DistanceTo(battle.Fighters[1].Position);
+        BattleAi.PlayTurn(battle, Ai);
+        Assert.Equal(before - 2, battle.Fighters[0].Position.DistanceTo(battle.Fighters[1].Position));
+    }
+
+    [Fact]
     public void A_beast_closes_in()
     {
         var battle = Start(Field(4), Fighter("wolf", Beast, reaction: 20), Fighter("me", Cautious));
@@ -95,8 +105,8 @@ public class AiTests
         // The wolf (faster) closes in and bites; the cultivator, with the energy for crane retreat
         // but not for a basic attack, answers with it: it strikes and leaves without a free attack.
         var config = Field(2);
-        config.AttackEnergy = 5;
-        var battle = Start(config, Fighter("me", Cautious, energy: 4, techniques: "tech.movement.crane_retreat"), Fighter("wolf", Beast, reaction: 20));
+        config.AttackEnergy = 6;
+        var battle = Start(config, Fighter("me", Cautious, energy: 5, techniques: "tech.movement.crane_retreat"), Fighter("wolf", Beast, reaction: 20));
         var ai = Ai;
         while (battle.Active!.Id == "wolf")
             BattleAi.PlayTurn(battle, ai);

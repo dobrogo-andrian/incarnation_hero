@@ -52,7 +52,9 @@ public class BattleTests
         var hit = Assert.Single(outcome.Events.OfType<FighterHit>());
         Assert.InRange(hit.Damage, 8, 12);
         Assert.Equal(4, hit.Absorbed);
-        Assert.Equal(hit.Damage - 4, hit.ToHealth, 9);
+        // What gets through the shield hurts the body harder, and the broken shield is told.
+        Assert.Equal((hit.Damage - 4) * Close.BodyDamageMultiplier, hit.ToHealth, 9);
+        Assert.Equal(new ShieldBroken("wolf"), Assert.Single(outcome.Events.OfType<ShieldBroken>()));
         Assert.Equal(0, wolf.Shield);
         Assert.Equal(100 - hit.ToHealth, wolf.Health, 9);
         Assert.Equal(hit.ToHealth / 10, wolf.Injuries["injury.body"], 9);
@@ -202,7 +204,8 @@ public class BattleTests
         var sim = Simulation.NewGame(TestContent.Repo, 1);
         var ctx = new SimContext(sim.Content, RngStreams.FromStates(sim.State.RngStates));
         var player = CombatSystem.Snapshot(sim.State.Player, ctx);
-        Assert.Equal(5, player.EnergyRefill);
-        Assert.Equal(15, player.MaxEnergy);
+        // The new hero's endurance output is 10.
+        Assert.Equal(10 * Config.EnergyRefillPerOutput, player.EnergyRefill, 9);
+        Assert.Equal(10 * Config.EnergyCapacityPerOutput, player.MaxEnergy, 9);
     }
 }

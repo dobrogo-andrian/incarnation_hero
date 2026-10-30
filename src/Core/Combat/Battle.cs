@@ -46,6 +46,9 @@ public sealed record FighterWaited(string FighterId) : SimEvent;
 
 public sealed record FighterHit(string AttackerId, string TargetId, double Damage, double Absorbed, double ToHealth) : SimEvent;
 
+/// <summary>The hit emptied the fighter's qi shield: until qi flows back, hits land on the body, harder (§7.4).</summary>
+public sealed record ShieldBroken(string FighterId) : SimEvent;
+
 public sealed record TechniqueUsed(string FighterId, string TechniqueId, Hex Target) : SimEvent;
 
 public sealed record FighterGuarded(string FighterId) : SimEvent;
@@ -505,12 +508,16 @@ public sealed class Battle
     /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>
     private void Strike(BattleFighter attacker, BattleFighter target, double damage, List<SimEvent> events)
     {
-        var hit = CombatMath.Hit(damage, attacker.Def, target.Def, target.Shield, _config, Rng, target.Guarding ? _config.GuardBodyShare : 1);
+        double bodyShare = _config.BodyDamageMultiplier * (target.Guarding ? _config.GuardBodyShare : 1);
+        var hit = CombatMath.Hit(damage, attacker.Def, target.Def, target.Shield, _config, Rng, bodyShare);
+        bool hadShield = target.Shield > 0;
         target.Shield -= hit.Absorbed;
         target.Health = Math.Max(0, target.Health - hit.ToHealth);
         foreach (var (injuryId, amount) in hit.Injuries)
             target.Wound(injuryId, amount);
         events.Add(new FighterHit(attacker.Id, target.Id, hit.Damage, hit.Absorbed, hit.ToHealth));
+        if (hadShield && target.Shield <= 0)
+            events.Add(new ShieldBroken(target.Id));
         if (target.Down)
             events.Add(new FighterDown(target.Id));
     }
