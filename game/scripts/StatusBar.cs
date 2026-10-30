@@ -3,15 +3,16 @@ using Core.State;
 using Godot;
 
 /// <summary>
-/// The top bar (D44): week, age, life left, zone, stones and stage scale on one line; resting; the
-/// interrupt settings; the stage 2 test fight (D56); how fast weeks are shown (D47), and skipping the weeks being shown; quitting the
-/// game at the far right, which loses nothing since every command is already saved.
+/// The top bar (D44): week, age, life left, zone, stones and stage scale on a line of their own, which
+/// wraps rather than cuts; below it resting, the interrupt settings and the stage 2 test fight (D56), and
+/// at the right how fast weeks are shown (D47), skipping the weeks being shown and quitting the game,
+/// which loses nothing since every command is already saved.
 /// </summary>
-public partial class StatusBar : HBoxContainer
+public partial class StatusBar : VBoxContainer
 {
     private const string Separator = "   ·   ";
 
-    private readonly Label _info = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true };
+    private readonly Label _info = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
     private readonly Button _restWeek = new();
     private readonly Button _restOpen = new();
     private readonly Button _interrupts = new();
@@ -29,7 +30,7 @@ public partial class StatusBar : HBoxContainer
     public void Setup(UiContext ui, Action skip, Action sandbox)
     {
         _ui = ui;
-        AddThemeConstantOverride("separation", 8);
+        AddThemeConstantOverride("separation", 4);
         _restWeek.Text = ui.Text("str.shell.wait_week");
         _restOpen.Text = ui.Text("str.shell.wait_until_interrupt");
         _interrupts.Text = ui.Text("str.ui.interrupts");
@@ -52,7 +53,12 @@ public partial class StatusBar : HBoxContainer
         };
         ShowSpeed();
 
-        foreach (var node in new Node[] { _info, _restWeek, _restOpen, _interrupts, _sandbox, _speedText, _speed, _skip, _quit, _popup })
+        var controls = new HBoxContainer();
+        controls.AddThemeConstantOverride("separation", 8);
+        var gap = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        foreach (var node in new Node[] { _restWeek, _restOpen, _interrupts, _sandbox, gap, _speedText, _speed, _skip, _quit })
+            controls.AddChild(node);
+        foreach (var node in new Node[] { _info, controls, _popup })
             AddChild(node);
     }
 
