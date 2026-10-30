@@ -46,6 +46,16 @@ public sealed class BattleSession
         return CommandOutcome.Accept(events);
     }
 
+    /// <summary>The AI plays side 0's turn, then the enemy turns up to side 0's next turn or the end.</summary>
+    public IReadOnlyList<SimEvent> PlayTurnByAi()
+    {
+        if (Battle.Active is not { Side: 0 })
+            throw new InvalidOperationException("Side 0 acts only on its own turn.");
+        var events = BattleAi.PlayTurn(Battle, _ai).ToList();
+        PlayEnemies(events);
+        return events;
+    }
+
     /// <summary>The AI plays both sides to the end.</summary>
     public IReadOnlyList<SimEvent> PlayOut()
     {

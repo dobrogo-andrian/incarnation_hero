@@ -124,6 +124,18 @@ public static class SimText
     private static readonly LocKey StageLower = new("str.combat.stage_lower");
     private static readonly LocKey StageEqual = new("str.combat.stage_equal");
     private static readonly LocKey StageHigher = new("str.combat.stage_higher");
+    private static readonly LocKey FightTitle = new("str.fight.title");
+    private static readonly LocKey TermsToDeath = new("str.fight.terms_to_death");
+    private static readonly LocKey TermsSpared = new("str.fight.terms_spared");
+    private static readonly LocKey TermsBout = new("str.fight.terms_bout");
+    private static readonly LocKey FoeOne = new("str.fight.foe");
+    private static readonly LocKey FoeMany = new("str.fight.foes");
+    private static readonly LocKey FoeReading = new("str.fight.foe_reading");
+    private static readonly LocKey FoeHidden = new("str.fight.foe_hidden");
+    private static readonly LocKey FoeTechniques = new("str.fight.foe_techniques");
+    private static readonly LocKey FoeNoTechniques = new("str.fight.foe_no_techniques");
+    private static readonly LocKey FoeTechniquesUnseen = new("str.fight.foe_techniques_unseen");
+    private static readonly LocKey ScoutingReliability = new("str.fight.reliability");
 
     private static readonly LocKey ReputationLine = new("str.view.reputation");
     private static readonly LocKey RumorLine = new("str.view.rumor");
@@ -490,6 +502,48 @@ public static class SimText
             return (o.Index, text, o.Available);
         }).ToList();
     }
+
+    /// <summary>
+    /// The fight on offer (D67, D70): its title and what is at stake, then each kind of foe as the player
+    /// reads it, and how far those readings can be trusted.
+    /// </summary>
+    public static IReadOnlyList<LocKey> FightLines(FightView view)
+    {
+        var lines = new List<LocKey>
+        {
+            FightTitle with { Args = [new("group", Name(view.GroupId))] },
+            view.Terms switch { BattleTerms.Bout => TermsBout, BattleTerms.Spared => TermsSpared, _ => TermsToDeath },
+        };
+        foreach (var foe in view.Scouting.Foes)
+        {
+            lines.Add((foe.Count == 1 ? FoeOne : FoeMany) with
+            {
+                Args = [new("name", Name(foe.EnemyId)), new("count", foe.Count), new("stage", StageRelationName(foe.Stage))],
+            });
+            lines.Add(foe is { Vitality: { } vitality, Strike: { } strike, Speed: { } speed }
+                ? FoeReading with { Args = [new("vitality", ComparisonName(vitality)), new("strike", ComparisonName(strike)), new("speed", ComparisonName(speed))] }
+                : FoeHidden);
+            lines.Add(foe.Techniques switch
+            {
+                null => FoeTechniquesUnseen,
+                [] => FoeNoTechniques,
+                var known => FoeTechniques with { Args = [new("techniques", known.Select(Name).ToList())] },
+            });
+        }
+        if (view.Scouting.Foes.Any(f => f.Vitality is not null))
+            lines.Add(ScoutingReliability with { Args = [new("percent", Number(view.Scouting.Reliability * 100))] });
+        return lines;
+    }
+
+    private static LocKey ComparisonName(Comparison comparison) => new($"str.fight.cmp.{comparison switch
+    {
+        Comparison.FarBelow => "far_below",
+        Comparison.Below => "below",
+        Comparison.Even => "even",
+        Comparison.Above => "above",
+        Comparison.FarAbove => "far_above",
+        _ => throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null),
+    }}");
 
     private static LocKey Requirement(EventConditionDef c) => c switch
     {

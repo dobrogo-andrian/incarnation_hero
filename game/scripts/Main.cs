@@ -8,8 +8,9 @@ using Godot;
 /// The main screen (D44): a slim status bar on top; side tabs on the left; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
-/// player steps into one; the run's summary in the centre once it is over; the test fight (D56) over
-/// everything when opened from the status bar. All rules, saving
+/// player steps into one; the run's summary in the centre once it is over; a fight on offer in the
+/// centre too (D67), and the hex fight over everything once it is taken by hand, or as the test fight
+/// (D56) when opened from the status bar. All rules, saving
 /// included, stay in Core; this node loads content, owns the run session, sends commands and
 /// redraws every part from the new PlayerView.
 /// <para>
@@ -30,6 +31,7 @@ public partial class Main : Control
     private readonly SideTabs _tabs = new();
     private readonly PointPanel _panel = new();
     private readonly EventDialog _dialog = new();
+    private readonly FightPanel _fight = new();
     private readonly JournalView _journal = new();
     private readonly Label _mapTitle = new();
     private readonly MapView _map = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
@@ -64,7 +66,7 @@ public partial class Main : Control
         // A UI shot plays on a fresh throwaway run with a fixed seed and never touches the real save.
         var shot = UiShot.FromArgs();
         Func<ulong> newSeed = shot is null ? NewSeed : () => shot.Seed;
-        _ui = new UiContext(loaded.Db, loc, Send);
+        _ui = new UiContext(loaded.Db, loc, command => Send(command));
         BuildLayout(newSeed);
 
         string savePath = ProjectSettings.GlobalizePath(shot is null ? "user://run.json" : "user://shot_run.json");
@@ -122,7 +124,7 @@ public partial class Main : Control
     private void BuildLayout(Func<ulong> newSeed)
     {
         _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); });
-        _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Refresh, newSeed);
+        _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Send, Refresh, newSeed);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
         _map.ExitPressed += () => { _regionMap = true; Pick(null); };
@@ -136,6 +138,7 @@ public partial class Main : Control
         center.AddChild(_summary);
         center.AddChild(_panel);
         center.AddChild(_dialog);
+        center.AddChild(_fight);
         center.AddChild(new HSeparator());
         center.AddChild(_journal);
 
@@ -180,17 +183,23 @@ public partial class Main : Control
     private MapTarget? HomeTarget(PlayerView view) =>
         _ui.Db.Get<ZoneDef>(view.Zone.ZoneId).Settlement ? null : new ZoneTarget(view.Zone.ZoneId);
 
-    /// <summary>Executes a command; logs the rejection reason, or plays its events back week by week.</summary>
-    private void Send(Command command)
+    /// <summary>
+    /// Executes a command; logs the rejection reason, or plays its events back week by week. A fight
+    /// taken by hand opens the battle screen on the fight Core keeps, which it fights through here too.
+    /// </summary>
+    private CommandOutcome Send(Command command)
     {
         var before = _session.Sim.View;
+        var battle = _session.Sim.Battle;
         var outcome = _session.Execute(command);
         if (outcome.RejectReason is { } reason)
         {
             _journal.Add(_ui.Text(reason));
             Refresh();
-            return;
+            return outcome;
         }
+        if (command is FightByHand)
+            _battle.OpenRun(battle!, _ui.Name(before.Fight!.GroupId), outcome.Events);
 
         (_shownView, _shownWeek, _clock) = (before, before.Week, 0);
         foreach (var e in outcome.Events)
@@ -199,6 +208,7 @@ public partial class Main : Control
             FinishPlayback();
         else
             ShowPlayback();
+        return outcome;
     }
 
     public override void _Process(double delta)
@@ -282,10 +292,15 @@ public partial class Main : Control
             _map.ShowLocal(_ui, view);
         _mapTitle.Text = _regionMap && !inside ? _ui.Text("str.ui.region") : _ui.Name(zoneId);
 
+        // A fight taken by hand before the game was closed is shown again where it stands.
+        if (view.Fight is { ByHand: true } fight && !_battle.InRun)
+            _battle.OpenRun(_session.Sim.Battle!, _ui.Name(fight.GroupId), []);
+
         _summary.Refresh(_ui, view, OnNewRunPressed);
-        _panel.Visible = view.Event is null && view.EndCause is null;
+        _panel.Visible = view.Event is null && view.Fight is null && view.EndCause is null;
         _panel.Refresh(_ui, view, _target);
         _dialog.Refresh(_ui, view);
+        _fight.Refresh(_ui, view);
         _status.Refresh(view, playing: false, fighting: _battle.Visible);
         _tabs.Refresh(_ui, view);
     }

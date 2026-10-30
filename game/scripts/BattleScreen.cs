@@ -1,23 +1,25 @@
 using Core.Combat;
 using Core.Content;
 using Core.Loc;
-using Core.Rng;
 using Core.Sim;
 using Godot;
 using static Widgets;
 
 /// <summary>
-/// The test fight (D56), over the run's screen below the status bar and outside the run:
-/// pick the hero (a sandbox profile or a snapshot of the current hero) and an enemy group, then fight
-/// on the hex field. The player clicks a lit hex to step and an adjacent enemy to strike. The skill
-/// bar under the field holds the techniques (keys 1–5) and, apart at the far right, the basic attack
-/// and ending the turn (Space); picking a skill lights where it can go. Guard and flee are
-/// buttons beside the log. What Core would refuse is greyed out with its reason. Enemy turns are
-/// played back event by event (steps, hits) with the CTB queue on top; Core has already decided them.
+/// The hex fight, over the run's screen below the status bar: the test fight (D56), outside the run,
+/// where the player picks the hero (a sandbox profile or a snapshot of the current hero) and an enemy
+/// group; or a fight of the run taken by hand (D67), fought through Core's commands and saved as it
+/// goes. The player clicks a lit hex to step and an adjacent enemy to strike. The skill bar under the
+/// field holds the techniques (keys 1–5) and, apart at the far right, the basic attack and ending the
+/// turn (Space); picking a skill lights where it can go. Guard, flee, giving an arena bout up and
+/// handing the fight to the AI are buttons beside the log. What Core would refuse is greyed out with
+/// its reason. Every command's events, the enemy turns after it included, are played back event by
+/// event (steps, hits) with the CTB queue on top; Core has already decided them. A fight of the run
+/// ends on what it left behind, and "continue" goes back to the run.
 /// </summary>
 public partial class BattleScreen : PanelContainer
 {
-    /// <summary>Seconds each step or hit of an enemy turn stays on screen.</summary>
+    /// <summary>Seconds each step or hit stays on screen.</summary>
     private const double EventSeconds = 0.3;
 
     private const string CurrentHero = "current";
@@ -35,9 +37,13 @@ public partial class BattleScreen : PanelContainer
     private UiContext _ui = null!;
     private Func<Combatant> _currentHero = null!;
     private Func<ulong> _newSeed = null!;
+    private Func<Command, CommandOutcome> _execute = null!;
+    private Action _back = null!;
 
+    private readonly Label _title = new() { AutowrapMode = TextServer.AutowrapMode.Off, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+    private Button _leave = null!;
     private readonly VBoxContainer _setup = new();
-    private readonly HBoxContainer _fight = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
+    private readonly HBoxContainer _fightView = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly Label _queue = new() { ClipText = true };
     private readonly HexFieldView _field = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly Label _active = new();
@@ -53,20 +59,27 @@ public partial class BattleScreen : PanelContainer
     private string _heroPick = CurrentHero;
     private string? _groupPick;
 
-    private CombatSandbox? _sandbox;
+    private IFight? _fight;
     private string? _aiming;
     private Hex? _hover;
 
-    /// <summary>Fighters as shown while an enemy turn is played back, by ID; empty when the screen shows Core's state.</summary>
+    /// <summary>What a fight of the run left behind, as journal lines: the result, injuries, insight, loot.</summary>
+    private readonly List<LocKey> _aftermath = [];
+
+    /// <summary>Fighters as shown while events are played back, by ID; empty when the screen shows Core's state.</summary>
     private readonly Dictionary<string, HexFieldView.Token> _shown = [];
     private readonly Queue<SimEvent> _playback = new();
     private double _clock;
 
-    /// <param name="newSeed">The fight seeds, from the shell like a run's.</param>
-    public void Setup(UiContext ui, Func<Combatant> currentHero, Action back, Func<ulong> newSeed)
+    /// <param name="execute">Runs a command of the run's fight through Core and the save, as the main screen does.</param>
+    /// <param name="back">Called once the screen closes, to redraw the run.</param>
+    /// <param name="newSeed">The test fight seeds, from the shell like a run's.</param>
+    public void Setup(UiContext ui, Func<Combatant> currentHero, Func<Command, CommandOutcome> execute, Action back, Func<ulong> newSeed)
     {
         _ui = ui;
         _currentHero = currentHero;
+        _execute = execute;
+        _back = back;
         _newSeed = newSeed;
         Visible = false;
         MouseFilter = MouseFilterEnum.Stop;
@@ -84,19 +97,18 @@ public partial class BattleScreen : PanelContainer
         left.AddChild(_field);
         _skillBar.AddThemeConstantOverride("separation", 8);
         left.AddChild(_skillBar);
-        _fight.AddThemeConstantOverride("separation", 16);
-        _fight.AddChild(left);
-        _fight.AddChild(side);
+        _fightView.AddThemeConstantOverride("separation", 16);
+        _fightView.AddChild(left);
+        _fightView.AddChild(side);
 
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 12);
         // A wrapping label in a row is squeezed to nothing and grows tall: the title stays on one line.
-        var title = Title(ui.Text("str.ui.sandbox"));
-        title.AutowrapMode = TextServer.AutowrapMode.Off;
-        title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        column.AddChild(Row(title, Button(ui.Text("str.ui.sandbox_back"), () => { Visible = false; back(); })));
+        _title.AddThemeFontSizeOverride("font_size", 20);
+        _leave = Button(ui.Text("str.ui.sandbox_back"), Close);
+        column.AddChild(Row(_title, _leave));
         column.AddChild(_setup);
-        column.AddChild(_fight);
+        column.AddChild(_fightView);
         var margin = new MarginContainer();
         foreach (string edge in new[] { "left", "top", "right", "bottom" })
             margin.AddThemeConstantOverride($"margin_{edge}", 16);
@@ -104,17 +116,43 @@ public partial class BattleScreen : PanelContainer
         AddChild(margin);
     }
 
-    /// <summary>Opens the screen on the picker; the previous picks are kept.</summary>
+    /// <summary>Whether a fight of the run is on screen; the main screen opens it once for each fight taken by hand.</summary>
+    public bool InRun => Visible && _fight is RunFight;
+
+    /// <summary>Opens the test fight on the picker; the previous picks are kept.</summary>
     public void Open()
     {
         Visible = true;
-        _sandbox = null;
+        _fight = null;
+        _title.Text = _ui.Text("str.ui.sandbox");
+        _leave.Visible = true;
         ShowSetup();
+    }
+
+    /// <summary>
+    /// Shows a fight of the run taken by hand, <paramref name="battle"/> as Core keeps it, and plays
+    /// <paramref name="opening"/> back from where the fighters stood; none after a load, which shows the fight as it stands.
+    /// </summary>
+    public void OpenRun(Battle battle, string title, IReadOnlyList<SimEvent> opening)
+    {
+        Visible = true;
+        _title.Text = title;
+        _leave.Visible = false;
+        _aftermath.Clear();
+        _aftermath.AddRange(opening.Select(SimText.Describe).OfType<LocKey>());
+        Begin(new RunFight(battle, this), _currentHero(), opening);
+    }
+
+    private void Close()
+    {
+        Visible = false;
+        _fight = null;
+        _back();
     }
 
     private void ShowSetup()
     {
-        _fight.Visible = false;
+        _fightView.Visible = false;
         _setup.Visible = true;
         Clear(_setup);
         var heroes = CombatSandbox.Profiles(_ui.Db).Select(id => (id, _ui.Name(id)))
@@ -124,7 +162,7 @@ public partial class BattleScreen : PanelContainer
         _setup.AddChild(Text(_ui.Text("str.ui.sandbox_note")));
         _setup.AddChild(Row(new Label { Text = _ui.Text("str.ui.sandbox_hero"), CustomMinimumSize = new Vector2(90, 0) }, Options(heroes, _heroPick, id => _heroPick = id)));
         _setup.AddChild(Row(new Label { Text = _ui.Text("str.ui.sandbox_foes"), CustomMinimumSize = new Vector2(90, 0) }, Options(groups, _groupPick, id => _groupPick = id)));
-        _setup.AddChild(Button(_ui.Text("str.ui.sandbox_start"), () => StartFight(_newSeed())));
+        _setup.AddChild(Button(_ui.Text("str.ui.sandbox_start"), () => StartSandbox(_newSeed())));
     }
 
     /// <summary>
@@ -133,63 +171,69 @@ public partial class BattleScreen : PanelContainer
     public void Preselect(string hero) => _heroPick = hero;
 
     /// <summary>
-    /// For a UI shot: starts the fight against <paramref name="group"/>, and has the AI play the hero's
+    /// For a UI shot: starts the test fight against <paramref name="group"/>, and has the AI play the hero's
     /// first <paramref name="heroTurns"/> turns, every turn shown at once.
     /// </summary>
     public void Stage(string group, int heroTurns)
     {
         Open();
         _groupPick = group;
-        ulong seed = _newSeed();
-        StartFight(seed);
-        var ai = Xoshiro256StarStar.FromSeed(seed);
-        for (int turn = 0; turn <= heroTurns; turn++)
-        {
-            while (Playing)
-                Reveal(_playback.Dequeue());
-            _shown.Clear();
-            if (turn == heroTurns || Battle.IsOver)
-                break;
-            Log(BattleAi.PlayTurn(Battle, ai));
-            PlayEnemies();
-        }
-        ShowState();
+        StartSandbox(_newSeed());
+        FinishPlayback();
+        var session = ((SandboxFight)_fight!).Session;
+        for (int turn = 0; turn < heroTurns && !Battle.IsOver; turn++)
+            Log(session.PlayTurnByAi());
+        FinishPlayback();
     }
 
-    private void StartFight(ulong seed)
+    private void StartSandbox(ulong seed)
     {
         var hero = _heroPick == CurrentHero ? _currentHero() : CombatSandbox.Profile(_ui.Db, _heroPick);
-        _sandbox = CombatSandbox.Start(_ui.Db, hero, _groupPick!, seed);
+        var session = CombatSandbox.Start(_ui.Db, hero, _groupPick!, seed);
+        Begin(new SandboxFight(session), hero, session.Opening);
+    }
+
+    private void Begin(IFight fight, Combatant hero, IReadOnlyList<SimEvent> opening)
+    {
+        _fight = fight;
         (_aiming, _clock) = (null, 0);
         _playback.Clear();
         _shown.Clear();
         _log.Clear();
         _hint.Text = _ui.Text("str.ui.battle_hint");
         _setup.Visible = false;
-        _fight.Visible = true;
+        _fightView.Visible = true;
         BuildSkillBar(hero);
-        Log(_sandbox.Battle.Opening);
-        PlayEnemies();
+        // The opening is played back from where everyone was deployed, at full strength.
+        Play(Battle.Fighters.Select(f => (f.Id, new HexFieldView.Token(
+            Initials(FighterName(f.Id)), f.Side, f.StartPosition, f.Def.Health, f.Def.MaxHealth, f.Def.Shield, f.Def.MaxShield, false))), opening);
+        ShowState();
     }
 
-    private Battle Battle => _sandbox!.Battle;
+    private Battle Battle => _fight!.Battle;
 
-    /// <summary>Whether enemy turns are still being shown; the player's input waits meanwhile.</summary>
+    /// <summary>Whether events are still being shown; the player's input waits meanwhile.</summary>
     public bool Playing => _playback.Count > 0;
 
-    /// <summary>While enemies are to act, has Core play their turns and queues the events to show.</summary>
-    private void PlayEnemies()
+    private bool MyTurn => _fight is not null && !Playing && Battle.Active is { Side: 0 };
+
+    /// <summary>Queues events to show, played from the fighters as they stood before them (<paramref name="from"/>).</summary>
+    private void Play(IEnumerable<(string Id, HexFieldView.Token Token)> from, IEnumerable<SimEvent> events)
     {
-        if (!Playing && !Battle.IsOver && !_sandbox!.PlayersTurn)
-        {
-            foreach (var token in Tokens())
-                _shown[token.Id] = token.Token;
-            while (!Battle.IsOver && !_sandbox.PlayersTurn)
-            {
-                foreach (var e in _sandbox.PlayEnemyTurn())
-                    _playback.Enqueue(e);
-            }
-        }
+        foreach (var (id, token) in from)
+            _shown[id] = token;
+        foreach (var e in events)
+            _playback.Enqueue(e);
+        if (!Playing)
+            _shown.Clear();
+    }
+
+    /// <summary>Shows whatever is left of the playback at once.</summary>
+    private void FinishPlayback()
+    {
+        while (Playing)
+            Reveal(_playback.Dequeue());
+        _shown.Clear();
         ShowState();
     }
 
@@ -224,9 +268,14 @@ public partial class BattleScreen : PanelContainer
                 var t = _shown[h.TargetId];
                 _shown[h.TargetId] = t with { Shield = t.Shield - h.Absorbed, Health = Math.Max(0, t.Health - h.ToHealth) };
                 return true;
-            case FighterDown or FighterFled:
-                _shown.Remove(e is FighterDown d ? d.FighterId : ((FighterFled)e).FighterId);
-                return true;
+            case FighterDown d:
+                return _shown.Remove(d.FighterId);
+            case FighterFled f:
+                return _shown.Remove(f.FighterId);
+            case FighterBeaten b:
+                return _shown.Remove(b.FighterId);
+            case FighterYielded y:
+                return _shown.Remove(y.FighterId);
             case BattleTurnStarted s:
                 foreach (var (id, token) in _shown)
                     _shown[id] = token with { Active = id == s.FighterId };
@@ -238,9 +287,10 @@ public partial class BattleScreen : PanelContainer
 
     private void Send(BattleCommand command)
     {
-        if (Playing || Battle.IsOver || !_sandbox!.PlayersTurn)
+        if (!MyTurn)
             return;
-        var outcome = Battle.Execute(command);
+        var before = Tokens().ToList();
+        var outcome = _fight!.Act(command);
         if (outcome.RejectReason is { } reason)
         {
             _hint.Text = _ui.Text(reason);
@@ -249,13 +299,24 @@ public partial class BattleScreen : PanelContainer
         }
         _aiming = null;
         _hint.Text = _ui.Text("str.ui.battle_hint");
-        Log(outcome.Events);
-        PlayEnemies();
+        Play(before, outcome.Events);
+        ShowState();
+    }
+
+    /// <summary>The AI fights the rest; it is shown at once rather than turn by turn.</summary>
+    private void HandOver()
+    {
+        if (!MyTurn)
+            return;
+        _aiming = null;
+        var before = Tokens().ToList();
+        Play(before, _fight!.HandOver());
+        FinishPlayback();
     }
 
     private void OnHexPressed(Hex hex)
     {
-        if (_sandbox is null || Playing || Battle.IsOver || !_sandbox.PlayersTurn)
+        if (!MyTurn)
             return;
         var me = Battle.Active!;
         var there = Battle.Fighters.FirstOrDefault(f => f.InFight && f.Position == hex);
@@ -280,7 +341,7 @@ public partial class BattleScreen : PanelContainer
 
     private void Aim(string? skill)
     {
-        if (Playing || _sandbox is not { PlayersTurn: true } || Battle.IsOver)
+        if (!MyTurn)
             return;
         _aiming = skill;
         _hint.Text = _ui.Text(skill switch { null => "str.ui.battle_hint", AttackSkill => "str.ui.battle_aim_attack", _ => "str.ui.battle_aim" });
@@ -323,7 +384,7 @@ public partial class BattleScreen : PanelContainer
     /// </summary>
     public override void _Input(InputEvent e)
     {
-        if (!Visible || !_fight.Visible || _sandbox is null || e is not InputEventKey { Pressed: true, Echo: false } key)
+        if (!Visible || !_fightView.Visible || _fight is null || e is not InputEventKey { Pressed: true, Echo: false } key)
             return;
         if (key.Keycode == Key.Space)
         {
@@ -353,7 +414,7 @@ public partial class BattleScreen : PanelContainer
     /// <summary>Redraws the field, the queue, the fighters' numbers, the action buttons and the result.</summary>
     private void ShowState()
     {
-        if (_sandbox is null)
+        if (_fight is null)
             return;
         var tokens = Playing ? _shown.Values.ToList() : Tokens().Select(t => t.Token).ToList();
         _field.Display(Battle.Field, tokens, Marks());
@@ -365,7 +426,8 @@ public partial class BattleScreen : PanelContainer
             ? FighterText(under)
             : "";
 
-        bool myTurn = !Playing && !Battle.IsOver && _sandbox.PlayersTurn;
+        bool myTurn = MyTurn;
+        _hint.Visible = !Battle.IsOver;
         Clear(_actions);
         _actions.Visible = myTurn;
         // What Core would refuse now is greyed out, with its reason on hover.
@@ -375,9 +437,11 @@ public partial class BattleScreen : PanelContainer
             Allow(endTurn, null, myTurn, false);
         if (myTurn)
         {
-            _actions.AddChild(Row(
-                ActionButton("str.ui.battle_guard", new Guard()),
-                ActionButton("str.ui.battle_flee", new Flee())));
+            var row = Row(ActionButton("str.ui.battle_guard", new Guard()), ActionButton("str.ui.battle_flee", new Flee()));
+            if (Battle.Terms == BattleTerms.Bout)
+                row.AddChild(ActionButton("str.ui.battle_yield", new Yield()));
+            _actions.AddChild(row);
+            _actions.AddChild(Row(Button(_ui.Text("str.ui.battle_hand_over"), HandOver)));
             if (_aiming is not null)
                 _actions.AddChild(Button(_ui.Text("str.ui.battle_cancel"), () => Aim(null)));
         }
@@ -385,12 +449,26 @@ public partial class BattleScreen : PanelContainer
         Clear(_result);
         if (!Playing && Battle.IsOver)
         {
-            var hero = Battle.Fighters.First(f => f.Side == 0);
-            string outcome = Battle.Winner == 0 ? "str.ui.battle_won" : hero.Fled ? "str.ui.battle_escaped" : "str.ui.battle_lost";
-            _result.AddChild(Title(_ui.Text(outcome)));
-            _result.AddChild(Row(Button(_ui.Text("str.ui.sandbox_again"), ShowSetup)));
+            _result.AddChild(Title(_ui.Text(ResultTitle(Battle.Fighters.First(f => f.Side == 0)))));
+            if (_fight is RunFight)
+            {
+                foreach (var line in _aftermath)
+                    _result.AddChild(Text(_ui.Text(line)));
+                _result.AddChild(Row(Button(_ui.Text("str.ui.battle_continue"), Close)));
+            }
+            else
+            {
+                _result.AddChild(Row(Button(_ui.Text("str.ui.sandbox_again"), ShowSetup)));
+            }
         }
     }
+
+    private string ResultTitle(BattleFighter hero) =>
+        Battle.Winner == 0 ? "str.ui.battle_won"
+        : hero.Yielded ? "str.ui.battle_yielded"
+        : hero.Beaten ? "str.ui.battle_beaten"
+        : hero.Fled ? "str.ui.battle_escaped"
+        : "str.ui.battle_lost";
 
     private LocKey? SkillRefusal(string skill) => Battle.SkillUnavailable(skill == AttackSkill ? null : skill);
 
@@ -412,7 +490,7 @@ public partial class BattleScreen : PanelContainer
     private Dictionary<Hex, HexFieldView.Mark> Marks()
     {
         var marks = new Dictionary<Hex, HexFieldView.Mark>();
-        if (Playing || Battle.IsOver || !_sandbox!.PlayersTurn)
+        if (!MyTurn)
             return marks;
         if (_aiming == AttackSkill)
         {
@@ -483,5 +561,44 @@ public partial class BattleScreen : PanelContainer
     {
         foreach (var child in node.GetChildren())
             child.QueueFree();
+    }
+
+    /// <summary>What the screen fights: the side-0 command with the enemy turns after it, and handing the rest to the AI.</summary>
+    private interface IFight
+    {
+        Battle Battle { get; }
+
+        CommandOutcome Act(BattleCommand command);
+
+        IReadOnlyList<SimEvent> HandOver();
+    }
+
+    /// <summary>The test fight: a battle session of its own, nothing saved.</summary>
+    private sealed class SandboxFight(BattleSession session) : IFight
+    {
+        public BattleSession Session { get; } = session;
+
+        public Battle Battle => Session.Battle;
+
+        public CommandOutcome Act(BattleCommand command) => Session.Act(command);
+
+        public IReadOnlyList<SimEvent> HandOver() => Session.PlayOut();
+    }
+
+    /// <summary>A fight of the run: every command goes through Core, which saves it; its end is kept for the result.</summary>
+    private sealed class RunFight(Battle battle, BattleScreen screen) : IFight
+    {
+        public Battle Battle { get; } = battle;
+
+        public CommandOutcome Act(BattleCommand command) => Run(new FightAction(command));
+
+        public IReadOnlyList<SimEvent> HandOver() => Run(new AutoResolveFight()).Events;
+
+        private CommandOutcome Run(Command command)
+        {
+            var outcome = screen._execute(command);
+            screen._aftermath.AddRange(outcome.Events.Select(SimText.Describe).OfType<LocKey>());
+            return outcome;
+        }
     }
 }

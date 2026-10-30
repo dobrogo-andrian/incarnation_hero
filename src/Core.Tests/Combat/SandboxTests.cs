@@ -9,15 +9,15 @@ public class SandboxTests
     private static readonly Localizer Loc = Localizer.FromContent(TestContent.Repo);
 
     /// <summary>Plays a sandbox fight to the end, the player only waiting, and returns every log line.</summary>
-    private static List<string> PlayOut(CombatSandbox sandbox)
+    private static List<string> PlayOut(BattleSession sandbox)
     {
         var battle = sandbox.Battle;
         var lines = new List<string>();
         void Log(IEnumerable<SimEvent> events) =>
             lines.AddRange(events.Select(e => BattleText.Describe(battle, e)).OfType<LocKey>().Select(Loc.Resolve));
-        Log(battle.Opening);
+        Log(sandbox.Opening);
         while (!battle.IsOver)
-            Log(sandbox.PlayersTurn ? battle.Execute(new EndTurn()).Events : sandbox.PlayEnemyTurn());
+            Log(sandbox.Act(new EndTurn()).Events);
         return lines;
     }
 
@@ -62,10 +62,16 @@ public class SandboxTests
     }
 
     [Fact]
-    public void Enemy_turns_are_refused_on_the_players_turn()
+    public void The_fight_only_ever_waits_for_the_player()
     {
         var sandbox = CombatSandbox.Start(TestContent.Repo, CombatSandbox.Profile(TestContent.Repo, "profile.sandbox.stage_2"), "grp.beast.wild_boar", 1);
-        Assert.True(sandbox.PlayersTurn);
-        Assert.Throws<InvalidOperationException>(() => sandbox.PlayEnemyTurn());
+        Assert.Equal(0, sandbox.Battle.Active!.Side);
+        var events = new List<SimEvent>();
+        for (int turn = 0; turn < 4 && !sandbox.Battle.IsOver; turn++)
+        {
+            events.AddRange(turn % 2 == 0 ? sandbox.Act(new EndTurn()).Events : sandbox.PlayTurnByAi());
+            Assert.True(sandbox.Battle.IsOver || sandbox.Battle.Active!.Side == 0);
+        }
+        Assert.Contains(events, e => e is BattleTurnStarted s && s.FighterId != Combatant.PlayerId);
     }
 }

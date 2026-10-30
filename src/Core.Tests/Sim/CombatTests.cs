@@ -206,10 +206,19 @@ public sealed class CombatTests
         Assert.Contains(new FightOffered("grp.test.adepts", FightKind.Event), offer.Events);
         Assert.Equal(GameMode.Combat, sim.State.Mode);
         Assert.Equal((FightKind.Event, false, BattleTerms.ToDeath), (sim.View.Fight!.Kind, sim.View.Fight.ByHand, sim.View.Fight.Terms));
-        Assert.Null(sim.Battle);
         Assert.Equal(RejectReasons.WrongMode, sim.Execute(new ChooseEventOption(0)).RejectReason);
         Assert.Equal(RejectReasons.WrongMode, sim.Execute(new StartActivity(new WaitActivity(), 1)).RejectReason);
         Assert.Equal(RejectReasons.FightNotTaken, sim.Execute(new FightAction(new EndTurn())).RejectReason);
+    }
+
+    [Fact]
+    public void TheFightOnOffer_ReadsAsLines_WithAHigherStageHidden()
+    {
+        var lines = SimText.FightLines(Offered().View.Fight!).Select(Localizer.FromContent(Content).Resolve).ToList();
+
+        Assert.Equal(
+            ["Бій: Адепти", "Пощади не буде: програш може коштувати життя.", "Адепт ×2 — етап: вищий за ваш.", "Сили вищого етапу не прочитати.", "Техніки: не розгледіти."],
+            lines);
     }
 
     [Fact]

@@ -108,6 +108,9 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
     public int Side { get; } = side;
 
     public Hex Position { get; internal set; } = position;
+
+    /// <summary>Where the fighter was deployed: the screen plays the fight back from here.</summary>
+    public Hex StartPosition { get; } = position;
     public double Health { get; internal set; } = def.Health;
     public double Shield { get; internal set; } = def.Shield;
     public double QiPool { get; internal set; } = def.QiPool;

@@ -37,10 +37,11 @@ public sealed class Simulation
     public PlayerView View => PlayerView.From(State, _ctx);
 
     /// <summary>
-    /// The fight being fought by hand, as the battle screen shows it (D67): the field and every fighter's
-    /// true numbers, as in the sandbox. Null when no fight is on screen.
+    /// The battle of the fight offered or fought by hand (D67): the field and every fighter's true
+    /// numbers, which the battle screen shows as the sandbox does once the fight is taken by hand. It
+    /// lives on as the same object to the fight's end, so the screen can show how it ended. Null with no fight.
     /// </summary>
-    public Battle? Battle => State.Fight is { ByHand: true } ? Session().Battle : null;
+    public Battle? Battle => State.Fight is not null ? Session().Battle : null;
 
     public static Simulation NewGame(ContentDb content, ulong seed)
     {

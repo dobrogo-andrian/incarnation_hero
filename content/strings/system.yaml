@@ -504,6 +504,21 @@
 - id: str.ui.interrupts_title
   text: { uk: "Що зупиняє заняття" }
 
+- id: str.ui.auto_fights_title
+  text: { uk: "Бої тренувань без питань" }
+
+- id: str.ui.auto_fight_hunt
+  text: { uk: "Полювання: авторезолв" }
+
+- id: str.ui.auto_fight_arena
+  text: { uk: "Арена: авторезолв" }
+
+- id: str.ui.fight_by_hand
+  text: { uk: "Битися самому" }
+
+- id: str.ui.fight_auto
+  text: { uk: "Авторезолв" }
+
 - id: str.ui.speed_title
   text: { uk: "Плин часу" }
 
@@ -651,6 +666,58 @@
 
 - id: str.combat.stage_higher
   text: { uk: "вищий за ваш" }
+
+# The fight on offer (D67, D70).
+- id: str.fight.title
+  text: { uk: "Бій: {group}" }
+
+- id: str.fight.terms_to_death
+  text: { uk: "Пощади не буде: програш може коштувати життя." }
+
+- id: str.fight.terms_spared
+  text: { uk: "Переможеного грабують до нитки, але здебільшого лишають живим." }
+
+- id: str.fight.terms_bout
+  text: { uk: "Поєдинок до здачі: розпорядник не дасть загинути." }
+
+- id: str.fight.foe
+  text: { uk: "{name} — етап: {stage}." }
+
+- id: str.fight.foes
+  text: { uk: "{name} ×{count} — етап: {stage}." }
+
+- id: str.fight.foe_reading
+  text: { uk: "Живучість: {vitality}; сила удару: {strike}; швидкість: {speed}." }
+
+- id: str.fight.foe_hidden
+  text: { uk: "Сили вищого етапу не прочитати." }
+
+- id: str.fight.foe_techniques
+  text: { uk: "Техніки: {techniques}." }
+
+- id: str.fight.foe_no_techniques
+  text: { uk: "Технік немає." }
+
+- id: str.fight.foe_techniques_unseen
+  text: { uk: "Техніки: не розгледіти." }
+
+- id: str.fight.reliability
+  text: { uk: "Надійність оцінок: {percent}%." }
+
+- id: str.fight.cmp.far_below
+  text: { uk: "значно нижча за вашу" }
+
+- id: str.fight.cmp.below
+  text: { uk: "нижча за вашу" }
+
+- id: str.fight.cmp.even
+  text: { uk: "як у вас" }
+
+- id: str.fight.cmp.above
+  text: { uk: "вища за вашу" }
+
+- id: str.fight.cmp.far_above
+  text: { uk: "значно вища за вашу" }
 
 - id: str.view.reputation
   text: { uk: "Репутація ({sect}): {value}" }
@@ -867,3 +934,18 @@
 
 - id: str.ui.battle_escaped
   text: { uk: "Герой вийшов із бою." }
+
+- id: str.ui.battle_yielded
+  text: { uk: "Поєдинок програно: ви здалися." }
+
+- id: str.ui.battle_beaten
+  text: { uk: "Поразка: вас подолали." }
+
+- id: str.ui.battle_yield
+  text: { uk: "Здатися" }
+
+- id: str.ui.battle_hand_over
+  text: { uk: "Доручити бій AI" }
+
+- id: str.ui.battle_continue
+  text: { uk: "Далі" }
