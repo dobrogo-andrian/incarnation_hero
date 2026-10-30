@@ -77,11 +77,12 @@ public sealed class RunRecorder
                     break;
                 case CombatResolved fight:
                     lootGroup = fight.GroupId;
-                    var counts = _combat.GetValueOrDefault(fight.GroupId, new CombatGroupSummary(0, 0, 0));
+                    var counts = _combat.GetValueOrDefault(fight.GroupId, new CombatGroupSummary(0, 0, 0, 0));
                     _combat[fight.GroupId] = fight.End switch
                     {
                         CombatEnd.Won => counts with { Won = counts.Won + 1 },
                         CombatEnd.Fled or CombatEnd.Yielded => counts with { Fled = counts.Fled + 1 },
+                        CombatEnd.Beaten => counts with { Beaten = counts.Beaten + 1 },
                         _ => counts with { Died = counts.Died + 1 },
                     };
                     break;
@@ -130,9 +131,10 @@ public sealed class RunRecorder
             _events,
             _rumors,
             new CombatSummary(
-                _combat.Values.Sum(c => c.Won + c.Fled + c.Died),
+                _combat.Values.Sum(c => c.Won + c.Fled + c.Beaten + c.Died),
                 _combat.Values.Sum(c => c.Won),
                 _combat.Values.Sum(c => c.Fled),
+                _combat.Values.Sum(c => c.Beaten),
                 _combat.Values.Sum(c => c.Died),
                 Round(_insight),
                 _combat),

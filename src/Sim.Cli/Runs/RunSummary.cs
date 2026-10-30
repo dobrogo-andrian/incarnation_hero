@@ -45,11 +45,12 @@ public sealed record CombatSummary(
     int Fights,
     int Won,
     int Fled,
+    int Beaten,
     int Died,
     double Insight,
     IReadOnlyDictionary<string, CombatGroupSummary> ByGroup);
 
-public sealed record CombatGroupSummary(int Won, int Fled, int Died);
+public sealed record CombatGroupSummary(int Won, int Fled, int Beaten, int Died);
 
 /// <summary>Stones earned by source (an event, <c>loot:grp.*</c>) and spent by sink (an event, shop, qi_restore, place_refill).</summary>
 public sealed record StonesSummary(

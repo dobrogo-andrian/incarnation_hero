@@ -103,10 +103,18 @@ public sealed class EnemyGroupDef : ContentDef, IValidatedDef
 
     public LootDef Loot { get; set; } = new();
 
+    /// <summary>
+    /// Set for those who spare a beaten player (D62): instead of dying they lose everything they
+    /// carry, and are finished off after all with this chance. Not set: the fight is to the death.
+    /// </summary>
+    public double? KillChance { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (Members.Count == 0 || Members.Any(m => m.Count < 1))
             yield return "needs members, each at least once.";
+        if (KillChance is < 0 or > 1)
+            yield return "kill_chance must be a fraction.";
     }
 }
 

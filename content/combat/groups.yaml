@@ -1,10 +1,13 @@
 # Enemy groups events can start fights with (tech 4.1, D42): who fights, and the loot of a won
 # fight (stones in a range, items each with its own chance). Treasures of a place stay in the event.
+# Cultivators spare a beaten player (kill_chance, D62): they take everything and kill only now and
+# then. Beasts have none: their fights are to the death, and the way out is to flee.
 
 - id: grp.bandits.road
   name: { uk: "Дорожні розбійники" }
   members: [ { enemy: enemy.human.bandit, count: 2 } ]
   loot: { stones_min: 8, stones_max: 16 }
+  kill_chance: 0.1
 
 - id: grp.beast.grey_wolves
   name: { uk: "Зграя сірих вовків" }
@@ -15,6 +18,7 @@
   name: { uk: "Шукачі реліквій" }
   members: [ { enemy: enemy.human.relic_hunter, count: 2 } ]
   loot: { stones_min: 6, stones_max: 14 }       # fragments of old weapons
+  kill_chance: 0.1
 
 - id: grp.beast.river_serpent
   name: { uk: "Річковий змій" }
@@ -24,6 +28,7 @@
 - id: grp.human.tomb_keeper
   name: { uk: "Сторож гробниці" }
   members: [ { enemy: enemy.human.tomb_keeper } ]
+  kill_chance: 0.1
 
 # Hunting prey (§5): the loot is what pelts and meat fetch in the settlement.
 - id: grp.beast.wild_boar

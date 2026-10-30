@@ -35,7 +35,7 @@ public sealed class BotRunTests
             var stones = summary.Stones;
             Assert.Equal(stones.End - stones.Start, stones.Earned.Values.Sum() - stones.Spent.Values.Sum());
             Assert.Equal(summary.Weeks, summary.ActivityWeeks.Values.Sum());
-            Assert.Equal(summary.Combat.Fights, summary.Combat.ByGroup.Values.Sum(g => g.Won + g.Fled + g.Died));
+            Assert.Equal(summary.Combat.Fights, summary.Combat.ByGroup.Values.Sum(g => g.Won + g.Fled + g.Beaten + g.Died));
         }
     }
 
@@ -80,9 +80,9 @@ public sealed class BotRunTests
     /// update the hash only deliberately.
     /// </summary>
     [Theory]
-    [InlineData("cautious", "d51c10e20cb9674ca1d4d60537b5927baf767731ea72e266fdaa3c5560e73e92")]
-    [InlineData("fighter", "74840c54a31b3b36668085f7c397430591a16765d77375cf22967880d791d994")]
-    [InlineData("random", "524f4411d5dce76de732d37c246684f18f523fd79967a803da333ef7bd9e515b")]
+    [InlineData("cautious", "04dc57547c51c92b2242ad41b0f4008f3b03e26980175a5836e6c128d2d91f13")]
+    [InlineData("fighter", "0a22bf27052d3942b87d721753f79a4bb602a602fc6eb2ec0e15e02c19cad353")]
+    [InlineData("random", "03f732bffb0154acfea64a81b407ea28f0fd8046330c3fb3703727a083345215")]
     public void Golden_Seed42(string bot, string expectedHash)
     {
         var (_, sim) = BotRunner.Play(Repo, bot, 42);

@@ -88,6 +88,9 @@ public sealed class RunStats
 
     public int CombatsFled { get; set; }
 
+    /// <summary>Fights lost and survived at the winners' mercy (D62).</summary>
+    public int CombatsBeaten { get; set; }
+
     public int CombatsDied { get; set; }
 
     public int PillsTaken { get; set; }

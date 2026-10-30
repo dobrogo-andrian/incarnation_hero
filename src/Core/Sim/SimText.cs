@@ -117,6 +117,7 @@ public static class SimText
     private static readonly LocKey CombatWon = new("str.event.combat_won");
     private static readonly LocKey CombatFled = new("str.event.combat_fled");
     private static readonly LocKey CombatYielded = new("str.event.combat_yielded");
+    private static readonly LocKey CombatBeaten = new("str.event.combat_beaten");
     private static readonly LocKey CombatDied = new("str.event.combat_died");
     private static readonly LocKey CombatDeath = new("str.end.combat_death");
     private static readonly LocKey OptionCombat = new("str.dialog.option_combat");
@@ -389,7 +390,7 @@ public static class SimText
                 ? SummaryBreakthrough with { Args = [age, new("rank", Name(rank))] }
                 : SummaryBreakthroughFailed with { Args = [age, new("zone", Name(b.FailureZoneId!))] });
         }
-        lines.Add(SummaryCombats with { Args = [new("won", stats.CombatsWon), new("fled", stats.CombatsFled)] });
+        lines.Add(SummaryCombats with { Args = [new("won", stats.CombatsWon), new("fled", stats.CombatsFled), new("beaten", stats.CombatsBeaten)] });
         lines.Add(SummaryPills with { Args = [new("pills", stats.PillsTaken)] });
         lines.Add(SummaryStones with { Args = [new("earned", stats.StonesEarned), new("spent", stats.StonesSpent)] });
         lines.Add(SummaryDialogs with { Args = [new("dialogs", stats.Dialogs), new("rumors", stats.RumorsHeard)] });
@@ -568,7 +569,7 @@ public static class SimText
         ReputationChanged r => ReputationChangedLine with { Args = [new("sect", Name(r.SectId)), new("amount", Signed(r.Amount))] },
         Revealed r => RevealedLine with { Args = [new("place", Name(r.Id))] },
         RumorHeard r => Heard with { Args = [new("rumor", Name(r.RumorId))] },
-        CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, CombatEnd.Yielded => CombatYielded, _ => CombatDied }) with
+        CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, CombatEnd.Yielded => CombatYielded, CombatEnd.Beaten => CombatBeaten, _ => CombatDied }) with
         {
             Args = [new("group", Name(c.GroupId)), new("turns", c.Turns), new("health", Number(c.HealthLost)), new("qi", Number(c.QiSpent))],
         },

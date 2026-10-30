@@ -208,7 +208,7 @@
   text: { uk: "Прорив у віці {age} провалено: {zone}" }
 
 - id: str.summary.combats
-  text: { uk: "Бої: перемог {won}, втеч {fled}" }
+  text: { uk: "Бої: перемог {won}, втеч {fled}, поразок {beaten}" }
 
 - id: str.summary.pills
   text: { uk: "Пігулок прийнято: {pills}" }
@@ -710,6 +710,9 @@
 - id: str.view.trains
   text: { uk: "Тренує: {stats}" }
 
+- id: str.event.combat_beaten
+  text: { uk: "Поразка в бою: {group}. Вас лишили живим, але забрали все, що було при вас. Ходів: {turns}; здоров'я −{health}, ці −{qi}." }
+
 - id: str.event.combat_yielded
   text: { uk: "Ви здалися на арені: {group}. Ходів: {turns}; здоров'я −{health}, ці −{qi}." }
 
@@ -767,6 +770,9 @@
 
 - id: str.battle.fled
   text: { uk: "{who} тікає з поля." }
+
+- id: str.battle.beaten
+  text: { uk: "{who} падає без сил: переможці лишають живим." }
 
 - id: str.battle.yielded
   text: { uk: "{who} здається: поєдинок скінчено." }

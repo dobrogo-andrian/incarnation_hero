@@ -5,7 +5,7 @@ using Core.Sim;
 
 namespace Core.Tests.Combat;
 
-/// <summary>Auto-resolve: the hex battle played to the end by the AI on both sides, and the arena's yielding (§5).</summary>
+/// <summary>Auto-resolve: the hex battle played to the end by the AI on both sides, on its terms: to the death, spared (D62), an arena bout (§5).</summary>
 public class AutoBattleTests
 {
     private static CombatConfigDef Config => TestContent.Repo.Get<CombatConfigDef>(CombatConfigDef.CombatId);
@@ -15,8 +15,8 @@ public class AutoBattleTests
     private static Combatant Fighter(string id, double health = 100, double weapon = 10, string ai = "ai.cultivator_cautious") =>
         new(id, 0, health, 100, 0, 0, 0, 0, weapon, 10, 10, 10, 5, 15, "injury.body", weapon, [], Ai(ai));
 
-    private static CombatResult Resolve(Combatant player, Combatant foe, bool yields = false, ulong seed = 1) =>
-        AutoBattle.Resolve(player, [foe], Config, Xoshiro256StarStar.FromSeed(seed), Xoshiro256StarStar.FromSeed(seed + 100), yields);
+    private static CombatResult Resolve(Combatant player, Combatant foe, BattleTerms terms = BattleTerms.ToDeath, ulong seed = 1) =>
+        AutoBattle.Resolve(player, [foe], Config, Xoshiro256StarStar.FromSeed(seed), Xoshiro256StarStar.FromSeed(seed + 100), terms);
 
     [Fact]
     public void A_much_stronger_player_wins_and_keeps_what_the_fight_left()
@@ -37,12 +37,14 @@ public class AutoBattleTests
         Assert.Contains(result.Injuries, i => i.InjuryId == "injury.body");
     }
 
-    [Fact]
-    public void In_a_bout_to_giving_up_a_deadly_blow_is_stopped()
+    [Theory]
+    [InlineData(BattleTerms.Spared, CombatEnd.Beaten)]
+    [InlineData(BattleTerms.Bout, CombatEnd.Yielded)]
+    public void Unless_the_fight_is_to_the_death_a_deadly_blow_is_stopped(BattleTerms terms, CombatEnd end)
     {
-        var result = Resolve(Fighter(Combatant.PlayerId, weapon: 0.1), Fighter("killer", weapon: 1000, ai: "ai.beast_aggressive"), yields: true);
+        var result = Resolve(Fighter(Combatant.PlayerId, weapon: 0.1), Fighter("killer", weapon: 1000, ai: "ai.beast_aggressive"), terms);
 
-        Assert.Equal((CombatEnd.Yielded, 1.0), (result.End, result.Health));
+        Assert.Equal((end, 1.0), (result.End, result.Health));
     }
 
     [Fact]
@@ -50,7 +52,7 @@ public class AutoBattleTests
     {
         var player = Fighter(Combatant.PlayerId, health: 20);
 
-        var result = Resolve(player, Fighter("adept", weapon: 1), yields: true);
+        var result = Resolve(player, Fighter("adept", weapon: 1), BattleTerms.Bout);
 
         // Below the archetype's flee share from the start: the first own turn gives up.
         Assert.True(20 <= Ai("ai.cultivator_cautious").FleeHealthShare * 100);
@@ -58,12 +60,12 @@ public class AutoBattleTests
     }
 
     [Fact]
-    public void Only_side_0_of_a_bout_to_giving_up_may_yield()
+    public void Only_side_0_of_an_arena_bout_may_yield()
     {
-        var plain = Battle.Start([Fighter(Combatant.PlayerId)], [Fighter("wolf")], Config, Xoshiro256StarStar.FromSeed(1));
-        Assert.Equal(RejectReasons.CannotYield, plain.WhyNot(new Yield()));
+        var spared = Battle.Start([Fighter(Combatant.PlayerId)], [Fighter("wolf")], Config, Xoshiro256StarStar.FromSeed(1), BattleTerms.Spared);
+        Assert.Equal(RejectReasons.CannotYield, spared.WhyNot(new Yield()));
 
-        var bout = Battle.Start([Fighter(Combatant.PlayerId, weapon: 1)], [Fighter("wolf")], Config, Xoshiro256StarStar.FromSeed(1), yields: true);
+        var bout = Battle.Start([Fighter(Combatant.PlayerId, weapon: 1)], [Fighter("wolf")], Config, Xoshiro256StarStar.FromSeed(1), BattleTerms.Bout);
         Assert.Null(bout.WhyNot(new Yield()));
         bout.Execute(new EndTurn());
         Assert.Equal((1, RejectReasons.CannotYield), (bout.Active!.Side, bout.WhyNot(new Yield())));

@@ -46,6 +46,14 @@ public sealed class CombatTests
         - id: grp.test.killer
           name: { uk: "Убивці" }
           members: [ { enemy: enemy.test.killer } ]
+        - id: grp.test.robbers
+          name: { uk: "Грабіжники" }
+          members: [ { enemy: enemy.test.killer } ]
+          kill_chance: 0
+        - id: grp.test.murderers
+          name: { uk: "Душогуби" }
+          members: [ { enemy: enemy.test.killer } ]
+          kill_chance: 1
         - id: grp.test.adepts
           name: { uk: "Адепти" }
           members: [ { enemy: enemy.test.adept, count: 2 } ]
@@ -141,6 +149,37 @@ public sealed class CombatTests
         Assert.Equal(CombatEnd.Died, outcome.Events.OfType<CombatResolved>().Single().End);
         Assert.Equal(0, Current(sim.State.Player, "resource.health"));
         Assert.Contains(new RunEnded(RunEndCause.CombatDeath), outcome.Events);
+    }
+
+    [Fact]
+    public void BeatenBySparingCultivators_ThePlayerLivesOn_WithNothingLeft()
+    {
+        var sim = Simulation.NewGame(Content, 1);
+        var ctx = Context(sim);
+        var player = sim.State.Player;
+        Assert.NotEmpty(player.Items);
+        var events = new List<SimEvent>();
+
+        Assert.False(CombatSystem.Fight(sim.State, ctx, "grp.test.robbers", events));
+
+        Assert.Equal(CombatEnd.Beaten, events.OfType<CombatResolved>().Single().End);
+        Assert.Equal((GameMode.Overworld, 1.0, 0), (sim.State.Mode, Current(player, "resource.health"), player.Stones));
+        Assert.Empty(player.Items);
+        Assert.Contains(events, e => e is StonesChanged { Amount: -30 });
+        Assert.Contains(events, e => e is ItemsChanged { Count: < 0 });
+        Assert.Contains(player.Injuries, i => i.Value > 0);
+    }
+
+    [Fact]
+    public void BeatenPlayer_IsFinishedOff_WithTheGroupsKillChance()
+    {
+        var sim = Simulation.NewGame(Content, 1);
+        var events = new List<SimEvent>();
+
+        Assert.False(CombatSystem.Fight(sim.State, Context(sim), "grp.test.murderers", events));
+
+        Assert.Equal(CombatEnd.Died, events.OfType<CombatResolved>().Single().End);
+        Assert.Equal((GameMode.RunEnd, RunEndCause.CombatDeath), (sim.State.Mode, sim.State.EndCause));
     }
 
     [Fact]

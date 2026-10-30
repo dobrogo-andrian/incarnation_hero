@@ -14,16 +14,21 @@ public static class CombatSystem
 {
     /// <summary>
     /// Fights <paramref name="groupId"/>; true when won. An escape is a loss; death ends the run.
-    /// A bout that <paramref name="yields"/> (the arena) ends in giving up instead of escape or death.
+    /// An arena <paramref name="bout"/> ends in giving up instead of escape or death; a group that
+    /// spares (D62) robs a beaten player of everything, or finishes them off with its kill chance.
     /// </summary>
-    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events, bool yields = false)
+    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events, bool bout = false)
     {
         var player = state.Player;
         var config = ctx.Combat;
+        var group = ctx.Content.Get<EnemyGroupDef>(groupId);
         var me = Snapshot(player, ctx);
         var foes = Foes(ctx, groupId);
+        var terms = bout ? BattleTerms.Bout : group.KillChance is null ? BattleTerms.ToDeath : BattleTerms.Spared;
         var result = AutoBattle.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)),
-            Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Ai)), yields);
+            Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Ai)), terms);
+        if (result.End == CombatEnd.Beaten && ctx.Rng[RngStream.Combat].Chance(group.KillChance!.Value))
+            result = result with { End = CombatEnd.Died, Health = 0 };
 
         double qiBefore = me.Shield + me.QiPool;
         SetCurrent(player, config.HealthResource, result.Health);
@@ -48,7 +53,9 @@ public static class CombatSystem
             events.Add(new BuffGained(BuffKind.CombatInsight, insight));
         }
         if (result.End == CombatEnd.Won)
-            GiveLoot(player, ctx, ctx.Content.Get<EnemyGroupDef>(groupId).Loot, events);
+            GiveLoot(player, ctx, group.Loot, events);
+        if (result.End == CombatEnd.Beaten)
+            LoseEverything(player, events);
         return result.End == CombatEnd.Won;
     }
 
@@ -149,6 +156,19 @@ public static class CombatSystem
             ItemSystem.Change(player.Items, item.Item, item.Count);
             events.Add(new ItemsChanged(item.Item, item.Count));
         }
+    }
+
+    /// <summary>The winners take every stone and item the beaten player carries (D62).</summary>
+    private static void LoseEverything(PlayerState player, List<SimEvent> events)
+    {
+        if (player.Stones > 0)
+        {
+            events.Add(new StonesChanged(-player.Stones));
+            player.Stones = 0;
+        }
+        foreach (var item in player.Items)
+            events.Add(new ItemsChanged(item.ItemId, -item.Count));
+        player.Items.Clear();
     }
 
     /// <summary>An enemy's body for the character rules: its stats (0 where not given), its profile, no modifiers.</summary>

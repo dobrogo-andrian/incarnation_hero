@@ -71,7 +71,7 @@ def load(bots=BOTS, runs: int = 1000, seed_from: int = 1, force: bool = False) -
             "death_age_years": r["death_age_years"], "final_stage": r["final_stage"], "weeks": r["weeks"],
             "healing_weeks": r["healing_weeks"], "events": sum(r["events"].values()),
             "rumors": sum(r["rumors"].values()), "breakthrough_attempts": len(r["breakthroughs"]),
-            "fights": c["fights"], "won": c["won"], "fled": c["fled"], "died": c["died"],
+            "fights": c["fights"], "won": c["won"], "fled": c["fled"], "beaten": c["beaten"], "died": c["died"],
             "combat_insight": c["insight"], "stones_start": s["start"], "stones_end": s["end"],
             "stones_earned": sum(s["earned"].values()), "stones_spent": sum(s["spent"].values()),
             "pills_bought": sum(p["bought"].values()), "pills_taken": sum(p["taken"].values()),
@@ -94,7 +94,7 @@ def load(bots=BOTS, runs: int = 1000, seed_from: int = 1, force: bool = False) -
         stones=long(stones, ["flow", "source", "amount"]),
         pills=long(pills, ["flow", "item", "count"]),
         injuries=long(injuries, ["injury", "peak"]),
-        combat_groups=long(groups, ["group", "won", "fled", "died"]),
+        combat_groups=long(groups, ["group", "won", "fled", "beaten", "died"]),
     )
 
 

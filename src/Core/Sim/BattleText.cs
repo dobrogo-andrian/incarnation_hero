@@ -21,6 +21,7 @@ public static class BattleText
     private static readonly LocKey FleeBroken = new("str.battle.flee_broken");
     private static readonly LocKey Fled = new("str.battle.fled");
     private static readonly LocKey Yielded = new("str.battle.yielded");
+    private static readonly LocKey Beaten = new("str.battle.beaten");
     private static readonly LocKey Down = new("str.battle.down");
     private static readonly LocKey ShieldGone = new("str.battle.shield_broken");
     private static readonly LocKey TimedOut = new("str.battle.timed_out");
@@ -59,6 +60,7 @@ public static class BattleText
             FleeBroken f => FleeBroken with { Args = [Who(f.FighterId), Who(f.ByFighterId, "by")] },
             FighterFled f => Fled with { Args = [Who(f.FighterId)] },
             FighterYielded y => Yielded with { Args = [Who(y.FighterId)] },
+            FighterBeaten b => Beaten with { Args = [Who(b.FighterId)] },
             FighterDown d => Down with { Args = [Who(d.FighterId)] },
             ShieldBroken s => ShieldGone with { Args = [Who(s.FighterId)] },
             BattleTimedOut t => TimedOut with { Args = [new("turns", t.Turns)] },

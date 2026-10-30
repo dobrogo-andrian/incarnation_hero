@@ -63,7 +63,7 @@ public static class TrainingSystem
                 var bout = arena.Bouts[a.Bout];
                 Train(player, ctx, arena, events);
                 Pay(player, -bout.Fee, routine: true, events);
-                if (CombatSystem.Fight(state, ctx, bout.Group, events, yields: true))
+                if (CombatSystem.Fight(state, ctx, bout.Group, events, bout: true))
                     Pay(player, bout.Prize, routine: false, events);
                 break;
             default:

@@ -63,6 +63,9 @@ public static class RunStatsSystem
                 case CombatResolved { End: CombatEnd.Fled or CombatEnd.Yielded }:
                     stats.CombatsFled++;
                     break;
+                case CombatResolved { End: CombatEnd.Beaten }:
+                    stats.CombatsBeaten++;
+                    break;
                 case CombatResolved:
                     stats.CombatsDied++;
                     break;

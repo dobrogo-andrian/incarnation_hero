@@ -17,7 +17,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "46d8c5a2fc9d1d28cff015f0411db5611a2d5dc87ac8708748b7d7bc5afd1333";
+        const string expectedHash = "edf165c7245c460cf8e0a09f0433a805166cedeb613b8bc22a1d4b20afb16fea";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -35,7 +35,7 @@ public sealed class GoldenTests
     [Fact]
     public void TravelToPeakTakeTwoPillsThenAssimilateUntilSpent_Seed42()
     {
-        const string expectedHash = "e1194138e2e4b30da9299ee0afa188fc55d9389898c62fc20c39e8ac12a8da15";
+        const string expectedHash = "ac41566bb3f112f3aac8f01040d13df44a9358c203c168e65136a93eb0db97dc";
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);
         RunToEnd(sim, new Travel("zone.spirit_peak"));
@@ -56,7 +56,7 @@ public sealed class GoldenTests
     [Fact]
     public void PurifyFillTheScaleAndBreakThroughThenPurifyUntilDeath_Seed42()
     {
-        const string expectedHash = "0ac1c81dcc2628d943c0893da46e9a2b181c8993a35e52298aeb9b0351147e5b";
+        const string expectedHash = "8a6dd0c54717dbbc968add69b6accfb01bbe38575d5d5ff414b0edb77880c3c3";
         var purify = new MeditateActivity("meditation.purification", "place.spirit_peak.vein");
 
         var sim = Simulation.NewGame(TestContent.Repo, 42);

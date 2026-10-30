@@ -44,6 +44,9 @@ public enum CombatEnd
 
     /// <summary>An arena bout given up (§5): the player yields where they would flee, and a deadly blow is stopped.</summary>
     Yielded,
+
+    /// <summary>Struck down and spared by cultivators (D62): robbed of everything, unless they finish the player off after all.</summary>
+    Beaten,
 }
 
 /// <summary>What the fight left of the player: the numbers to write back, and injury points per scale in ID order.</summary>

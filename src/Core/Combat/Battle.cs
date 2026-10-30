@@ -22,7 +22,7 @@ public sealed record Guard : BattleCommand;
 /// </summary>
 public sealed record Flee : BattleCommand;
 
-/// <summary>Gives the bout up at once (§5): only side 0, only in a fight that <see cref="Battle.Yields"/>.</summary>
+/// <summary>Gives the bout up at once (§5): only side 0, only in an arena bout (<see cref="BattleTerms.Bout"/>).</summary>
 public sealed record Yield : BattleCommand;
 
 /// <summary>A technique the fighter knows, aimed at a hex: the adjacent hex its line or arc starts from, or the enemy it strikes (D56).</summary>
@@ -64,8 +64,24 @@ public sealed record FleeBroken(string FighterId, string ByFighterId) : SimEvent
 
 public sealed record FighterFled(string FighterId) : SimEvent;
 
-/// <summary>The fighter gave the bout up, by choice or because a deadly blow was stopped; it is out of the fight.</summary>
+/// <summary>The fighter gave the bout up; it is out of the fight.</summary>
 public sealed record FighterYielded(string FighterId) : SimEvent;
+
+/// <summary>A blow that would have killed the fighter left it at the winners' mercy instead; it is out of the fight.</summary>
+public sealed record FighterBeaten(string FighterId) : SimEvent;
+
+/// <summary>What side 0 risks in a fight (§5, §7.7, D62).</summary>
+public enum BattleTerms
+{
+    /// <summary>No health left is death: beasts, and anyone who does not spare.</summary>
+    ToDeath,
+
+    /// <summary>A blow that would kill side 0 leaves it beaten at 1 health instead: cultivators who rob rather than kill.</summary>
+    Spared,
+
+    /// <summary>An arena bout: spared as well, and side 0 may also yield (<see cref="Yield"/>).</summary>
+    Bout,
+}
 
 /// <summary>The fight ran out of turns: side 0 is taken to have withdrawn (D59).</summary>
 public sealed record BattleTimedOut(int Turns) : SimEvent;
@@ -120,8 +136,11 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
     /// <summary>Gave the bout up (§5): out of the fight, alive.</summary>
     public bool Yielded { get; internal set; }
 
+    /// <summary>Struck down but spared (<see cref="BattleTerms.Spared"/>): out of the fight at 1 health.</summary>
+    public bool Beaten { get; internal set; }
+
     public bool Down => Health <= 0;
-    public bool InFight => !Down && !Fled && !Yielded;
+    public bool InFight => !Down && !Fled && !Yielded && !Beaten;
 
     internal void Wound(string injuryId, double amount) => _injuries[injuryId] = _injuries.GetValueOrDefault(injuryId) + amount;
 }
@@ -135,23 +154,23 @@ public sealed class Battle
     private readonly CombatConfigDef _config;
     private readonly List<BattleFighter> _fighters;
 
-    /// <summary>What a yielding fighter is left with when the blow that would have killed it is stopped.</summary>
-    private const double YieldedHealth = 1;
+    /// <summary>What a spared fighter is left with when the blow that would have killed it is stopped.</summary>
+    private const double SparedHealth = 1;
 
-    private Battle(HexField field, List<BattleFighter> fighters, CombatConfigDef config, Xoshiro256StarStar rng, bool yields)
+    private Battle(HexField field, List<BattleFighter> fighters, CombatConfigDef config, Xoshiro256StarStar rng, BattleTerms terms)
     {
         Field = field;
         _fighters = fighters;
         _config = config;
         Rng = rng;
-        Yields = yields;
+        Terms = terms;
         Opening = NextTurn();
     }
 
     public HexField Field { get; }
 
-    /// <summary>A bout to giving up (the arena, §5): side 0 may yield, and a blow that would kill it makes it yield instead.</summary>
-    public bool Yields { get; }
+    /// <summary>Whether side 0 is spared a deadly blow and may yield.</summary>
+    public BattleTerms Terms { get; }
     public IReadOnlyList<BattleFighter> Fighters => _fighters;
 
     /// <summary>The fight's own stream (a subseed of <c>combat</c>), for damage rolls.</summary>
@@ -174,13 +193,13 @@ public sealed class Battle
     public int? Winner => IsOver ? _fighters.Where(f => f.InFight).Select(f => (int?)f.Side).FirstOrDefault() : null;
 
     /// <summary>Side 0 deploys one step inside the near rim, side 1 inside the far one, each spreading out from its anchor.</summary>
-    public static Battle Start(IReadOnlyList<Combatant> side0, IReadOnlyList<Combatant> side1, CombatConfigDef config, Xoshiro256StarStar rng, bool yields = false)
+    public static Battle Start(IReadOnlyList<Combatant> side0, IReadOnlyList<Combatant> side1, CombatConfigDef config, Xoshiro256StarStar rng, BattleTerms terms = BattleTerms.ToDeath)
     {
         var field = new HexField(config.FieldRadius);
         var fighters = new List<BattleFighter>();
         Deploy(side0, 0, new Hex(0, field.Radius - 1));
         Deploy(side1, 1, new Hex(0, 1 - field.Radius));
-        return new Battle(field, fighters, config, rng, yields);
+        return new Battle(field, fighters, config, rng, terms);
 
         void Deploy(IReadOnlyList<Combatant> side, int sideIndex, Hex anchor)
         {
@@ -278,7 +297,7 @@ public sealed class Battle
                 return new(ActionRefusal(actor, _config.FleeEnergy));
 
             case Yield:
-                return new(Yields && actor.Side == 0 ? null : RejectReasons.CannotYield);
+                return new(Terms == BattleTerms.Bout && actor.Side == 0 ? null : RejectReasons.CannotYield);
 
             case Move move:
                 return Reachable().FirstOrDefault(r => r.To == move.To) is { } reach ? new(null, Reach: reach) : new(RejectReasons.Unreachable);
@@ -531,7 +550,7 @@ public sealed class Battle
         events.AddRange(NextTurn());
     }
 
-    /// <summary>One hit through the shared pipeline (§7.4); in a bout that yields, a deadly blow on side 0 is stopped and it yields.</summary>
+    /// <summary>One hit through the shared pipeline (§7.4); unless the fight is to the death, a deadly blow on side 0 is stopped and it is beaten.</summary>
     private void Strike(BattleFighter attacker, BattleFighter target, double damage, List<SimEvent> events)
     {
         double bodyShare = _config.BodyDamageMultiplier * (target.Guarding ? _config.GuardBodyShare : 1);
@@ -539,16 +558,16 @@ public sealed class Battle
         bool hadShield = target.Shield > 0;
         target.Shield -= hit.Absorbed;
         target.Health = Math.Max(0, target.Health - hit.ToHealth);
-        bool yielded = target.Down && Yields && target.Side == 0;
-        if (yielded)
-            (target.Health, target.Yielded) = (YieldedHealth, true);
+        bool spared = target.Down && Terms != BattleTerms.ToDeath && target.Side == 0;
+        if (spared)
+            (target.Health, target.Beaten) = (SparedHealth, true);
         foreach (var (injuryId, amount) in hit.Injuries)
             target.Wound(injuryId, amount);
         events.Add(new FighterHit(attacker.Id, target.Id, hit.Damage, hit.Absorbed, hit.ToHealth));
         if (hadShield && target.Shield <= 0)
             events.Add(new ShieldBroken(target.Id));
-        if (yielded)
-            events.Add(new FighterYielded(target.Id));
+        if (spared)
+            events.Add(new FighterBeaten(target.Id));
         else if (target.Down)
             events.Add(new FighterDown(target.Id));
     }
