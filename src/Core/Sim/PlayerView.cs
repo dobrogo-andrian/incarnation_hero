@@ -84,7 +84,7 @@ public sealed record PlayerView(
             RumorSystem.View(state, ctx),
             EventSystem.View(state, ctx),
             state.Fight is { } fight
-                ? new FightView(fight.Kind, fight.ByHand, CombatSystem.Terms(ctx, fight), CombatSystem.Preview(player, ctx, fight.GroupId))
+                ? new FightView(fight.GroupId, fight.Kind, fight.ByHand, CombatSystem.Terms(ctx, fight), Scouting.Of(player, ctx, fight))
                 : null,
             state.StoppingInterrupts.ToList(),
             state.AutoFights.ToList(),

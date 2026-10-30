@@ -45,4 +45,9 @@ body_damage_multiplier: 1.5       # what gets through the qi shield hurts the bo
 flee_energy: 4                    # escape from a rim hex with no enemy next to it (§7.6)
 max_turns: 200                    # an undecided hex fight: side 0 is taken to have withdrawn (D59)
 player_ai: ai.cultivator_cautious # who plays the player in arena runs and auto-resolve
+scouting:                         # reading the foes before a fight (D70); draft numbers
+  bounds: [0.5, 0.8, 1.25, 2]     # foe / hero: far below < 0.5 ≤ below < 0.8 ≤ even < 1.25 ≤ above < 2 ≤ far above
+  misread_chance: 0.5             # a word is a step off at 50% with no perception,
+  misread_per_perception: 0.025   # 2.5 points less per perception point: 20 reads true, as with event chances
+  techniques_min_perception: 2    # a readable foe's techniques show from perception 2
 attack_energy: 5                  # the basic attack costs more than a turn gives back (output 10–18 → 2.5–4.5): energy runs out

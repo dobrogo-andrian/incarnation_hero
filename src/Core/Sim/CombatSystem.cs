@@ -183,14 +183,16 @@ public static class CombatSystem
     public static CombatPreview Preview(PlayerState player, SimContext ctx, string groupId)
     {
         var members = ctx.Content.Get<EnemyGroupDef>(groupId).Members;
-        int stage = members.Max(m => ctx.Content.Get<EnemyDef>(m.Enemy).Stage);
-        return new CombatPreview(groupId, members.Sum(m => m.Count), stage.CompareTo(QiStage(player)) switch
-        {
-            < 0 => StageRelation.Lower,
-            0 => StageRelation.Equal,
-            _ => StageRelation.Higher,
-        });
+        return new CombatPreview(groupId, members.Sum(m => m.Count), StageAgainst(player, members.Max(m => ctx.Content.Get<EnemyDef>(m.Enemy).Stage)));
     }
+
+    /// <summary>A qi stage against the player's, known without perception (§2.1).</summary>
+    public static StageRelation StageAgainst(PlayerState player, int stage) => stage.CompareTo(QiStage(player)) switch
+    {
+        < 0 => StageRelation.Lower,
+        0 => StageRelation.Equal,
+        _ => StageRelation.Higher,
+    };
 
     /// <summary>Whether the player has the health hunting and the arena ask for (§5).</summary>
     public static bool FitToFight(PlayerState player, SimContext ctx)
@@ -313,5 +315,5 @@ public enum StageRelation
 /// <summary>The basic knowledge of a fight ahead, available without perception (§2.1).</summary>
 public sealed record CombatPreview(string GroupId, int Foes, StageRelation Stage);
 
-/// <summary>The fight waiting for the player (D67): offered, or fought by hand on the battle screen.</summary>
-public sealed record FightView(FightKind Kind, bool ByHand, BattleTerms Terms, CombatPreview Preview);
+/// <summary>The fight waiting for the player (D67): offered with the foes as the player reads them (D70), or fought by hand on the battle screen.</summary>
+public sealed record FightView(string GroupId, FightKind Kind, bool ByHand, BattleTerms Terms, FightScouting Scouting);

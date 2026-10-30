@@ -205,7 +205,7 @@ public sealed class CombatTests
 
         Assert.Contains(new FightOffered("grp.test.adepts", FightKind.Event), offer.Events);
         Assert.Equal(GameMode.Combat, sim.State.Mode);
-        Assert.Equal(new FightView(FightKind.Event, false, BattleTerms.ToDeath, new CombatPreview("grp.test.adepts", 2, StageRelation.Higher)), sim.View.Fight);
+        Assert.Equal((FightKind.Event, false, BattleTerms.ToDeath), (sim.View.Fight!.Kind, sim.View.Fight.ByHand, sim.View.Fight.Terms));
         Assert.Null(sim.Battle);
         Assert.Equal(RejectReasons.WrongMode, sim.Execute(new ChooseEventOption(0)).RejectReason);
         Assert.Equal(RejectReasons.WrongMode, sim.Execute(new StartActivity(new WaitActivity(), 1)).RejectReason);
@@ -221,7 +221,7 @@ public sealed class CombatTests
 
         Assert.True(opening.Accepted);
         Assert.Contains(opening.Events, e => e is BattleTurnStarted);
-        Assert.Equal(new FightView(FightKind.Event, true, BattleTerms.ToDeath, new CombatPreview("grp.test.adepts", 2, StageRelation.Higher)), sim.View.Fight);
+        Assert.True(sim.View.Fight!.ByHand);
         Assert.Equal(0, sim.Battle!.Active!.Side);
         Assert.Equal(3, sim.Battle.Fighters.Count);
         Assert.Equal(RejectReasons.FightUnderway, sim.Execute(new FightByHand()).RejectReason);

@@ -160,6 +160,29 @@ public sealed class LootItemDef
 /// Combat rules (<c>config.combat</c>, tech 4.1): the hex battle (D53–D60) and what a fight leaves
 /// on the character: the shield → health → injuries pipeline, insight. Draft numbers until Sim.Cli reports.
 /// </summary>
+/// <summary>Reading the foes before a fight (D70): each number against the hero's as one of five words, misread by a step at a chance perception lowers.</summary>
+public sealed class ScoutingDef : IValidatedDef
+{
+    /// <summary>The foe's number over the hero's from which each word above "far below" starts: below, even, above, far above.</summary>
+    public List<double> Bounds { get; set; } = [];
+
+    /// <summary>The chance a word is a step off with no perception; each point of perception takes <see cref="MisreadPerPerception"/> off it.</summary>
+    public double MisreadChance { get; set; }
+
+    public double MisreadPerPerception { get; set; }
+
+    /// <summary>Perception from which a readable foe's techniques are known.</summary>
+    public double TechniquesMinPerception { get; set; }
+
+    public IEnumerable<string> Validate(ContentDb db)
+    {
+        if (Bounds.Count != 4 || Bounds[0] <= 0 || Bounds.Zip(Bounds.Skip(1)).Any(p => p.Second <= p.First))
+            yield return "scouting needs 4 positive bounds in ascending order.";
+        if (MisreadChance is < 0 or > 1 || MisreadPerPerception < 0 || TechniquesMinPerception < 0)
+            yield return "scouting needs a misread_chance fraction and misread_per_perception and techniques_min_perception of zero or more.";
+    }
+}
+
 public sealed class CombatConfigDef : ContentDef, IValidatedDef
 {
     public const string CombatId = "config.combat";
@@ -278,6 +301,9 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
 
     /// <summary>What gets through the qi shield hurts the body this many times over, injuries with it (§7.4).</summary>
     public double BodyDamageMultiplier { get; set; } = 1;
+
+    /// <summary>What perception tells of the foes before a fight (D70).</summary>
+    public ScoutingDef Scouting { get; set; } = new();
 
     public IEnumerable<string> Validate(ContentDb db)
     {
