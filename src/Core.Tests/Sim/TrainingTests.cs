@@ -92,6 +92,53 @@ public sealed class TrainingTests
     }
 
     [Fact]
+    public void AHuntsFight_NotAutoResolved_IsOffered_AndEndsTheHunt()
+    {
+        var sim = NewGame();
+        int stones = sim.State.Player.Stones;
+        Assert.Equal([FightKind.Hunt, FightKind.Arena], sim.View.AutoFights);
+        Assert.True(sim.Execute(new SetAutoFights([FightKind.Arena])).Accepted);
+
+        var outcome = sim.Execute(new StartActivity(new HuntActivity("hunt.test.easy"), 5));
+
+        Assert.Contains(new FightOffered("grp.test.weak", FightKind.Hunt), outcome.Events);
+        Assert.Contains(outcome.Events, e => e is ActivityInterrupted);
+        Assert.Equal((GameMode.Combat, 1), (sim.State.Mode, sim.State.Week));
+        Assert.Null(sim.State.Activity);
+
+        sim.Execute(new FightByHand());
+        var end = sim.Execute(new AutoResolveFight());
+
+        Assert.Equal(CombatEnd.Won, end.Events.OfType<CombatResolved>().Single().End);
+        Assert.Equal((GameMode.Overworld, stones + 3), (sim.State.Mode, sim.State.Player.Stones));
+    }
+
+    [Fact]
+    public void AnArenaBoutByHand_CanBeGivenUp_WithoutThePrize()
+    {
+        var sim = NewGame();
+        int stones = sim.State.Player.Stones;
+        sim.Execute(new SetAutoFights([]));
+
+        sim.Execute(new StartActivity(new ArenaActivity("arena.test", 0), 3));
+        Assert.Equal(BattleTerms.Bout, sim.View.Fight!.Terms);
+        sim.Execute(new FightByHand());
+        var given = sim.Execute(new FightAction(new Yield()));
+
+        Assert.Equal(CombatEnd.Yielded, given.Events.OfType<CombatResolved>().Single().End);
+        Assert.Equal((GameMode.Overworld, stones - 4), (sim.State.Mode, sim.State.Player.Stones));
+    }
+
+    [Fact]
+    public void AnEventsFight_IsNeverAutoResolvedUnasked()
+    {
+        var sim = NewGame();
+
+        Assert.Equal(RejectReasons.EventFightsAsk, sim.Execute(new SetAutoFights([FightKind.Event])).RejectReason);
+        Assert.Equal([FightKind.Hunt, FightKind.Arena], sim.State.AutoFights);
+    }
+
+    [Fact]
     public void HuntingAndTheArena_NeedFightingHealth()
     {
         var sim = NewGame();

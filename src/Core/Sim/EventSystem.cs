@@ -83,13 +83,14 @@ public static class EventSystem
             return CommandOutcome.Reject(RejectReasons.OptionUnavailable);
 
         string? next = Apply(option.Effects, state, ctx, events) ?? option.Next;
-        if (option.Outcomes.Count > 0 && state.Mode != GameMode.RunEnd)
+        if (option.Outcomes.Count > 0 && state.Mode == GameMode.EventDialog)
         {
             var outcome = ctx.Rng[RngStream.Events].PickWeighted(option.Outcomes.Select(o => (o, OutcomeWeight(o, state.Player, ctx))).ToList());
             next = Apply(outcome.Effects, state, ctx, events) ?? outcome.Next;
         }
 
-        if (state.Mode == GameMode.RunEnd)
+        // The run ended, or a fight is offered: its end goes on to the win or loss node itself.
+        if (state.Mode != GameMode.EventDialog)
             return CommandOutcome.Accept(events);
         if (next is null)
             Close(state, events);
@@ -137,7 +138,7 @@ public static class EventSystem
         };
     }
 
-    /// <summary>Applies effects in order; returns the node a fight among them leads to, if any.</summary>
+    /// <summary>Applies effects in order; returns the next node an effect decides, if any. A fight comes last and leaves the dialog waiting.</summary>
     private static string? Apply(List<EventEffectDef> effects, GameState state, SimContext ctx, List<SimEvent> events)
     {
         var player = state.Player;
@@ -207,7 +208,8 @@ public static class EventSystem
                     RumorSystem.Hear(state, ctx, ctx.Content.Get<RumorDef>(rumor.Id), rumor.Source, events);
                     break;
                 case { StartCombat: { } combat }:
-                    return CombatSystem.Fight(state, ctx, combat.Group, events) ? combat.Win : combat.Loss;
+                    CombatSystem.Offer(state, ctx, CombatSystem.NewFight(ctx, combat.Group, FightKind.Event, combat.Win, combat.Loss), events);
+                    return null;
                 default:
                     throw new InvalidOperationException("Effect with no field set.");
             }

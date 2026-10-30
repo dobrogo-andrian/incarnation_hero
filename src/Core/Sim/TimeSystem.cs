@@ -7,7 +7,7 @@ public static class TimeSystem
 {
     /// <summary>
     /// Advances weeks until the activity ends, an interrupt of a stopping category fires, an event
-    /// opens or the run ends. An interrupt or event ends the activity for good (D44): the player
+    /// or a fight opens or the run ends. An interrupt, event or fight ends the activity for good (D44, D67): the player
     /// decides anew what to do. Seclusion runs to its resolution, since no event comes during it
     /// and stopping would throw away its weeks. Non-stopping interrupts are still reported in
     /// <paramref name="events"/>.
@@ -19,7 +19,7 @@ public static class TimeSystem
             int weekStart = events.Count;
             AdvanceWeek(state, ctx, events);
 
-            bool stopped = state.Mode == GameMode.EventDialog
+            bool stopped = state.Mode is GameMode.EventDialog or GameMode.Combat
                 || (active.Activity is not BreakthroughActivity && StopsAt(state, events, weekStart));
             if (stopped && state.Activity is not null)
             {
@@ -66,7 +66,7 @@ public static class TimeSystem
         string? context = EventSystem.ContextOf(state, ctx.Content);
         var activity = state.Activity!.Activity;
         ActivitySystem.AdvanceWeek(state, ctx, events);
-        if (state.Mode == GameMode.RunEnd)
+        if (state.Mode is GameMode.RunEnd or GameMode.Combat)
             return;
         RumorSystem.RollWeek(state, ctx, RumorSystem.OriginOf(context, activity, ctx), events);
         if (!RumorSystem.TryMeet(state, ctx, activity, events))

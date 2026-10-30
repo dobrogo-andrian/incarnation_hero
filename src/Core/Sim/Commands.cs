@@ -1,3 +1,4 @@
+using Core.Combat;
 using Core.State;
 
 namespace Core.Sim;
@@ -17,6 +18,20 @@ public abstract record EventDialogCommand : Command
 {
     public override GameMode Mode => GameMode.EventDialog;
 }
+
+public abstract record CombatCommand : Command
+{
+    public override GameMode Mode => GameMode.Combat;
+}
+
+/// <summary>Takes the offered fight by hand, on the hex field (D67).</summary>
+public sealed record FightByHand : CombatCommand;
+
+/// <summary>Leaves the fight to the AI (D61, D67): the offered fight from its start, or the rest of one fought by hand.</summary>
+public sealed record AutoResolveFight : CombatCommand;
+
+/// <summary>The player's command in a fight by hand; the enemy turns up to the player's next one come in the same outcome.</summary>
+public sealed record FightAction(BattleCommand Command) : CombatCommand;
 
 /// <summary>
 /// Chooses option <paramref name="Index"/> of the current event node; at a node without options,
@@ -54,6 +69,9 @@ public sealed record AttemptBreakthrough(string VectorId, string PlaceId, bool A
 
 /// <summary>Makes a studied cultivation method the active one, or clears it with null (§6). Instant.</summary>
 public sealed record SetActiveMethod(string? MethodId) : OverworldCommand;
+
+/// <summary>Chooses which kinds of fight (hunts, the arena) are auto-resolved without asking (D67).</summary>
+public sealed record SetAutoFights(IReadOnlyList<FightKind> Kinds) : OverworldCommand;
 
 /// <summary>Chooses which interrupt categories stop a running activity.</summary>
 public sealed record SetInterruptStops(IReadOnlyList<InterruptCategory> Categories) : OverworldCommand;

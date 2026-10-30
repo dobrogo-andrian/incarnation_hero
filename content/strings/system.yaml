@@ -28,6 +28,15 @@
 - id: str.reject.cannot_yield
   text: { uk: "Здатися можна лише в поєдинку на арені." }
 
+- id: str.reject.fight_underway
+  text: { uk: "Бій уже йде." }
+
+- id: str.reject.fight_not_taken
+  text: { uk: "Спершу оберіть: битися самому чи довіритися авторезолву." }
+
+- id: str.reject.event_fights_ask
+  text: { uk: "Бій із події завжди питає, як битися." }
+
 - id: str.reject.unknown_technique
   text: { uk: "Ця техніка вам невідома." }
 

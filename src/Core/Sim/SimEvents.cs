@@ -117,4 +117,7 @@ public sealed record RumorHeard(string RumorId) : InterruptEvent
 }
 
 /// <summary>A fight is over (D42): how it ended, after how many turns of the hex battle, and what it cost in health and qi (shield and pool).</summary>
+/// <summary>A fight waits for the player to take it by hand or leave it to the AI (D67).</summary>
+public sealed record FightOffered(string GroupId, FightKind Kind) : SimEvent;
+
 public sealed record CombatResolved(string GroupId, CombatEnd End, int Turns, double HealthLost, double QiSpent) : SimEvent;

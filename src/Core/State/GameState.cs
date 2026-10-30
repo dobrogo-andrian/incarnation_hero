@@ -1,3 +1,4 @@
+using Core.Combat;
 using Core.Rng;
 
 namespace Core.State;
@@ -22,6 +23,14 @@ public enum InterruptCategory
     RumorHeard,
 }
 
+/// <summary>Where a fight of the run comes from: what it goes on to, and whether it may be auto-resolved unasked (D67).</summary>
+public enum FightKind
+{
+    Event,
+    Hunt,
+    Arena,
+}
+
 public enum RunEndCause
 {
     OldAge,
@@ -35,7 +44,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 16;
+    public const int CurrentSchemaVersion = 17;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }
@@ -56,6 +65,9 @@ public sealed class GameState
     /// <summary>The event dialog in progress (<see cref="GameMode.EventDialog"/>).</summary>
     public ActiveEvent? Event { get; set; }
 
+    /// <summary>The fight offered or fought by hand (<see cref="GameMode.Combat"/>); an event's dialog waits in <see cref="Event"/> meanwhile.</summary>
+    public ActiveFight? Fight { get; set; }
+
     /// <summary>Every event shown this run, in event ID order: for once-per-run, cooldowns and the repeat penalty (D38).</summary>
     public List<EventRecord> EventHistory { get; set; } = [];
 
@@ -67,6 +79,9 @@ public sealed class GameState
 
     /// <summary>Interrupt categories that stop a running activity. Others are reported and time goes on.</summary>
     public List<InterruptCategory> StoppingInterrupts { get; set; } = [.. Enum.GetValues<InterruptCategory>()];
+
+    /// <summary>Kinds of fight auto-resolved without asking (D67); an event's fight always asks.</summary>
+    public List<FightKind> AutoFights { get; set; } = [FightKind.Hunt, FightKind.Arena];
 
     /// <summary>Set when the run is over (<see cref="GameMode.RunEnd"/>).</summary>
     public RunEndCause? EndCause { get; set; }
@@ -198,6 +213,35 @@ public sealed class ActiveEvent
 
     /// <summary>Week it started; with the seed it fixes how the chances of its options are misjudged.</summary>
     public int StartedWeek { get; set; }
+}
+
+/// <summary>
+/// A fight of the run waiting for the player (D67): offered, then fought by hand or auto-resolved.
+/// The battle itself is not saved: its seeds and the player's commands replay it exactly (tech 4.1).
+/// </summary>
+public sealed class ActiveFight
+{
+    public string GroupId { get; set; } = "";
+    public FightKind Kind { get; set; }
+
+    /// <summary>Subseeds of the <c>combat</c> and <c>ai</c> streams, drawn when the fight was offered.</summary>
+    public ulong CombatSeed { get; set; }
+
+    public ulong AiSeed { get; set; }
+
+    /// <summary>Whether the player took the fight by hand; until then it is only offered.</summary>
+    public bool ByHand { get; set; }
+
+    /// <summary>The player's commands so far, in order.</summary>
+    public List<BattleCommand> Commands { get; set; } = [];
+
+    /// <summary>An event's nodes after a win and after any other end.</summary>
+    public string? WinNode { get; set; }
+
+    public string? LossNode { get; set; }
+
+    /// <summary>An arena bout's prize for a win.</summary>
+    public int Prize { get; set; }
 }
 
 public sealed class EventRecord

@@ -4,7 +4,7 @@ namespace Core.Sim;
 
 /// <summary>
 /// Plays a command the way a headless script does (Sim.Cli <c>run</c>, golden and system tests):
-/// answers event dialogs with the first available choice and, since an event or interrupt ends an
+/// answers event dialogs with the first available choice, auto-resolves fights (D67) and, since an event or interrupt ends an
 /// activity for good (D44), starts it again for the weeks still left — until it finishes, its weeks
 /// are used up, the journey arrives, it can no longer start, or the run ends.
 /// </summary>
@@ -25,11 +25,13 @@ public static class Script
         while (true)
         {
             bool interrupted = outcome.Events.Any(e => e is ActivityInterrupted);
-            while (sim.View.Event is { } dialog)
+            while (sim.State.Mode is GameMode.EventDialog or GameMode.Combat)
             {
-                var choice = new ChooseEventOption(SimText.EventChoices(dialog).First(c => c.Available).Index);
-                outcome = sim.Execute(choice);
-                yield return (choice, outcome);
+                Command answer = sim.State.Mode == GameMode.Combat
+                    ? new AutoResolveFight()
+                    : new ChooseEventOption(SimText.EventChoices(sim.View.Event!).First(c => c.Available).Index);
+                outcome = sim.Execute(answer);
+                yield return (answer, outcome);
             }
             if (!interrupted || sim.State.Mode != GameMode.Overworld || Resume(sim, command, startWeek) is not { } again)
                 yield break;

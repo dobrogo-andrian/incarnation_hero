@@ -34,7 +34,9 @@ public static class BotRunner
                 throw new InvalidOperationException($"Bot {botName} made {MaxCommands} commands on seed {seed} without ending the run.");
 
             var view = sim.View;
-            var (command, outcome) = ExecuteFirstAccepted(sim, bot.Propose(view))
+            // Bots always auto-resolve (D67).
+            var proposals = view.Mode == GameMode.Combat ? [new AutoResolveFight()] : bot.Propose(view);
+            var (command, outcome) = ExecuteFirstAccepted(sim, proposals)
                 ?? throw new InvalidOperationException($"Core rejected every command of bot {botName} on seed {seed}, week {view.Week}.");
             bot.Observe(outcome.Events);
             recorder.Record(view, command, outcome.Events);

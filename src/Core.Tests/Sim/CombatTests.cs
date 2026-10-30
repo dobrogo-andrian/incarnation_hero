@@ -2,6 +2,7 @@ using Core.Combat;
 using Core.Content;
 using Core.Loc;
 using Core.Rng;
+using Core.Save;
 using Core.Sim;
 using Core.State;
 
@@ -144,7 +145,8 @@ public sealed class CombatTests
         var sim = Simulation.NewGame(Content, 1);
         EventSystem.Start(sim.State, Content.Get<EventDef>("evt.test.ambush"), []);
 
-        var outcome = sim.Execute(new ChooseEventOption(0));
+        Assert.True(sim.Execute(new ChooseEventOption(0)).Accepted);
+        var outcome = sim.Execute(new AutoResolveFight());
 
         Assert.True(outcome.Accepted);
         Assert.Equal((GameMode.RunEnd, RunEndCause.CombatDeath), (sim.State.Mode, sim.State.EndCause));
@@ -182,6 +184,93 @@ public sealed class CombatTests
 
         Assert.Equal(CombatEnd.Died, events.OfType<CombatResolved>().Single().End);
         Assert.Equal((GameMode.RunEnd, RunEndCause.CombatDeath), (sim.State.Mode, sim.State.EndCause));
+    }
+
+    /// <summary>An event's fight against the two adepts, offered and waiting for the player's choice.</summary>
+    private static Simulation Offered()
+    {
+        var sim = Simulation.NewGame(Content, 1);
+        EventSystem.Start(sim.State, Content.Get<EventDef>("evt.test.ambush"), []);
+        Assert.True(sim.Execute(new ChooseEventOption(1)).Accepted);
+        return sim;
+    }
+
+    [Fact]
+    public void AnEventsFight_WaitsForTheChoice_AndTakesOnlyFightCommands()
+    {
+        var sim = Simulation.NewGame(Content, 1);
+        EventSystem.Start(sim.State, Content.Get<EventDef>("evt.test.ambush"), []);
+
+        var offer = sim.Execute(new ChooseEventOption(1));
+
+        Assert.Contains(new FightOffered("grp.test.adepts", FightKind.Event), offer.Events);
+        Assert.Equal(GameMode.Combat, sim.State.Mode);
+        Assert.Equal(new FightView(FightKind.Event, false, BattleTerms.ToDeath, new CombatPreview("grp.test.adepts", 2, StageRelation.Higher)), sim.View.Fight);
+        Assert.Null(sim.Battle);
+        Assert.Equal(RejectReasons.WrongMode, sim.Execute(new ChooseEventOption(0)).RejectReason);
+        Assert.Equal(RejectReasons.WrongMode, sim.Execute(new StartActivity(new WaitActivity(), 1)).RejectReason);
+        Assert.Equal(RejectReasons.FightNotTaken, sim.Execute(new FightAction(new EndTurn())).RejectReason);
+    }
+
+    [Fact]
+    public void AFightByHand_ShowsTheBattle_AndCannotBeTakenTwice()
+    {
+        var sim = Offered();
+
+        var opening = sim.Execute(new FightByHand());
+
+        Assert.True(opening.Accepted);
+        Assert.Contains(opening.Events, e => e is BattleTurnStarted);
+        Assert.Equal(new FightView(FightKind.Event, true, BattleTerms.ToDeath, new CombatPreview("grp.test.adepts", 2, StageRelation.Higher)), sim.View.Fight);
+        Assert.Equal(0, sim.Battle!.Active!.Side);
+        Assert.Equal(3, sim.Battle.Fighters.Count);
+        Assert.Equal(RejectReasons.FightUnderway, sim.Execute(new FightByHand()).RejectReason);
+        Assert.Equal(RejectReasons.CannotYield, sim.Execute(new FightAction(new Yield())).RejectReason);
+    }
+
+    [Fact]
+    public void AFightByHand_PlaysTheEnemiesUpToThePlayersTurn_AndAFightHandedOverEndsLikeAutoResolve()
+    {
+        var auto = Offered();
+        auto.Execute(new AutoResolveFight());
+
+        var byHand = Offered();
+        byHand.Execute(new FightByHand());
+        var waited = byHand.Execute(new FightAction(new EndTurn()));
+        Assert.Contains(waited.Events, e => e is FighterWaited { FighterId: Combatant.PlayerId });
+        Assert.True(byHand.Battle is null || byHand.Battle.Active!.Side == 0);
+        var rest = byHand.Execute(new AutoResolveFight());
+
+        Assert.Contains(rest.Events, e => e is BattleTurnStarted);   // the fight on screen shows the AI's turns
+        Assert.Single(rest.Events.OfType<CombatResolved>());
+        Assert.Null(byHand.Battle);
+        Assert.Equal(GameMode.EventDialog, byHand.State.Mode);
+
+        // Taken by hand and handed over at once, the fight is the auto-resolved one.
+        var handedOver = Offered();
+        handedOver.Execute(new FightByHand());
+        handedOver.Execute(new AutoResolveFight());
+        Assert.Equal(SaveSerializer.HashState(auto.State), SaveSerializer.HashState(handedOver.State));
+    }
+
+    [Fact]
+    public void AFightByHand_IsSavedAsItsCommands_AndReplaysAfterLoading()
+    {
+        var sim = Offered();
+        sim.Execute(new FightByHand());
+        for (int i = 0; i < 3 && sim.Battle is not null; i++)
+            Assert.True(sim.Execute(new FightAction(i % 2 == 0 ? new Guard() : new EndTurn())).Accepted);
+        Assert.Equal(GameMode.Combat, sim.State.Mode);
+
+        var loaded = SaveSerializer.Decode(SaveSerializer.Encode(sim.State));
+        var resumed = Simulation.Resume(Content, loaded.State!);
+
+        Assert.Equal(LoadStatus.Ok, loaded.Status);
+        Assert.Equal(3, resumed.State.Fight!.Commands.Count);
+        static string Field(Battle b) => string.Join(";", b.Fighters.Select(f => $"{f.Id}@{f.Position}:{f.Health}/{f.Shield}/{f.Energy}"));
+        Assert.Equal(Field(sim.Battle!), Field(resumed.Battle!));
+        Assert.Equal(sim.Execute(new FightAction(new EndTurn())).Events, resumed.Execute(new FightAction(new EndTurn())).Events);
+        Assert.Equal(SaveSerializer.HashState(sim.State), SaveSerializer.HashState(resumed.State));
     }
 
     [Fact]

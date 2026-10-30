@@ -55,7 +55,7 @@ public static class TrainingSystem
                 if (rng.Chance(hunt.EncounterChance))
                 {
                     var prey = rng.PickWeighted(hunt.Groups.OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => (g.Key, g.Value)).ToList());
-                    CombatSystem.Fight(state, ctx, prey, events);
+                    CombatSystem.Offer(state, ctx, CombatSystem.NewFight(ctx, prey, FightKind.Hunt), events);
                 }
                 break;
             case ArenaActivity a:
@@ -63,8 +63,7 @@ public static class TrainingSystem
                 var bout = arena.Bouts[a.Bout];
                 Train(player, ctx, arena, events);
                 Pay(player, -bout.Fee, routine: true, events);
-                if (CombatSystem.Fight(state, ctx, bout.Group, events, bout: true))
-                    Pay(player, bout.Prize, routine: false, events);
+                CombatSystem.Offer(state, ctx, CombatSystem.NewFight(ctx, bout.Group, FightKind.Arena, prize: bout.Prize), events);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(activity), activity, null);

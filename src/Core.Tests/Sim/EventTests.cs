@@ -154,15 +154,18 @@ public sealed class EventTests
     }
 
     [Fact]
-    public void Combat_GoesToWinOrLoss()
+    public void Combat_WaitsForTheFight_ThenGoesToWinOrLoss()
     {
         var won = Open();
-        var wonEvents = won.Execute(new ChooseEventOption(Weak)).Events;
-        Assert.Equal("won", won.State.Event!.NodeId);
+        won.Execute(new ChooseEventOption(Weak));
+        Assert.Equal((GameMode.Combat, "start"), (won.State.Mode, won.State.Event!.NodeId));
+        var wonEvents = won.Execute(new AutoResolveFight()).Events;
+        Assert.Equal((GameMode.EventDialog, "won"), (won.State.Mode, won.State.Event!.NodeId));
         Assert.Equal(CombatEnd.Won, wonEvents.OfType<CombatResolved>().Single().End);
 
         var lost = Open();
-        var lostEvents = lost.Execute(new ChooseEventOption(Strong)).Events;
+        lost.Execute(new ChooseEventOption(Strong));
+        var lostEvents = lost.Execute(new AutoResolveFight()).Events;
         Assert.Equal("lost", lost.State.Event!.NodeId);
         Assert.Equal(CombatEnd.Fled, lostEvents.OfType<CombatResolved>().Single().End);
     }

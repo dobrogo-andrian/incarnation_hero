@@ -6,27 +6,130 @@ using Core.State;
 namespace Core.Sim;
 
 /// <summary>
-/// Fights started by events, hunting and the arena (tech 4.1, D42): builds the fighters' snapshots, auto-resolves the
-/// hex battle on the fight's own subseeds from the combat and AI streams, and writes the result back: health
-/// and qi, injuries, combat insight by difficulty, loot of a won fight, or death.
+/// Fights started by events, hunting and the arena (tech 4.1, D42, D67): offers the fight, fought by hand or
+/// auto-resolved as the same hex battle on the fight's own subseeds from the combat and AI streams, and writes
+/// the result back: health and qi, injuries, combat insight by difficulty, loot of a won fight, or death.
 /// </summary>
 public static class CombatSystem
 {
     /// <summary>
-    /// Fights <paramref name="groupId"/>; true when won. An escape is a loss; death ends the run.
-    /// An arena <paramref name="bout"/> ends in giving up instead of escape or death; a group that
-    /// spares (D62) robs a beaten player of everything, or finishes them off with its kill chance.
+    /// A fight of the run (D67), its <c>combat</c> and <c>ai</c> subseeds drawn now. An event's
+    /// win and loss nodes, or an arena bout's prize, say what it goes on to.
     /// </summary>
-    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events, bool bout = false)
+    public static ActiveFight NewFight(SimContext ctx, string groupId, FightKind kind, string? winNode = null, string? lossNode = null, int prize = 0) => new()
+    {
+        GroupId = groupId,
+        Kind = kind,
+        CombatSeed = ctx.Rng.NextSubseed(RngStream.Combat),
+        AiSeed = ctx.Rng.NextSubseed(RngStream.Ai),
+        WinNode = winNode,
+        LossNode = lossNode,
+        Prize = prize,
+    };
+
+    /// <summary>
+    /// Offers <paramref name="fight"/>: the run waits in <see cref="GameMode.Combat"/> for the player to
+    /// fight by hand or auto-resolve, unless its kind is auto-resolved unasked (D67). Whether it was
+    /// won once it is over; null while it waits.
+    /// </summary>
+    public static bool? Offer(GameState state, SimContext ctx, ActiveFight fight, List<SimEvent> events)
+    {
+        if (fight.Kind != FightKind.Event && state.AutoFights.Contains(fight.Kind))
+            return PlayOut(state, ctx, fight, Session(state, ctx, fight), events);
+        state.Fight = fight;
+        state.Mode = GameMode.Combat;
+        events.Add(new FightOffered(fight.GroupId, fight.Kind));
+        return null;
+    }
+
+    /// <summary>Auto-resolves a fight of <paramref name="kind"/> against <paramref name="groupId"/> at once; true when won.</summary>
+    public static bool Fight(GameState state, SimContext ctx, string groupId, List<SimEvent> events, FightKind kind = FightKind.Hunt)
+    {
+        var fight = NewFight(ctx, groupId, kind);
+        return PlayOut(state, ctx, fight, Session(state, ctx, fight), events);
+    }
+
+    /// <summary>
+    /// The battle of <paramref name="fight"/> replayed to where the player left it: the same subseeds and
+    /// the player's commands give the same battle (tech 4.1). The player has not changed since it was offered.
+    /// </summary>
+    public static BattleSession Session(GameState state, SimContext ctx, ActiveFight fight)
+    {
+        var session = BattleSession.Start([Snapshot(state.Player, ctx)], Foes(ctx, fight.GroupId), ctx.Combat,
+            Xoshiro256StarStar.FromSeed(fight.CombatSeed), Xoshiro256StarStar.FromSeed(fight.AiSeed), Terms(ctx, fight));
+        foreach (var command in fight.Commands)
+        {
+            if (!session.Act(command).Accepted)
+                throw new InvalidOperationException($"The saved fight command {command} does not replay.");
+        }
+        return session;
+    }
+
+    /// <summary>What the player risks (D62): an arena bout ends in giving up, a group that spares robs, the rest kill.</summary>
+    public static BattleTerms Terms(SimContext ctx, ActiveFight fight) =>
+        fight.Kind == FightKind.Arena ? BattleTerms.Bout
+        : ctx.Content.Get<EnemyGroupDef>(fight.GroupId).KillChance is null ? BattleTerms.ToDeath
+        : BattleTerms.Spared;
+
+    /// <summary>Takes the offered fight by hand: the opening, and the enemy turns before the player's first.</summary>
+    public static CommandOutcome ByHand(GameState state, SimContext ctx, BattleSession session)
+    {
+        var fight = state.Fight!;
+        if (fight.ByHand)
+            return CommandOutcome.Reject(RejectReasons.FightUnderway);
+        fight.ByHand = true;
+        var events = session.Opening.ToList();
+        if (session.Battle.IsOver)
+            Conclude(state, ctx, fight, session.Result(), events);
+        return CommandOutcome.Accept(events);
+    }
+
+    /// <summary>The player's command in a fight by hand, kept for the replay; the fight's end writes its result back.</summary>
+    public static CommandOutcome Act(GameState state, SimContext ctx, BattleSession session, BattleCommand command)
+    {
+        var fight = state.Fight!;
+        if (!fight.ByHand)
+            return CommandOutcome.Reject(RejectReasons.FightNotTaken);
+        var outcome = session.Act(command);
+        if (!outcome.Accepted)
+            return outcome;
+        fight.Commands.Add(command);
+        var events = outcome.Events.ToList();
+        if (session.Battle.IsOver)
+            Conclude(state, ctx, fight, session.Result(), events);
+        return CommandOutcome.Accept(events);
+    }
+
+    /// <summary>The AI fights on to the end: the whole offered fight, or the rest of one fought by hand.</summary>
+    public static CommandOutcome AutoResolve(GameState state, SimContext ctx, BattleSession session)
+    {
+        var events = new List<SimEvent>();
+        PlayOut(state, ctx, state.Fight!, session, events);
+        return CommandOutcome.Accept(events);
+    }
+
+    /// <summary>The AI plays the battle out; a fight on screen shows its turns, an unseen one only its result.</summary>
+    private static bool PlayOut(GameState state, SimContext ctx, ActiveFight fight, BattleSession session, List<SimEvent> events)
+    {
+        var turns = session.PlayOut();
+        if (fight.ByHand)
+            events.AddRange(turns);
+        return Conclude(state, ctx, fight, session.Result(), events);
+    }
+
+    /// <summary>
+    /// Writes the result back (D42, D62) and goes on: an event to its win or loss node, a hunt or
+    /// the arena back to the map, with a won bout's prize. An escape is a loss; death ends the run.
+    /// A group that spares robs a beaten player of everything, or finishes them off with its kill chance.
+    /// </summary>
+    private static bool Conclude(GameState state, SimContext ctx, ActiveFight fight, CombatResult result, List<SimEvent> events)
     {
         var player = state.Player;
         var config = ctx.Combat;
-        var group = ctx.Content.Get<EnemyGroupDef>(groupId);
+        var group = ctx.Content.Get<EnemyGroupDef>(fight.GroupId);
         var me = Snapshot(player, ctx);
-        var foes = Foes(ctx, groupId);
-        var terms = bout ? BattleTerms.Bout : group.KillChance is null ? BattleTerms.ToDeath : BattleTerms.Spared;
-        var result = AutoBattle.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)),
-            Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Ai)), terms);
+        var foes = Foes(ctx, fight.GroupId);
+        state.Fight = null;
         if (result.End == CombatEnd.Beaten && ctx.Rng[RngStream.Combat].Chance(group.KillChance!.Value))
             result = result with { End = CombatEnd.Died, Health = 0 };
 
@@ -35,7 +138,7 @@ public static class CombatSystem
         SetCurrent(player, config.ShieldResource, result.Shield);
         SetCurrent(player, config.QiPoolResource, result.QiPool);
         SetCurrent(player, config.EnergyResource, result.Energy);
-        events.Add(new CombatResolved(groupId, result.End, result.Turns,
+        events.Add(new CombatResolved(fight.GroupId, result.End, result.Turns,
             StateNumbers.Round(me.Health - result.Health), StateNumbers.Round(qiBefore - result.Shield - result.QiPool)));
         foreach (var (injuryId, amount) in result.Injuries)
             InjurySystem.Inflict(player, ctx, injuryId, amount, events);
@@ -53,11 +156,27 @@ public static class CombatSystem
             CultivationSystem.GrantCombatInsight(player, insight);
             events.Add(new BuffGained(BuffKind.CombatInsight, insight));
         }
-        if (result.End == CombatEnd.Won)
+        bool won = result.End == CombatEnd.Won;
+        if (won)
             GiveLoot(player, ctx, group.Loot, events);
         if (result.End == CombatEnd.Beaten)
             LoseEverything(player, events);
-        return result.End == CombatEnd.Won;
+        if (won && fight.Prize > 0)
+        {
+            player.Stones += fight.Prize;
+            events.Add(new StonesChanged(fight.Prize));
+        }
+
+        if (fight.Kind == FightKind.Event)
+        {
+            state.Mode = GameMode.EventDialog;
+            state.Event!.NodeId = won ? fight.WinNode! : fight.LossNode!;
+        }
+        else
+        {
+            state.Mode = GameMode.Overworld;
+        }
+        return won;
     }
 
     /// <summary>What the player sees of a group before choosing to fight: how many, and their stage against the player's (§2.1).</summary>
@@ -193,3 +312,6 @@ public enum StageRelation
 
 /// <summary>The basic knowledge of a fight ahead, available without perception (§2.1).</summary>
 public sealed record CombatPreview(string GroupId, int Foes, StageRelation Stage);
+
+/// <summary>The fight waiting for the player (D67): offered, or fought by hand on the battle screen.</summary>
+public sealed record FightView(FightKind Kind, bool ByHand, BattleTerms Terms, CombatPreview Preview);

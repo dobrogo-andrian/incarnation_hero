@@ -1,4 +1,5 @@
 using Core.Character;
+using Core.Combat;
 using Core.Content;
 using Core.Rng;
 using Core.State;
@@ -16,6 +17,9 @@ public sealed class Simulation
 
     private readonly SimContext _ctx;
 
+    /// <summary>The battle of <see cref="GameState.Fight"/>, replayed once after a load and then kept live.</summary>
+    private (ActiveFight Fight, BattleSession Session)? _battle;
+
     private Simulation(ContentDb content, GameState state, RngStreams rng)
     {
         State = state;
@@ -31,6 +35,12 @@ public sealed class Simulation
     public WorldMap Map => _ctx.Map;
 
     public PlayerView View => PlayerView.From(State, _ctx);
+
+    /// <summary>
+    /// The fight being fought by hand, as the battle screen shows it (D67): the field and every fighter's
+    /// true numbers, as in the sandbox. Null when no fight is on screen.
+    /// </summary>
+    public Battle? Battle => State.Fight is { ByHand: true } ? Session().Battle : null;
 
     public static Simulation NewGame(ContentDb content, ulong seed)
     {
@@ -71,6 +81,10 @@ public sealed class Simulation
             AttemptBreakthrough c => ExecuteBreakthrough(c),
             SetActiveMethod c => CultivationSystem.SetActiveMethod(State.Player, _ctx, c.MethodId),
             SetInterruptStops c => ExecuteSetInterruptStops(c),
+            SetAutoFights c => ExecuteSetAutoFights(c),
+            FightByHand => CombatSystem.ByHand(State, _ctx, Session()),
+            FightAction c => CombatSystem.Act(State, _ctx, Session(), c.Command),
+            AutoResolveFight => CombatSystem.AutoResolve(State, _ctx, Session()),
             ChooseEventOption c => EventSystem.Choose(State, _ctx, c.Index),
             UsePill c => ItemSystem.UsePill(State.Player, _ctx, c.ItemId),
             Buy c => EconomySystem.Buy(State.Player, _ctx, c.ItemId),
@@ -121,6 +135,22 @@ public sealed class Simulation
     {
         State.StoppingInterrupts = command.Categories.Distinct().Order().ToList();
         return CommandOutcome.Accept([]);
+    }
+
+    private CommandOutcome ExecuteSetAutoFights(SetAutoFights command)
+    {
+        if (command.Kinds.Contains(FightKind.Event))
+            return CommandOutcome.Reject(RejectReasons.EventFightsAsk);
+        State.AutoFights = command.Kinds.Distinct().Order().ToList();
+        return CommandOutcome.Accept([]);
+    }
+
+    private BattleSession Session()
+    {
+        var fight = State.Fight!;
+        if (_battle is not { } battle || battle.Fight != fight)
+            _battle = battle = (fight, CombatSystem.Session(State, _ctx, fight));
+        return battle.Session;
     }
 
     private CommandOutcome Start(Activity activity, int? weeks)

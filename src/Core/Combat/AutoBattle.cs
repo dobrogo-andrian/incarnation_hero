@@ -16,16 +16,8 @@ public static class AutoBattle
     public static CombatResult Resolve(Combatant player, IReadOnlyList<Combatant> foes, CombatConfigDef config,
         Xoshiro256StarStar combat, Xoshiro256StarStar ai, BattleTerms terms = BattleTerms.ToDeath)
     {
-        var battle = Battle.Start([player], foes, config, combat, terms);
-        while (!battle.IsOver)
-            BattleAi.PlayTurn(battle, ai);
-
-        var me = battle.Fighters.First(f => f.Side == 0);
-        var end = me.Down ? CombatEnd.Died
-            : me.Yielded || (me.Beaten && terms == BattleTerms.Bout) ? CombatEnd.Yielded
-            : me.Beaten ? CombatEnd.Beaten
-            : battle.Winner == 0 ? CombatEnd.Won
-            : CombatEnd.Fled;
-        return new CombatResult(end, battle.Turns, me.Health, me.Shield, me.QiPool, me.Energy, me.Injuries.Select(i => (i.Key, i.Value)).ToList());
+        var session = BattleSession.Start([player], foes, config, combat, ai, terms);
+        session.PlayOut();
+        return session.Result();
     }
 }

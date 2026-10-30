@@ -14,6 +14,9 @@ public static class RejectReasons
     public static readonly LocKey NotOnEdge = new("str.reject.not_on_edge");
     public static readonly LocKey EnemyAdjacent = new("str.reject.enemy_adjacent");
     public static readonly LocKey CannotYield = new("str.reject.cannot_yield");
+    public static readonly LocKey FightUnderway = new("str.reject.fight_underway");
+    public static readonly LocKey FightNotTaken = new("str.reject.fight_not_taken");
+    public static readonly LocKey EventFightsAsk = new("str.reject.event_fights_ask");
     public static readonly LocKey UnknownTechnique = new("str.reject.unknown_technique");
     public static readonly LocKey NotEnoughQi = new("str.reject.not_enough_qi");
     public static readonly LocKey NoRoom = new("str.reject.no_room");

@@ -1,10 +1,19 @@
+using System.Text.Json.Serialization;
 using Core.Content;
 using Core.Rng;
 using Core.Sim;
 
 namespace Core.Combat;
 
-/// <summary>A command for the fighter whose turn it is.</summary>
+/// <summary>A command for the fighter whose turn it is. Registered here for saving: a fight by hand keeps the player's commands (D67).</summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
+[JsonDerivedType(typeof(EndTurn), "end_turn")]
+[JsonDerivedType(typeof(Attack), "attack")]
+[JsonDerivedType(typeof(Guard), "guard")]
+[JsonDerivedType(typeof(Flee), "flee")]
+[JsonDerivedType(typeof(Yield), "yield")]
+[JsonDerivedType(typeof(UseTechnique), "technique")]
+[JsonDerivedType(typeof(Move), "move")]
 public abstract record BattleCommand;
 
 /// <summary>End the turn without an action: the fighter waits. An action ends the turn by itself (D56).</summary>

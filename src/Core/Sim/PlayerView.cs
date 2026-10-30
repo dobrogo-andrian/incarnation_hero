@@ -31,7 +31,9 @@ public sealed record PlayerView(
     IReadOnlyList<ReputationView> Reputation,
     IReadOnlyList<RumorView> Rumors,
     EventView? Event,
+    FightView? Fight,
     IReadOnlyList<InterruptCategory> StoppingInterrupts,
+    IReadOnlyList<FightKind> AutoFights,
     RunStats RunStats)
 {
     public static PlayerView From(GameState state, SimContext ctx)
@@ -81,7 +83,11 @@ public sealed record PlayerView(
             content.All<SectDef>().Select(s => new ReputationView(s.Id, EventSystem.ReputationOf(player, s.Id))).ToList(),
             RumorSystem.View(state, ctx),
             EventSystem.View(state, ctx),
+            state.Fight is { } fight
+                ? new FightView(fight.Kind, fight.ByHand, CombatSystem.Terms(ctx, fight), CombatSystem.Preview(player, ctx, fight.GroupId))
+                : null,
             state.StoppingInterrupts.ToList(),
+            state.AutoFights.ToList(),
             state.Stats);
     }
 }
