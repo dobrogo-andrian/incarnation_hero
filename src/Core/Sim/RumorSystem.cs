@@ -10,7 +10,7 @@ namespace Core.Sim;
 /// </summary>
 public static class RumorSystem
 {
-    /// <summary>World phase: rumors past their window are dropped, then rivals may take the rest (A4).</summary>
+    /// <summary>World phase: rumors past their window are dropped, then rivals may take the rest (D68).</summary>
     public static void AdvanceWeek(GameState state, SimContext ctx)
     {
         state.Rumors.RemoveAll(r => state.Week > r.LastWeek);

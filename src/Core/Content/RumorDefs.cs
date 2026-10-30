@@ -91,7 +91,7 @@ public sealed class RumorsConfigDef : ContentDef, IValidatedDef
     /// <summary>A settlement brings no new rumor while this many are being followed.</summary>
     public int MaxActive { get; set; }
 
-    /// <summary>Weekly chance that rivals take a rumor, per point of its appeal (A4).</summary>
+    /// <summary>Weekly chance that rivals take a rumor, per point of its appeal (D68).</summary>
     public double InterceptPerAppeal { get; set; }
 
     public IEnumerable<string> Validate(ContentDb db)

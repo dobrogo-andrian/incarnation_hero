@@ -8,4 +8,4 @@ inquiry:                        # a week of asking around, instead of the line a
   week_chance: 0.2
   sources: { source.tea_house_gossip: 1, source.travelling_merchant: 2, source.sect_disciple: 2 }
 max_active: 4                   # a settlement brings no more while this many are followed
-intercept_per_appeal: 0.01      # rivals take a rumor of appeal 2 with 2% a week (A4)
+intercept_per_appeal: 0.01      # rivals take a rumor of appeal 2 with 2% a week (D68)
