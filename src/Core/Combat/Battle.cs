@@ -16,7 +16,10 @@ public sealed record Attack(string TargetId) : BattleCommand;
 /// <summary>An action: until the fighter's next turn, hits that get through the shield hurt the body less (D56).</summary>
 public sealed record Guard : BattleCommand;
 
-/// <summary>An action on a rim hex with no enemy next to it: the fighter leaves the fight (§7.6, D56).</summary>
+/// <summary>
+/// An action on a rim hex with no enemy next to it: the fighter leaves the fight at the start of its
+/// next turn, unless an enemy comes next to it before then (§7.6, D56).
+/// </summary>
 public sealed record Flee : BattleCommand;
 
 /// <summary>A technique the fighter knows, aimed at a hex: the adjacent hex its line or arc starts from, or the enemy it strikes (D56).</summary>
@@ -46,6 +49,12 @@ public sealed record FighterHit(string AttackerId, string TargetId, double Damag
 public sealed record TechniqueUsed(string FighterId, string TechniqueId, Hex Target) : SimEvent;
 
 public sealed record FighterGuarded(string FighterId) : SimEvent;
+
+/// <summary>The fighter began to flee: it leaves at the start of its next turn if no enemy comes next to it.</summary>
+public sealed record FleeBegun(string FighterId) : SimEvent;
+
+/// <summary>An enemy came next to the fleeing fighter: the escape is off, its energy spent.</summary>
+public sealed record FleeBroken(string FighterId, string ByFighterId) : SimEvent;
 
 public sealed record FighterFled(string FighterId) : SimEvent;
 
@@ -93,6 +102,9 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
 
     /// <summary>Enemies that already struck this fighter for free this turn: each does so once (D54).</summary>
     internal HashSet<string> FreeAttackers { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>Fleeing since its last turn: it leaves the fight when that turn comes, unless broken (§7.6).</summary>
+    public bool Fleeing { get; internal set; }
 
     public bool Fled { get; internal set; }
     public bool Down => Health <= 0;
@@ -289,9 +301,9 @@ public sealed class Battle
 
             case Flee:
                 actor.Energy -= _config.FleeEnergy;
-                actor.Fled = true;
-                events.Add(new FighterFled(actor.Id));
-                events.AddRange(NextTurn());
+                actor.Fleeing = true;
+                events.Add(new FleeBegun(actor.Id));
+                EndOwnTurn(actor, events);
                 break;
 
             case Move:
@@ -364,6 +376,7 @@ public sealed class Battle
             events.Add(new FighterMoved(mover.Id, mover.Position, to));
             mover.Position = to;
             mover.MovePoints--;
+            BreakEscapes(mover, events);
         }
     }
 
@@ -432,6 +445,7 @@ public sealed class Battle
         {
             events.Add(new FighterMoved(actor.Id, actor.Position, to));
             actor.Position = to;
+            BreakEscapes(actor, events);
         }
         double damage = TechniqueDamage(actor, technique);
         foreach (var target in plan.Targets)
@@ -440,6 +454,17 @@ public sealed class Battle
         {
             events.Add(new FighterMoved(actor.Id, actor.Position, landing));
             actor.Position = landing;
+            BreakEscapes(actor, events);
+        }
+    }
+
+    /// <summary>Every step, however taken: an enemy that comes next to a fleeing fighter breaks its escape (§7.6).</summary>
+    private void BreakEscapes(BattleFighter mover, List<SimEvent> events)
+    {
+        foreach (var fleeing in _fighters.Where(f => f.Fleeing && f.InFight && f.Side != mover.Side && f.Position.DistanceTo(mover.Position) == 1))
+        {
+            fleeing.Fleeing = false;
+            events.Add(new FleeBroken(fleeing.Id, mover.Id));
         }
     }
 
@@ -512,6 +537,13 @@ public sealed class Battle
         for (int i = 0; i < inFight.Count; i++)
             inFight[i].Initiative = gauges[i];
         Active = inFight[next];
+        if (Active.Fleeing)
+        {
+            // The escape held for a whole turn: the fighter is gone, and the next one acts.
+            Active.Fleeing = false;
+            Active.Fled = true;
+            return [new FighterFled(Active.Id), .. NextTurn()];
+        }
         Active.Guarding = false;
         Active.MovePoints = MovePointsOf(Active.Def);
         Active.FreeAttackers.Clear();

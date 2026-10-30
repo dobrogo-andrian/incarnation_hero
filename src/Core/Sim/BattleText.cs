@@ -17,6 +17,8 @@ public static class BattleText
     private static readonly LocKey Technique = new("str.battle.technique");
     private static readonly LocKey Guarded = new("str.battle.guarded");
     private static readonly LocKey Waited = new("str.battle.waited");
+    private static readonly LocKey FleeBegun = new("str.battle.flee_begun");
+    private static readonly LocKey FleeBroken = new("str.battle.flee_broken");
     private static readonly LocKey Fled = new("str.battle.fled");
     private static readonly LocKey Down = new("str.battle.down");
     private static readonly LocKey TimedOut = new("str.battle.timed_out");
@@ -51,6 +53,8 @@ public static class BattleText
             TechniqueUsed u => Technique with { Args = [Who(u.FighterId), new("technique", SimText.Name(u.TechniqueId))] },
             FighterGuarded g => Guarded with { Args = [Who(g.FighterId)] },
             FighterWaited w => Waited with { Args = [Who(w.FighterId)] },
+            FleeBegun f => FleeBegun with { Args = [Who(f.FighterId)] },
+            FleeBroken f => FleeBroken with { Args = [Who(f.FighterId), Who(f.ByFighterId, "by")] },
             FighterFled f => Fled with { Args = [Who(f.FighterId)] },
             FighterDown d => Down with { Args = [Who(d.FighterId)] },
             BattleTimedOut t => TimedOut with { Args = [new("turns", t.Turns)] },

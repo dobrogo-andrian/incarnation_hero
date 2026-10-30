@@ -81,16 +81,47 @@ public class ActionTests
     }
 
     [Fact]
-    public void Escape_from_a_rim_hex_leaves_the_fight()
+    public void Escape_from_a_rim_hex_leaves_the_fight_when_the_next_own_turn_comes()
     {
-        var battle = Start(Field(4));
+        // Equal reactions: player, wolf, player. The wolf at (0,-3) stays far away.
+        var battle = Start(Field(4), playerReaction: 10, wolfReaction: 10);
+        var me = battle.Active!;
         Assert.Equal(RejectReasons.NotOnEdge, battle.Execute(new Flee()).RejectReason);
         battle.Execute(new Move(new Hex(0, 4)));
-        var outcome = battle.Execute(new Flee());
-        Assert.Equal(new FighterFled("player"), Assert.Single(outcome.Events.OfType<FighterFled>()));
-        Assert.True(battle.Fighters[0].Fled);
+
+        var begun = battle.Execute(new Flee());
+        Assert.Equal(new FleeBegun("player"), Assert.Single(begun.Events.OfType<FleeBegun>()));
+        Assert.Equal("player", Assert.Single(begun.Events.OfType<BattleTurnEnded>()).FighterId);
+        Assert.True(me.Fleeing);
+        Assert.False(me.Fled);
+        Assert.Equal("wolf", battle.Active!.Id);
+
+        var waited = battle.Execute(new EndTurn());
+        Assert.Equal(new FighterFled("player"), Assert.Single(waited.Events.OfType<FighterFled>()));
+        Assert.DoesNotContain(waited.Events, e => e is BattleTurnStarted { FighterId: "player" });
+        Assert.True(me.Fled);
         Assert.True(battle.IsOver);
         Assert.Equal(1, battle.Winner);
+    }
+
+    [Fact]
+    public void An_enemy_coming_next_to_the_fleeing_fighter_breaks_the_escape()
+    {
+        // Radius 2: the player steps from (0,1) to the rim at (0,2), three hexes from the wolf at (0,-1).
+        var battle = Start(Field(2), playerReaction: 10, wolfReaction: 10);
+        var me = battle.Active!;
+        battle.Execute(new Move(new Hex(0, 2)));
+        Assert.True(battle.Execute(new Flee()).Accepted);
+        double energy = me.Energy;
+
+        var closing = battle.Execute(new Move(new Hex(0, 1)));
+        Assert.Equal(new FleeBroken("player", "wolf"), Assert.Single(closing.Events.OfType<FleeBroken>()));
+        Assert.False(me.Fleeing);
+
+        battle.Execute(new EndTurn());
+        Assert.Same(me, battle.Active);
+        Assert.False(me.Fled);
+        Assert.Equal(energy, me.Energy);
     }
 
     [Fact]
