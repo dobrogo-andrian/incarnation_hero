@@ -72,7 +72,7 @@
           effects: [ { add_rumor: { id: rumor.spirit_peak.vein_surge, source: source.tea_house_gossip } } ]
           next: story
         - text: { uk: "Вартувати всю ніч, не довіряючи" }
-          effects: [ { resource: { id: resource.body_energy, amount: -20 } } ]
+          effects: [ { resource: { id: resource.body_energy, amount: -10 } } ]
           next: watched
     story:
       text: { uk: "Старий довго дивиться у вогонь, а потім розповідає, що жила під Піком скоро сплесне. Уранці його вже немає." }

@@ -11,6 +11,7 @@ damage_spread: 0.2                # each hit is damage × 0.8–1.2
 health_resource: resource.health
 shield_resource: resource.combat_qi
 qi_pool_resource: resource.qi_pool
+energy_resource: resource.body_energy   # the fight's energy pool (D55): spent by every action, comes back by output each turn
 flow_aspect: aspect.meridians.flow
 refill_per_flow: 0.5              # shield refill at the end of an own turn = flow × 0.5
 reaction_aspect: aspect.speed.reaction
@@ -36,7 +37,6 @@ initiative_per_reaction: 1        # the gauge fills by reaction a tick: 10 react
 energy_output_aspect: aspect.endurance.output
 energy_refill_per_output: 0.25    # end of own turn: output × 0.25 × health share comes back into the fight's pool (D55): less than a basic attack costs
 energy_refill_min: 2              # comes back whatever the body's state
-energy_capacity_per_output: 1.5   # the fight's pool holds output × 1.5 and starts full; the body never runs dry
 move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, all before the action (D56)
 step_energy: 1                    # every step costs body energy; the movement points still cap a turn's steps
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half

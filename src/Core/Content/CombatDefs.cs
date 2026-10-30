@@ -187,6 +187,14 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ResourceDef))]
     public string QiPoolResource { get; set; } = "";
 
+    /// <summary>
+    /// Body energy, the fight's own pool that every action spends (D55): a fight starts with what is
+    /// left of it and leaves the rest. Unlike the shield it draws on nothing: it comes back every turn
+    /// by output (<see cref="EnergyRefillPerOutput"/>) and between fights by the week.
+    /// </summary>
+    [ContentRef(typeof(ResourceDef))]
+    public string EnergyResource { get; set; } = "";
+
     /// <summary>The shield refills by this aspect × <see cref="RefillPerFlow"/> at the end of each own turn.</summary>
     [ContentRef(typeof(AspectDef))]
     public string FlowAspect { get; set; } = "";
@@ -252,12 +260,6 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>What comes back every turn whatever the body's state.</summary>
     public double EnergyRefillMin { get; set; }
 
-    /// <summary>
-    /// The fight's energy pool holds output × this (never less than the minimum refill) and starts
-    /// full (D55): the body does not run dry, but a turn can spend no more than the pool holds.
-    /// </summary>
-    public double EnergyCapacityPerOutput { get; set; }
-
     /// <summary>Body energy the basic weapon attack costs (D56).</summary>
     public double AttackEnergy { get; set; }
 
@@ -281,8 +283,8 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     {
         if (WeaponDamage <= 0 || MaxTurns < 1 || FieldRadius < 1)
             yield return "needs a positive weapon_damage, max_turns and field_radius.";
-        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || StepEnergy < 0 || AttackEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
-            yield return "needs a positive initiative_threshold, initiative_per_reaction, energy_capacity_per_output and move_points_per_agility, and energy refills and costs of zero or more.";
+        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || StepEnergy < 0 || AttackEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
+            yield return "needs a positive initiative_threshold, initiative_per_reaction and move_points_per_agility, and energy refills and costs of zero or more.";
         if (DamageSpread is < 0 or >= 1 || InsightFledShare is < 0 or > 1
             || ShieldBreakChance is < 0 or > 1 || GuardBodyShare is < 0 or > 1 || BodyDamageMultiplier < 1 || FightMinHealthShare is < 0 or > 1)
             yield return "damage_spread, guard_body_share, insight_fled_share, shield_break_chance and fight_min_health_share must be fractions, body_damage_multiplier at least 1.";

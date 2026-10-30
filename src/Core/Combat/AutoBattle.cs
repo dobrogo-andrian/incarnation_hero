@@ -26,6 +26,6 @@ public static class AutoBattle
             : me.Beaten ? CombatEnd.Beaten
             : battle.Winner == 0 ? CombatEnd.Won
             : CombatEnd.Fled;
-        return new CombatResult(end, battle.Turns, me.Health, me.Shield, me.QiPool, me.Injuries.Select(i => (i.Key, i.Value)).ToList());
+        return new CombatResult(end, battle.Turns, me.Health, me.Shield, me.QiPool, me.Energy, me.Injuries.Select(i => (i.Key, i.Value)).ToList());
     }
 }

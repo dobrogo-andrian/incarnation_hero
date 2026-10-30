@@ -119,6 +119,8 @@ public sealed class CombatTests
         Assert.Contains(new StonesChanged(5), events);
         Assert.Contains(new ItemsChanged("item.pill.qi_gathering", 2), events);
         Assert.Equal(35, player.Stones);
+        var energy = player.Resources.First(r => r.ResourceId == ctx.Combat.EnergyResource).Current;
+        Assert.InRange(energy, 0, ctx.Rules.Value(player, ctx.Combat.EnergyResource) - 1);   // the fight's spending stays with the body
     }
 
     [Fact]

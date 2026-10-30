@@ -34,6 +34,7 @@ public static class CombatSystem
         SetCurrent(player, config.HealthResource, result.Health);
         SetCurrent(player, config.ShieldResource, result.Shield);
         SetCurrent(player, config.QiPoolResource, result.QiPool);
+        SetCurrent(player, config.EnergyResource, result.Energy);
         events.Add(new CombatResolved(groupId, result.End, result.Turns,
             StateNumbers.Round(me.Health - result.Health), StateNumbers.Round(qiBefore - result.Shield - result.QiPool)));
         foreach (var (injuryId, amount) in result.Injuries)
@@ -127,11 +128,12 @@ public static class CombatSystem
             Agility: Value(config.AgilityAspect),
             Resilience: Value(config.ResilienceAspect),
             EnergyRefill: Value(config.EnergyOutputAspect) * config.EnergyRefillPerOutput,
-            MaxEnergy: Math.Max(config.EnergyRefillMin, Value(config.EnergyOutputAspect) * config.EnergyCapacityPerOutput),
+            MaxEnergy: Value(config.EnergyResource),
             injuryId,
             weaponDamage,
             techniques,
-            ctx.Content.Get<AiArchetypeDef>(aiId));
+            ctx.Content.Get<AiArchetypeDef>(aiId),
+            Energy: current(config.EnergyResource));
     }
 
     private static int QiStage(PlayerState player) => player.Tracks.First(t => t.VectorId == Simulation.QiVectorId).StageIndex;

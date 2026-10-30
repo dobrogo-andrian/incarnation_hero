@@ -20,7 +20,8 @@ public sealed record Combatant(
     string InjuryId,
     double WeaponDamage,
     IReadOnlyList<CombatTechnique> Techniques,
-    AiArchetypeDef Ai)
+    AiArchetypeDef Ai,
+    double? Energy = null)
 {
     /// <summary>The player's fighter in the game's fights and the sandbox.</summary>
     public const string PlayerId = "player";
@@ -49,4 +50,4 @@ public enum CombatEnd
 }
 
 /// <summary>What the fight left of the player: the numbers to write back, and injury points per scale in ID order.</summary>
-public sealed record CombatResult(CombatEnd End, int Turns, double Health, double Shield, double QiPool, IReadOnlyList<(string InjuryId, double Amount)> Injuries);
+public sealed record CombatResult(CombatEnd End, int Turns, double Health, double Shield, double QiPool, double Energy, IReadOnlyList<(string InjuryId, double Amount)> Injuries);

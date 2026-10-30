@@ -107,7 +107,7 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
     /// Body energy set aside for the fight (D55), full at the start: every step, strike and technique
     /// spends it, and each own turn's end refills it, the way qi flows into the shield.
     /// </summary>
-    public double Energy { get; internal set; } = def.MaxEnergy;
+    public double Energy { get; internal set; } = def.Energy ?? def.MaxEnergy;
 
     /// <summary>The CTB gauge (D53): it fills by <see cref="InitiativeRate"/> a tick, and the fighter acts at the threshold.</summary>
     public int Initiative { get; internal set; }

@@ -9,9 +9,9 @@
 
 - id: resource.body_energy
   name: { uk: "Енергія тіла" }
-  source: aspect.endurance.reserve
-  coefficient: 10
-  regen_per_week: 10
+  source: aspect.endurance.reserve   # the reserve sizes the fight's energy pool, the output refills it each turn (D55)
+  coefficient: 1.5
+  regen_per_week: 10            # full again within about a week of rest
 
 - id: resource.qi_pool
   name: { uk: "Пул ці" }

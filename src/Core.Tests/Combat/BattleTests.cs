@@ -199,13 +199,17 @@ public class BattleTests
     }
 
     [Fact]
-    public void Player_snapshot_sets_its_fight_energy_pool_by_output()
+    public void Player_snapshot_takes_its_fight_energy_from_body_energy()
     {
         var sim = Simulation.NewGame(TestContent.Repo, 1);
         var ctx = new SimContext(sim.Content, RngStreams.FromStates(sim.State.RngStates));
+        sim.State.Player.Resources.First(r => r.ResourceId == Config.EnergyResource).Current = 6;
         var player = CombatSystem.Snapshot(sim.State.Player, ctx);
-        // The new hero's endurance output is 10.
+        // The new hero's endurance reserve and output are 10: the reserve sizes the pool, the output refills it.
         Assert.Equal(10 * Config.EnergyRefillPerOutput, player.EnergyRefill, 9);
-        Assert.Equal(10 * Config.EnergyCapacityPerOutput, player.MaxEnergy, 9);
+        Assert.Equal(15, player.MaxEnergy, 9);
+        Assert.Equal(6, player.Energy);
+        var battle = Battle.Start([player], CombatSystem.Foes(ctx, "grp.beast.grey_wolves"), Config, Xoshiro256StarStar.FromSeed(1));
+        Assert.Equal(6, battle.Fighters[0].Energy);
     }
 }

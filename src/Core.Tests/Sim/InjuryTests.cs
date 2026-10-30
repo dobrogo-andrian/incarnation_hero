@@ -46,7 +46,7 @@ public sealed class InjuryTests
         var health = Resource(sim, "resource.health");
         Assert.Equal((80.0, 80.0), (health.Current, health.Max.Value));
         Assert.Equal(new Core.Character.ModifierPart(Body, ModifierOp.Mul, -0.2), Assert.Single(health.Max.Modifiers));
-        Assert.Equal(84, Resource(sim, "resource.body_energy").Max.Value);
+        Assert.Equal(12.6, Resource(sim, "resource.body_energy").Max.Value, 9);
         Assert.Equal(new InjuryView(Body, 40, 100), Assert.Single(sim.View.Injuries));
 
         Assert.Equal([new InjuryReceived(Body, 60)], Inflict(sim, Body, 500));
