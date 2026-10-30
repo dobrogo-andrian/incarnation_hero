@@ -105,23 +105,38 @@ public class ActionTests
     }
 
     [Fact]
-    public void An_enemy_coming_next_to_the_fleeing_fighter_breaks_the_escape()
+    public void An_enemy_coming_next_to_the_fleeing_fighter_does_not_stop_the_escape()
     {
         // Radius 2: the player steps from (0,1) to the rim at (0,2), three hexes from the wolf at (0,-1).
         var battle = Start(Field(2), playerReaction: 10, wolfReaction: 10);
         var me = battle.Active!;
         battle.Execute(new Move(new Hex(0, 2)));
         Assert.True(battle.Execute(new Flee()).Accepted);
-        double energy = me.Energy;
 
         var closing = battle.Execute(new Move(new Hex(0, 1)));
-        Assert.Equal(new FleeBroken("player", "wolf"), Assert.Single(closing.Events.OfType<FleeBroken>()));
-        Assert.False(me.Fleeing);
+        Assert.DoesNotContain(closing.Events, e => e is FleeBroken);
 
-        battle.Execute(new EndTurn());
+        var waited = battle.Execute(new EndTurn());
+        Assert.Equal(new FighterFled("player"), Assert.Single(waited.Events.OfType<FighterFled>()));
+        Assert.True(me.Fled);
+    }
+
+    [Fact]
+    public void A_hit_on_the_fleeing_fighter_breaks_the_escape()
+    {
+        var battle = Start(Field(2), playerReaction: 10, wolfReaction: 10);
+        var me = battle.Active!;
+        battle.Execute(new Move(new Hex(0, 2)));
+        Assert.True(battle.Execute(new Flee()).Accepted);
+        double energy = me.Energy;
+
+        battle.Execute(new Move(new Hex(0, 1)));
+        var bite = battle.Execute(new Attack("player"));
+        Assert.Equal(new FleeBroken("player", "wolf"), Assert.Single(bite.Events.OfType<FleeBroken>()));
+        Assert.False(me.Fleeing);
         Assert.Same(me, battle.Active);
         Assert.False(me.Fled);
-        Assert.Equal(energy, me.Energy);
+        Assert.True(me.Energy >= energy);   // the flee's energy stays spent; the turn only refilled it
     }
 
     [Fact]

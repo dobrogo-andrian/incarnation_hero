@@ -107,8 +107,8 @@ public sealed class BotRunTests
     /// update the hash only deliberately.
     /// </summary>
     [Theory]
-    [InlineData("cautious", "14c8f8a014d1ef6f12641fa798450b4c58aded3d3407dc1617601435e365bf3d")]
-    [InlineData("fighter", "4c38065037c925a6d1be3e8d08a4979efa00185e9b1c77b0e97e3636ab81f507")]
+    [InlineData("cautious", "cec81baa23f40e782a2c8c001920b4f0fcb712df5c2c6696a170389b4f7a6282")]
+    [InlineData("fighter", "2128841e9860c9d38a69f4df8a2afd80c351419d5226b95872fe89d379843b00")]
     [InlineData("random", "2007d40267d5a5d351b8e8321ea11e4a847b85f9968027f51df365d7459eb4c3")]
     public void Golden_Seed42(string bot, string expectedHash)
     {

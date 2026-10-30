@@ -56,10 +56,10 @@ public sealed record TechniqueUsed(string FighterId, string TechniqueId, Hex Tar
 
 public sealed record FighterGuarded(string FighterId) : SimEvent;
 
-/// <summary>The fighter began to flee: it leaves at the start of its next turn if no enemy comes next to it.</summary>
+/// <summary>The fighter began to flee: it leaves at the start of its next turn unless an enemy hits it first.</summary>
 public sealed record FleeBegun(string FighterId) : SimEvent;
 
-/// <summary>An enemy came next to the fleeing fighter: the escape is off, its energy spent.</summary>
+/// <summary>An enemy hit the fleeing fighter: the escape is off, its energy spent.</summary>
 public sealed record FleeBroken(string FighterId, string ByFighterId) : SimEvent;
 
 public sealed record FighterFled(string FighterId) : SimEvent;
@@ -439,7 +439,6 @@ public sealed class Battle
             mover.Position = to;
             mover.MovePoints--;
             mover.Energy -= _config.StepEnergy;
-            BreakEscapes(mover, events);
         }
     }
 
@@ -508,7 +507,6 @@ public sealed class Battle
         {
             events.Add(new FighterMoved(actor.Id, actor.Position, to));
             actor.Position = to;
-            BreakEscapes(actor, events);
         }
         double damage = TechniqueDamage(actor, technique);
         foreach (var target in plan.Targets)
@@ -517,17 +515,6 @@ public sealed class Battle
         {
             events.Add(new FighterMoved(actor.Id, actor.Position, landing));
             actor.Position = landing;
-            BreakEscapes(actor, events);
-        }
-    }
-
-    /// <summary>Every step, however taken: an enemy that comes next to a fleeing fighter breaks its escape (§7.6).</summary>
-    private void BreakEscapes(BattleFighter mover, List<SimEvent> events)
-    {
-        foreach (var fleeing in _fighters.Where(f => f.Fleeing && f.InFight && f.Side != mover.Side && f.Position.DistanceTo(mover.Position) == 1))
-        {
-            fleeing.Fleeing = false;
-            events.Add(new FleeBroken(fleeing.Id, mover.Id));
         }
     }
 
@@ -551,7 +538,10 @@ public sealed class Battle
         events.AddRange(NextTurn());
     }
 
-    /// <summary>One hit through the shared pipeline (§7.4); unless the fight is to the death, a deadly blow on side 0 is stopped and it is beaten.</summary>
+    /// <summary>
+    /// One hit through the shared pipeline (§7.4); unless the fight is to the death, a deadly blow on
+    /// side 0 is stopped and it is beaten. Any hit, even one the shield takes whole, breaks an escape (§7.6).
+    /// </summary>
     private void Strike(BattleFighter attacker, BattleFighter target, double damage, List<SimEvent> events)
     {
         double bodyShare = _config.BodyDamageMultiplier * (target.Guarding ? _config.GuardBodyShare : 1);
@@ -565,6 +555,11 @@ public sealed class Battle
         foreach (var (injuryId, amount) in hit.Injuries)
             target.Wound(injuryId, amount);
         events.Add(new FighterHit(attacker.Id, target.Id, hit.Damage, hit.Absorbed, hit.ToHealth));
+        if (target.Fleeing && !target.Down)
+        {
+            target.Fleeing = false;
+            events.Add(new FleeBroken(target.Id, attacker.Id));
+        }
         if (hadShield && target.Shield <= 0)
             events.Add(new ShieldBroken(target.Id));
         if (spared)
