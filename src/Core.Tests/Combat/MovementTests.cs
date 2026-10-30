@@ -121,6 +121,19 @@ public class MovementTests
     }
 
     [Fact]
+    public void A_beast_lets_go_of_whoever_steps_away_from_it()
+    {
+        // Radius 1: the beast stands next to the player and could pay for a strike.
+        var beast = Fighter("wolf") with { Ai = TestContent.Repo.Get<AiArchetypeDef>("ai.beast_aggressive") };
+        var battle = Battle.Start([Fighter("player", reaction: 20)], [beast], Field(1), Xoshiro256StarStar.FromSeed(3));
+
+        Assert.All(battle.Reachable(), r => Assert.Equal(0, r.FreeAttacks));
+        var away = battle.Execute(new Move(new Hex(-1, 0)));
+        Assert.Empty(away.Events.OfType<FreeAttackProvoked>());
+        Assert.Equal(100, battle.Fighters[0].Health);
+    }
+
+    [Fact]
     public void The_path_goes_around_enemy_sides_when_the_points_allow()
     {
         // Radius 2: the player at (0,1), the wolf at (0,-1). From (1,0) the short way to (-1,0)

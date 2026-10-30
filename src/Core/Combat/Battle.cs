@@ -403,11 +403,12 @@ public sealed class Battle
 
     /// <summary>
     /// Enemies next to <paramref name="hex"/> that would strike <paramref name="mover"/> for leaving it,
-    /// in fighter order: those with the energy for a basic attack, which the free attack costs them (D54).
+    /// in fighter order: those that strike at a mover at all (not beasts, D63) and have the energy for
+    /// a basic attack, which the free attack costs them (D54).
     /// </summary>
     private IEnumerable<BattleFighter> Provokers(BattleFighter mover, Hex hex) =>
-        _fighters.Where(f => f.InFight && f.Side != mover.Side && f.Position.DistanceTo(hex) == 1 && !mover.FreeAttackers.Contains(f.Id)
-            && f.Energy >= _config.AttackEnergy);
+        _fighters.Where(f => f.InFight && f.Side != mover.Side && f.Def.Ai.FreeAttacks && f.Position.DistanceTo(hex) == 1
+            && !mover.FreeAttackers.Contains(f.Id) && f.Energy >= _config.AttackEnergy);
 
     /// <summary>
     /// Step by step, each for its energy: leaving a hex next to an enemy draws its free attack first

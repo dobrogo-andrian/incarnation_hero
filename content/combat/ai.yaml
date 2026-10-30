@@ -17,6 +17,7 @@
   flee_health_share: 0          # beasts fight to the end (D59)
   flee: 0
   noise: 0.5
+  free_attacks: false           # lunges at what faces it, lets go of what backs away (D63)
 
 - id: ai.cultivator_cautious
   name: { uk: "Обережний культиватор" }

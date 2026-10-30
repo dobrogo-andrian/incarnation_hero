@@ -87,6 +87,12 @@ public sealed class AiArchetypeDef : ContentDef, IValidatedDef
     /// <summary>Each plan's score gets a uniform 0..noise from the <c>ai</c> stream, so equal plans do not always go the same way.</summary>
     public double Noise { get; set; }
 
+    /// <summary>
+    /// Whether the fighter strikes at an enemy stepping away from it (D54). Beasts do not (D63):
+    /// whoever backs off a beast gets away unhurt, though it still breaks an escape next to it.
+    /// </summary>
+    public bool FreeAttacks { get; set; } = true;
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if (new[] { Damage, Kill, Risk, Opportunity, FreeAttack, Qi, Energy, Approach, Flee, Noise }.Any(w => w < 0) || FleeHealthShare is < 0 or > 1)

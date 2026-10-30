@@ -13,15 +13,22 @@
   name: { uk: "Сірий вовк" }
   ai: ai.beast_aggressive
   stage: 0
-  stats: { stat.might: 4, stat.endurance: 8, stat.speed: 13 }
-  weapon_damage: 6
+  stats: { stat.might: 6, stat.endurance: 10, stat.speed: 10 }
+  weapon_damage: 6.3
+
+- id: enemy.beast.lone_wolf
+  name: { uk: "Вовк-одинак" }
+  ai: ai.beast_aggressive
+  stage: 0
+  stats: { stat.might: 14, stat.endurance: 12, stat.speed: 10 }
+  weapon_damage: 17.8
 
 - id: enemy.beast.river_serpent
   name: { uk: "Річковий змій" }
   ai: ai.beast_aggressive
   stage: 1
-  stats: { stat.might: 16, stat.endurance: 10, stat.speed: 8, stat.meridians: 4 }
-  weapon_damage: 10
+  stats: { stat.might: 26, stat.endurance: 16, stat.speed: 10, stat.meridians: 4 }
+  weapon_damage: 12.2
 
 - id: enemy.human.relic_hunter
   name: { uk: "Шукач реліквій" }
@@ -46,22 +53,22 @@
   name: { uk: "Дикий кабан" }
   ai: ai.beast_aggressive
   stage: 0
-  stats: { stat.might: 7, stat.endurance: 6, stat.speed: 5 }
-  weapon_damage: 6
+  stats: { stat.might: 19, stat.endurance: 12, stat.speed: 8 }
+  weapon_damage: 18.0
 
 - id: enemy.beast.red_fox
   name: { uk: "Руда лисиця" }
   ai: ai.beast_aggressive
   stage: 0
-  stats: { stat.might: 2, stat.endurance: 3, stat.speed: 12 }
-  weapon_damage: 3
+  stats: { stat.might: 8, stat.endurance: 10, stat.speed: 10 }
+  weapon_damage: 9.5
 
 - id: enemy.beast.mist_leopard
   name: { uk: "Туманний леопард" }
   ai: ai.beast_aggressive
   stage: 1
-  stats: { stat.might: 10, stat.endurance: 8, stat.speed: 16, stat.meridians: 2 }
-  weapon_damage: 9
+  stats: { stat.might: 20, stat.endurance: 16, stat.speed: 14, stat.meridians: 2 }
+  weapon_damage: 13.4
 
 # Arena fighters (§5): people who fight for prize money, by rank. Bouts end when the player yields.
 - id: enemy.human.arena_novice

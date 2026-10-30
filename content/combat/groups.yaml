@@ -43,7 +43,7 @@
 
 - id: grp.beast.lone_wolf
   name: { uk: "Вовк-одинак" }
-  members: [ { enemy: enemy.beast.grey_wolf } ]
+  members: [ { enemy: enemy.beast.lone_wolf } ]
   loot: { stones_min: 2, stones_max: 5 }
 
 - id: grp.beast.mist_leopard
