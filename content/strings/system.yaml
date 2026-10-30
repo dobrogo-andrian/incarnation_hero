@@ -489,11 +489,14 @@
 - id: str.ui.to_map
   text: { uk: "На карту" }
 
-- id: str.ui.interrupts
-  text: { uk: "Переривання" }
+- id: str.ui.tab_settings
+  text: { uk: "Налаштування" }
 
 - id: str.ui.interrupts_title
   text: { uk: "Що зупиняє заняття" }
+
+- id: str.ui.speed_title
+  text: { uk: "Плин часу" }
 
 - id: str.ui.speed
   text: { uk: "Тижнів за секунду: {weeks}" }
