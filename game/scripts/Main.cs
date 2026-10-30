@@ -68,9 +68,14 @@ public partial class Main : Control
         BuildLayout(newSeed);
 
         string savePath = ProjectSettings.GlobalizePath(shot is null ? "user://run.json" : "user://shot_run.json");
+        var store = new SaveStore(savePath);
         if (shot is not null)
-            File.Delete(savePath);
-        _session = RunSession.OpenOrStart(new SaveStore(savePath), loaded.Db, newSeed);
+        {
+            // The backup too: a missing save with a backup left is restored from it, not started afresh.
+            File.Delete(store.Path);
+            File.Delete(store.BackupPath);
+        }
+        _session = RunSession.OpenOrStart(store, loaded.Db, newSeed);
         if (_session.Notice is { } notice)
             _journal.Add(_ui.Text(notice));
         Refresh();

@@ -489,7 +489,7 @@
 - id: str.ui.to_map
   text: { uk: "На карту" }
 
-- id: str.ui.tab_settings
+- id: str.ui.settings
   text: { uk: "Налаштування" }
 
 - id: str.ui.interrupts_title
