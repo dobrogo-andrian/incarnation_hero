@@ -15,7 +15,6 @@ public static class BattleText
     private static readonly LocKey Hit = new("str.battle.hit");
     private static readonly LocKey FreeAttack = new("str.battle.free_attack");
     private static readonly LocKey Technique = new("str.battle.technique");
-    private static readonly LocKey Dashed = new("str.battle.dashed");
     private static readonly LocKey Guarded = new("str.battle.guarded");
     private static readonly LocKey Waited = new("str.battle.waited");
     private static readonly LocKey Fled = new("str.battle.fled");
@@ -50,7 +49,6 @@ public static class BattleText
             },
             FreeAttackProvoked f => FreeAttack with { Args = [Who(f.AttackerId, "attacker"), Who(f.MoverId, "mover")] },
             TechniqueUsed u => Technique with { Args = [Who(u.FighterId), new("technique", SimText.Name(u.TechniqueId))] },
-            FighterDashed d => Dashed with { Args = [Who(d.FighterId), new("points", d.MovePoints)] },
             FighterGuarded g => Guarded with { Args = [Who(g.FighterId)] },
             FighterWaited w => Waited with { Args = [Who(w.FighterId)] },
             FighterFled f => Fled with { Args = [Who(f.FighterId)] },

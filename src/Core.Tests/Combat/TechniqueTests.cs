@@ -83,7 +83,7 @@ public class TechniqueTests
         Assert.Empty(outcome.Events.OfType<FreeAttackProvoked>());
         Assert.Equal("wolf#1", Assert.Single(outcome.Events.OfType<FighterHit>()).TargetId);
         Assert.Equal(new Hex(0, -2), battle.Fighters[0].Position);
-        Assert.Equal(1, battle.Fighters[0].MovePoints);
+        Assert.Equal("player", Assert.Single(outcome.Events.OfType<BattleTurnEnded>()).FighterId);
     }
 
     [Fact]
@@ -96,8 +96,8 @@ public class TechniqueTests
         Assert.True(outcome.Accepted);
         Assert.Contains(outcome.Events, e => e is TechniqueUsed);
         Assert.Empty(outcome.Events.OfType<FighterHit>());
-        Assert.Equal(shield - 10, battle.Fighters[0].Shield, 9);
-        Assert.Equal(RejectReasons.ActionTaken, battle.SkillUnavailable(Arc));
+        var ended = Assert.Single(outcome.Events.OfType<BattleTurnEnded>());
+        Assert.Equal(shield - 10 + ended.ShieldRefilled, battle.Fighters[0].Shield, 9);
     }
 
     [Fact]
@@ -122,7 +122,6 @@ public class TechniqueTests
         var empty = Start(Field(1), Fighter("player", reaction: 20, shield: 5, techniques: Known(Arc)));
         Assert.Equal(RejectReasons.NotEnoughQi, empty.Execute(new UseTechnique(Arc, new Hex(1, 0))).RejectReason);
         Assert.True(empty.Execute(new Attack("wolf#1")).Accepted);
-        Assert.Equal(RejectReasons.ActionTaken, empty.Execute(new UseTechnique(Arc, new Hex(1, 0))).RejectReason);
     }
 
     [Fact]

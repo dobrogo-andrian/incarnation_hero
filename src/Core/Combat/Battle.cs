@@ -7,14 +7,11 @@ namespace Core.Combat;
 /// <summary>A command for the fighter whose turn it is.</summary>
 public abstract record BattleCommand;
 
-/// <summary>End the turn; without an action taken, the fighter waits.</summary>
+/// <summary>End the turn without an action: the fighter waits. An action ends the turn by itself (D56).</summary>
 public sealed record EndTurn : BattleCommand;
 
 /// <summary>The basic weapon attack on an adjacent enemy, for body energy (D56).</summary>
 public sealed record Attack(string TargetId) : BattleCommand;
-
-/// <summary>An action for extra movement points: as many again as the turn gives (D56).</summary>
-public sealed record Dash : BattleCommand;
 
 /// <summary>An action: until the fighter's next turn, hits that get through the shield hurt the body less (D56).</summary>
 public sealed record Guard : BattleCommand;
@@ -47,8 +44,6 @@ public sealed record FighterWaited(string FighterId) : SimEvent;
 public sealed record FighterHit(string AttackerId, string TargetId, double Damage, double Absorbed, double ToHealth) : SimEvent;
 
 public sealed record TechniqueUsed(string FighterId, string TechniqueId, Hex Target) : SimEvent;
-
-public sealed record FighterDashed(string FighterId, int MovePoints) : SimEvent;
 
 public sealed record FighterGuarded(string FighterId) : SimEvent;
 
@@ -90,13 +85,10 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
 
     private readonly SortedDictionary<string, double> _injuries = new(StringComparer.Ordinal);
 
-    /// <summary>The main action of the current turn is spent (D56).</summary>
-    public bool ActionTaken { get; internal set; }
-
     /// <summary>Guarding since its last turn: hits through the shield land at <c>guard_body_share</c>.</summary>
     public bool Guarding { get; internal set; }
 
-    /// <summary>Steps left this turn, before or after the action (D56).</summary>
+    /// <summary>Steps left this turn; they all come before the action, which ends the turn (D56).</summary>
     public int MovePoints { get; internal set; }
 
     /// <summary>Enemies that already struck this fighter for free this turn: each does so once (D54).</summary>
@@ -193,7 +185,7 @@ public sealed class Battle
 
     /// <summary>
     /// Why the active fighter cannot use <paramref name="techniqueId"/> (null: the basic attack) this
-    /// turn whatever it aims at — the action spent, too little energy or qi — or null when it can be
+    /// turn whatever it aims at — too little energy or qi — or null when it can be
     /// picked. The same check opens <see cref="Execute"/> for an attack or a technique.
     /// </summary>
     public Loc.LocKey? SkillUnavailable(string? techniqueId) =>
@@ -243,9 +235,6 @@ public sealed class Battle
                     return new(RejectReasons.NoRoom);
                 return new(null, Technique: technique, Plan: plan);
 
-            case Dash:
-                return new(ActionRefusal(actor, _config.DashEnergy));
-
             case Guard:
                 return new(ActionRefusal(actor, _config.GuardEnergy));
 
@@ -274,42 +263,32 @@ public sealed class Battle
         switch (command)
         {
             case EndTurn:
-                if (!actor.ActionTaken)
-                    events.Add(new FighterWaited(actor.Id));
-                FinishTurn(actor, events);
-                events.AddRange(NextTurn());
+                events.Add(new FighterWaited(actor.Id));
+                EndOwnTurn(actor, events);
                 break;
 
             case Attack:
-                SpendAction(actor, _config.AttackEnergy);
+                actor.Energy -= _config.AttackEnergy;
                 Strike(actor, check.Target!, actor.Def.WeaponDamage, events);
-                if (OneSideLeft())
-                    Active = null;
+                EndOwnTurn(actor, events);
                 break;
 
             case UseTechnique use:
-                SpendAction(actor, 0);
                 actor.Shield -= check.Technique!.Combat.Qi;
                 events.Add(new TechniqueUsed(actor.Id, check.Technique.Id, use.Target));
                 Perform(actor, check.Technique, check.Plan!, events);
-                if (OneSideLeft())
-                    Active = null;
-                break;
-
-            case Dash:
-                SpendAction(actor, _config.DashEnergy);
-                actor.MovePoints += MovePointsOf(actor.Def);
-                events.Add(new FighterDashed(actor.Id, actor.MovePoints));
+                EndOwnTurn(actor, events);
                 break;
 
             case Guard:
-                SpendAction(actor, _config.GuardEnergy);
+                actor.Energy -= _config.GuardEnergy;
                 actor.Guarding = true;
                 events.Add(new FighterGuarded(actor.Id));
+                EndOwnTurn(actor, events);
                 break;
 
             case Flee:
-                SpendAction(actor, _config.FleeEnergy);
+                actor.Energy -= _config.FleeEnergy;
                 actor.Fled = true;
                 events.Add(new FighterFled(actor.Id));
                 events.AddRange(NextTurn());
@@ -468,15 +447,20 @@ public sealed class Battle
     internal double TechniqueDamage(BattleFighter actor, CombatTechnique technique) =>
         actor.Def.WeaponDamage * (1 + technique.Level * _config.TechniqueBonusPerLevel) * technique.Combat.Damage;
 
-    /// <summary>Why the turn's one action, costing <paramref name="energy"/>, cannot be taken; null when it can.</summary>
+    /// <summary>Why the turn's action, costing <paramref name="energy"/>, cannot be taken; null when it can.</summary>
     private static Loc.LocKey? ActionRefusal(BattleFighter actor, double energy) =>
-        actor.ActionTaken ? RejectReasons.ActionTaken : actor.Energy < energy ? RejectReasons.NotEnoughEnergy : null;
+        actor.Energy < energy ? RejectReasons.NotEnoughEnergy : null;
 
-    /// <summary>Spends the turn's one action and its energy; <see cref="Check"/> has allowed it.</summary>
-    private static void SpendAction(BattleFighter actor, double energy)
+    /// <summary>The action or the wait closes the turn: the refill, then the next fighter, unless the fight is won.</summary>
+    private void EndOwnTurn(BattleFighter actor, List<SimEvent> events)
     {
-        actor.Energy -= energy;
-        actor.ActionTaken = true;
+        if (OneSideLeft())
+        {
+            Active = null;
+            return;
+        }
+        FinishTurn(actor, events);
+        events.AddRange(NextTurn());
     }
 
     /// <summary>One hit through the pipeline shared with the formula resolver (§7.4).</summary>
@@ -528,7 +512,6 @@ public sealed class Battle
         for (int i = 0; i < inFight.Count; i++)
             inFight[i].Initiative = gauges[i];
         Active = inFight[next];
-        Active.ActionTaken = false;
         Active.Guarding = false;
         Active.MovePoints = MovePointsOf(Active.Def);
         Active.FreeAttackers.Clear();

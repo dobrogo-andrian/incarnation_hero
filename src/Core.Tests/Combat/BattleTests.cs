@@ -48,6 +48,7 @@ public class BattleTests
         var outcome = battle.Execute(new Attack("wolf"));
 
         Assert.True(outcome.Accepted);
+        var ended = Assert.Single(outcome.Events.OfType<BattleTurnEnded>());
         var hit = Assert.Single(outcome.Events.OfType<FighterHit>());
         Assert.InRange(hit.Damage, 8, 12);
         Assert.Equal(4, hit.Absorbed);
@@ -55,20 +56,21 @@ public class BattleTests
         Assert.Equal(0, wolf.Shield);
         Assert.Equal(100 - hit.ToHealth, wolf.Health, 9);
         Assert.Equal(hit.ToHealth / 10, wolf.Injuries["injury.body"], 9);
-        Assert.Equal(15 - Close.AttackEnergy, me.Energy);
-        Assert.Same(me, battle.Active);
+        Assert.Equal(15 - Close.AttackEnergy + ended.EnergyRefilled, me.Energy, 9);
     }
 
     [Fact]
-    public void One_action_a_turn_and_ending_after_it_is_no_wait()
+    public void The_action_ends_the_turn_and_ending_without_one_is_a_wait()
     {
-        var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf")], Close);
-        battle.Execute(new Attack("wolf"));
-        Assert.Equal(RejectReasons.ActionTaken, battle.Execute(new Attack("wolf")).RejectReason);
+        var battle = Start([Fighter("player")], [Fighter("wolf")], Close);
+        var attacked = battle.Execute(new Attack("wolf"));
+        Assert.Empty(attacked.Events.OfType<FighterWaited>());
+        Assert.Equal("player", Assert.Single(attacked.Events.OfType<BattleTurnEnded>()).FighterId);
+        Assert.Equal("wolf", Assert.Single(attacked.Events.OfType<BattleTurnStarted>()).FighterId);
 
-        var ended = battle.Execute(new EndTurn());
-        Assert.Empty(ended.Events.OfType<FighterWaited>());
-        Assert.Single(ended.Events.OfType<BattleTurnEnded>());
+        var waited = battle.Execute(new EndTurn());
+        Assert.Equal(new FighterWaited("wolf"), Assert.Single(waited.Events.OfType<FighterWaited>()));
+        Assert.Single(waited.Events.OfType<BattleTurnEnded>());
     }
 
     [Fact]
@@ -100,7 +102,6 @@ public class BattleTests
     {
         var battle = Start([Fighter("player", reaction: 20)], [Fighter("wolf#1", health: 1), Fighter("wolf#2")], Close);
         Assert.True(battle.Execute(new Attack("wolf#1")).Accepted);
-        battle.Execute(new EndTurn());
         Assert.DoesNotContain(battle.Forecast(6), f => f.Id == "wolf#1");
         Assert.False(battle.IsOver);
     }
@@ -114,7 +115,6 @@ public class BattleTests
             for (int i = 0; i < 6 && !battle.IsOver; i++)
             {
                 battle.Execute(new Attack(battle.Active!.Side == 0 ? "wolf" : "player"));
-                battle.Execute(new EndTurn());
             }
             return battle.Fighters.Sum(f => f.Health);
         }

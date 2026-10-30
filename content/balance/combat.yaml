@@ -44,8 +44,7 @@ energy_output_aspect: aspect.endurance.output
 energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share flows from the reserve (D55)
 energy_refill_min: 2              # flows even from an empty reserve
 energy_capacity_per_output: 1.5   # energy ready to spend holds output × 1.5
-move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, split before and after the action
-dash_energy: 4                    # dash: as many movement points again
+move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, all before the action (D56)
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half
 guard_body_share: 0.5
 flee_energy: 4                    # escape from a rim hex with no enemy next to it (§7.6)

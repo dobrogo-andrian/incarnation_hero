@@ -11,7 +11,7 @@ using static Widgets;
 /// pick the hero (a sandbox profile or a snapshot of the current hero) and an enemy group, then fight
 /// on the hex field. The player clicks a lit hex to step and an adjacent enemy to strike. The skill
 /// bar under the field holds the techniques (keys 1–5) and, apart at the far right, the basic attack
-/// and ending the turn (Space); picking a skill lights where it can go. Dash, guard and flee are
+/// and ending the turn (Space); picking a skill lights where it can go. Guard and flee are
 /// buttons beside the log. What Core would refuse is greyed out with its reason. Enemy turns are
 /// played back event by event (steps, hits) with the CTB queue on top; Core has already decided them.
 /// </summary>
@@ -376,7 +376,6 @@ public partial class BattleScreen : PanelContainer
         if (myTurn)
         {
             _actions.AddChild(Row(
-                ActionButton("str.ui.battle_dash", new Dash()),
                 ActionButton("str.ui.battle_guard", new Guard()),
                 ActionButton("str.ui.battle_flee", new Flee())));
             if (_aiming is not null)

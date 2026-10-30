@@ -7,9 +7,6 @@
 - id: str.reject.battle_over
   text: { uk: "Бій уже скінчився." }
 
-- id: str.reject.action_taken
-  text: { uk: "Дію цього ходу вже виконано." }
-
 - id: str.reject.invalid_target
   text: { uk: "Це не ворог у бою." }
 
@@ -753,9 +750,6 @@
 - id: str.battle.technique
   text: { uk: "{who}: техніка «{technique}»." }
 
-- id: str.battle.dashed
-  text: { uk: "{who}: ривок (очок руху: {points})." }
-
 - id: str.battle.guarded
   text: { uk: "{who}: захист до наступного ходу." }
 
@@ -798,9 +792,6 @@
 
 - id: str.ui.battle_queue
   text: { uk: "Черга:" }
-
-- id: str.ui.battle_dash
-  text: { uk: "Ривок" }
 
 - id: str.ui.battle_guard
   text: { uk: "Захист" }

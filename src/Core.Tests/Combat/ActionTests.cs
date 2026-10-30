@@ -21,15 +21,22 @@ public class ActionTests
         Battle.Start([Fighter("player", playerReaction)], [Fighter("wolf", wolfReaction)], config, Xoshiro256StarStar.FromSeed(5));
 
     [Fact]
-    public void Dash_gives_the_turns_movement_points_again_for_energy()
+    public void An_action_ends_the_turn_and_the_steps_left_with_it()
     {
-        var battle = Start(Field(4));
+        // Equal reactions: the player goes first by ID, then the wolf.
+        var battle = Start(Field(4), playerReaction: 10, wolfReaction: 10);
         var me = battle.Active!;
-        var outcome = battle.Execute(new Dash());
-        Assert.Equal(new FighterDashed("player", 6), Assert.Single(outcome.Events.OfType<FighterDashed>()));
-        Assert.Equal(15 - Field(4).DashEnergy, me.Energy);
-        Assert.Contains(battle.Reachable(), r => r.Path.Count == 6);
-        Assert.Equal(RejectReasons.ActionTaken, battle.Execute(new Guard()).RejectReason);
+        battle.Execute(new Move(new Hex(0, 2)));
+        Assert.Equal(2, me.MovePoints);
+
+        var outcome = battle.Execute(new Guard());
+
+        Assert.True(outcome.Accepted);
+        Assert.Empty(outcome.Events.OfType<FighterWaited>());
+        var ended = Assert.Single(outcome.Events.OfType<BattleTurnEnded>());
+        Assert.Equal("player", ended.FighterId);
+        Assert.Equal(15 - Field(4).GuardEnergy + ended.EnergyRefilled, me.Energy, 9);
+        Assert.Equal("wolf", battle.Active!.Id);
     }
 
     [Fact]
@@ -37,18 +44,15 @@ public class ActionTests
     {
         var battle = Start(Field(4));
         var me = battle.Active!;
-        Assert.Null(battle.WhyNot(new Dash()));
+        Assert.Null(battle.WhyNot(new Guard()));
         Assert.Equal(RejectReasons.NotOnEdge, battle.WhyNot(new Flee()));
         Assert.Equal(RejectReasons.OutOfReach, battle.WhyNot(new Attack("wolf")));
-        Assert.False(me.ActionTaken);
+        Assert.Null(battle.WhyNot(new EndTurn()));
+        Assert.Same(me, battle.Active);
         Assert.Equal(15, me.Energy);
 
-        // Far from the wolf the attack can still be picked; after a dash the action itself is spent.
+        // Far from the wolf the attack can still be picked: a walk may bring it in reach.
         Assert.Null(battle.SkillUnavailable(null));
-        battle.Execute(new Dash());
-        Assert.Equal(RejectReasons.ActionTaken, battle.SkillUnavailable(null));
-        Assert.Equal(RejectReasons.ActionTaken, battle.WhyNot(new Guard()));
-        Assert.Null(battle.WhyNot(new EndTurn()));
     }
 
     [Fact]
@@ -67,11 +71,9 @@ public class ActionTests
         {
             var battle = Start(Field(1), playerReaction: 10, wolfReaction: 10);
             Assert.Equal("player", battle.Active!.Id);
-            if (guard)
-                Assert.True(battle.Execute(new Guard()).Accepted);
-            battle.Execute(new EndTurn());
+            Assert.True(battle.Execute(guard ? new Guard() : new EndTurn()).Accepted);
             var hit = battle.Execute(new Attack("player")).Events.OfType<FighterHit>().Single();
-            battle.Execute(new EndTurn());
+            Assert.Equal("player", battle.Active!.Id);
             Assert.False(battle.Fighters[0].Guarding);
             return hit.ToHealth;
         }
@@ -98,6 +100,6 @@ public class ActionTests
         var battle = Start(Field(1), playerReaction: 10, wolfReaction: 20);
         Assert.Equal("wolf", battle.Active!.Id);
         Assert.Equal(RejectReasons.EnemyAdjacent, battle.Execute(new Flee()).RejectReason);
-        Assert.False(battle.Active!.ActionTaken);
+        Assert.Equal("wolf", battle.Active!.Id);
     }
 }

@@ -49,7 +49,7 @@ public class MovementTests
     }
 
     [Fact]
-    public void Movement_points_split_between_moves_and_around_the_action()
+    public void Movement_points_split_between_moves_before_the_action()
     {
         var battle = Start(Field(4));
         var me = battle.Active!;

@@ -8,7 +8,7 @@ namespace Core.Combat;
 /// Utility AI for the hex battle (tech 4.1, D59). It plays the active fighter's whole turn as one
 /// plan: every candidate is a hex it can reach × an action × a target, scored by the weights of its
 /// archetype; the best one, with a little noise from the <c>ai</c> stream, is played through the same
-/// commands a player sends. The movement points left then take it to the best hex to end on.
+/// commands a player sends. The action ends the turn, so the hex to act from is the hex it ends on.
 /// </summary>
 public static class BattleAi
 {
@@ -26,20 +26,10 @@ public static class BattleAi
             .MaxBy(c => c.Score)!;
         if (plan.From != me.Position)
             Run(new Move(plan.From));
-        if (plan.Action is { } action && battle.Active == me)
-            Run(action);
-
-        if (battle.Active == me && battle.Reachable() is { Count: > 0 } reach)
-        {
-            double stay = Position(battle, me, ai, me.Position);
-            var step = reach
-                .Select(r => (r.To, Score: Position(battle, me, ai, r.To) - FreeAttacksCost(battle, me, ai, r.FreeAttacks)))
-                .MaxBy(r => r.Score);
-            if (step.Score > stay)
-                Run(new Move(step.To));
-        }
+        // A fighter brought down on the way has no turn left; otherwise the action, or the wait, ends it.
+        // Free attacks on the way may have cost the qi or the target the plan counted on: then it waits.
         if (battle.Active == me)
-            Run(new EndTurn());
+            Run(plan.Action is { } action && battle.WhyNot(action) is null ? action : new EndTurn());
         return events;
 
         void Run(BattleCommand command)

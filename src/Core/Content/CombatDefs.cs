@@ -266,8 +266,7 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>Steps a turn = agility × this, rounded down, at least 1 (D56).</summary>
     public double MovePointsPerAgility { get; set; }
 
-    /// <summary>Body energy of the other actions (D56): dash, guard and escape.</summary>
-    public double DashEnergy { get; set; }
+    /// <summary>Body energy of the other actions (D56): guard and escape.</summary>
     public double GuardEnergy { get; set; }
     public double FleeEnergy { get; set; }
 
@@ -278,7 +277,7 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     {
         if (WeaponDamage <= 0 || MaxRounds < 1 || MaxTurns < 1 || FieldRadius < 1)
             yield return "needs a positive weapon_damage, max_rounds, max_turns and field_radius.";
-        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || AttackEnergy < 0 || DashEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
+        if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || AttackEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
             yield return "needs a positive initiative_threshold, initiative_per_reaction, energy_capacity_per_output and move_points_per_agility, and energy refills and costs of zero or more.";
         if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
             || ShieldBreakChance is < 0 or > 1 || GuardBodyShare is < 0 or > 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
