@@ -7,6 +7,7 @@ namespace Sim.Cli.Runs;
 public sealed record RunSummary(
     ulong Seed,
     string Bot,
+    double? Aggression,
     string EndCause,
     int DeathAgeWeeks,
     double DeathAgeYears,

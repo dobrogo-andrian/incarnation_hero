@@ -26,7 +26,7 @@ public static class BotRunner
     {
         var sim = Simulation.NewGame(content, seed);
         var bot = BotRegistry.Create(botName, content, seed);
-        var recorder = new RunRecorder(sim, botName);
+        var recorder = new RunRecorder(sim, bot);
 
         for (int n = 0; sim.State.Mode != GameMode.RunEnd; n++)
         {

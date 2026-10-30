@@ -2,6 +2,7 @@ using Core.Combat;
 using Core.Content;
 using Core.Sim;
 using Core.State;
+using Sim.Cli.Bots;
 
 namespace Sim.Cli.Runs;
 
@@ -15,7 +16,7 @@ public sealed class RunRecorder
     public const double HeavyInjuryShare = 0.5;
 
     private readonly Simulation _sim;
-    private readonly string _bot;
+    private readonly IBot _bot;
     private readonly RunConfigDef _run;
     private readonly int _startStones;
 
@@ -39,7 +40,7 @@ public sealed class RunRecorder
     private int? _progressWeek;
     private double _progressMark;
 
-    public RunRecorder(Simulation sim, string bot)
+    public RunRecorder(Simulation sim, IBot bot)
     {
         _sim = sim;
         _bot = bot;
@@ -119,7 +120,8 @@ public sealed class RunRecorder
         var player = state.Player;
         return new RunSummary(
             state.Seed,
-            _bot,
+            _bot.Name,
+            _bot.Aggression is { } aggression ? Round(aggression) : null,
             state.EndCause?.ToString() ?? "none",
             player.AgeWeeks,
             Round(player.AgeWeeks / (double)_run.WeeksPerYear),

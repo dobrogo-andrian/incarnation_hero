@@ -6,7 +6,8 @@ using Core.State;
 namespace Sim.Cli.Bots;
 
 /// <summary>
-/// The knobs that tell rule bots apart (D43). Numbers are a draft, tuned by the reports.
+/// The knobs that tell rule bots apart (D43). Numbers are a draft, tuned by the reports. A profile
+/// with a <see cref="Temper"/> rolls a hidden aggression per run, which sets its health thresholds.
 /// </summary>
 public sealed record BotProfile(
     string Name,
@@ -15,26 +16,53 @@ public sealed record BotProfile(
     bool Roams,
     bool SeeksCombat,
     double MinHealthToFight,
+    double EvenFightChance,
     double HealAt,
     double MaxToxins,
     IReadOnlyList<string> AcceptedFailureZones,
     double DesperateYearsLeft,
-    IReadOnlyList<string> Shopping)
+    IReadOnlyList<string> Shopping,
+    Temper? Temper = null)
 {
     /// <summary>Meditates at safe places, avoids fights and waits out any breakthrough deficit.</summary>
     public static readonly BotProfile Cautious = new(
-        "cautious", BaseDanger: 1, DangerPerStage: 0, Roams: false, SeeksCombat: false, MinHealthToFight: 1,
+        "cautious", BaseDanger: 1, DangerPerStage: 0, Roams: false, SeeksCombat: false, MinHealthToFight: 1, EvenFightChance: 0,
         HealAt: 0.15, MaxToxins: 0.5, AcceptedFailureZones: [], DesperateYearsLeft: 5,
         Shopping: ["item.folio.azure_breath", "item.pill.qi_gathering"]);
 
     /// <summary>Roams dangerous zones for fights and their insight; breaks through with a light deficit.</summary>
     public static readonly BotProfile Fighter = new(
-        "fighter", BaseDanger: 1, DangerPerStage: 1, Roams: true, SeeksCombat: true, MinHealthToFight: 0.6,
+        "fighter", BaseDanger: 1, DangerPerStage: 1, Roams: true, SeeksCombat: true, MinHealthToFight: 0.6, EvenFightChance: 1,
         HealAt: 0.3, MaxToxins: 0.8, AcceptedFailureZones: ["failure_zone.light"], DesperateYearsLeft: 5,
-        Shopping: ["item.folio.piercing_dragon", "item.pill.qi_gathering"]);
+        Shopping: ["item.folio.piercing_dragon", "item.pill.qi_gathering"],
+        Temper: new(CarefulMinHealth: 0.95, RecklessMinHealth: 0.35, CarefulHealAt: 0.1, RecklessHealAt: 0.5,
+            CarefulEvenFight: 0, RecklessEvenFight: 1));
 
     public int MaxDanger(int stageIndex) => BaseDanger + DangerPerStage * stageIndex;
+
+    /// <summary>The thresholds of <paramref name="aggression"/> (0 careful, 1 reckless); a profile without a temper keeps its own.</summary>
+    public BotProfile WithAggression(double aggression) => Temper is not { } t ? this : this with
+    {
+        MinHealthToFight = Lerp(t.CarefulMinHealth, t.RecklessMinHealth, aggression),
+        HealAt = Lerp(t.CarefulHealAt, t.RecklessHealAt, aggression),
+        EvenFightChance = Lerp(t.CarefulEvenFight, t.RecklessEvenFight, aggression),
+    };
+
+    private static double Lerp(double from, double to, double t) => from + (to - from) * t;
 }
+
+/// <summary>
+/// The ends a hidden aggression moves a bot between: the health share it fights and roams from,
+/// the injury share it heals at, and the chance it takes a fight against its own stage. Risk is meant to pay (more fights, more insight), so the
+/// reports compare runs by aggression rather than tune one bot to survive.
+/// </summary>
+public sealed record Temper(
+    double CarefulMinHealth,
+    double RecklessMinHealth,
+    double CarefulHealAt,
+    double RecklessHealAt,
+    double CarefulEvenFight,
+    double RecklessEvenFight);
 
 /// <summary>
 /// A priority-rule player (D43): continue a commitment, break through when the forecast suits the
@@ -65,6 +93,11 @@ public sealed class RuleBot : IBot
 
     public RuleBot(BotProfile profile, ContentDb content, Xoshiro256StarStar rng)
     {
+        if (profile.Temper is not null)
+        {
+            Aggression = rng.NextDouble();
+            profile = profile.WithAggression(Aggression.Value);
+        }
         _profile = profile;
         _rng = rng;
         _content = content;
@@ -78,6 +111,8 @@ public sealed class RuleBot : IBot
     }
 
     public string Name => _profile.Name;
+
+    public double? Aggression { get; }
 
     public void Observe(IReadOnlyList<SimEvent> events) => _memory.Observe(events);
 
@@ -97,9 +132,10 @@ public sealed class RuleBot : IBot
         }
 
         var available = options.Where(o => o.Available).ToList();
-        if (_profile.SeeksCombat && Share(Resource(view, _healthResource)) >= _profile.MinHealthToFight)
+        if (_profile.SeeksCombat && Fit(view))
         {
-            foreach (var o in available.Where(o => o.Combat is { Stage: not StageRelation.Higher }))
+            foreach (var o in available.Where(o => o.Combat is { Stage: StageRelation.Lower }
+                         || o.Combat is { Stage: StageRelation.Equal } && _rng.Chance(_profile.EvenFightChance)))
                 yield return new ChooseEventOption(o.Index);
         }
         var peaceful = available.Where(o => o.Combat is null)
@@ -143,7 +179,7 @@ public sealed class RuleBot : IBot
         if (!scaleFull && view.Buffs.All(b => b.Kind != BuffKind.PillEnergy) && EnergyPill(view) is { } pill)
             yield return new UsePill(pill);
 
-        if (_profile.Roams && !scaleFull)
+        if (_profile.Roams && !scaleFull && Fit(view))
         {
             foreach (var command in Roam(view, track))
                 yield return command;
@@ -260,6 +296,9 @@ public sealed class RuleBot : IBot
 
     private PlaceDef? BestPlaceHere(PlayerView view) =>
         view.Places.Select(p => _content.Get<PlaceDef>(p.PlaceId)).MaxBy(p => Score(p, view.Week));
+
+    /// <summary>Healthy enough to pick a fight or roam into one.</summary>
+    private bool Fit(PlayerView view) => Share(Resource(view, _healthResource)) >= _profile.MinHealthToFight;
 
     private PillDef? Pill(string itemId) => _content.Get<ItemDef>(itemId).Pill;
 

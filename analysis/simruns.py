@@ -68,7 +68,7 @@ def load(bots=BOTS, runs: int = 1000, seed_from: int = 1, force: bool = False) -
         c, s, p, i = r["combat"], r["stones"], r["pills"], r["injuries"]
         run_rows.append({
             "seed": r["seed"], "bot": r["bot"], "end_cause": r["end_cause"],
-            "death_age_years": r["death_age_years"], "final_stage": r["final_stage"], "weeks": r["weeks"],
+            "aggression": r.get("aggression"), "death_age_years": r["death_age_years"], "final_stage": r["final_stage"], "weeks": r["weeks"],
             "healing_weeks": r["healing_weeks"], "events": sum(r["events"].values()),
             "rumors": sum(r["rumors"].values()), "breakthrough_attempts": len(r["breakthroughs"]),
             "fights": c["fights"], "won": c["won"], "fled": c["fled"], "beaten": c["beaten"], "died": c["died"],

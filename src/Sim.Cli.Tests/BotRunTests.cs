@@ -57,6 +57,33 @@ public sealed class BotRunTests
     }
 
     [Fact]
+    public void Fighter_RollsAHiddenAggressionPerRun_CautiousDoesNot()
+    {
+        var fighters = BotRunner.PlayMany(Repo, "fighter", 1, 6);
+
+        Assert.All(fighters, s => Assert.InRange(s.Aggression!.Value, 0, 1));
+        Assert.True(fighters.Select(s => s.Aggression).Distinct().Count() > 1);
+        Assert.Null(BotRunner.Play(Repo, "cautious", 1).Summary.Aggression);
+    }
+
+    [Fact]
+    public void Aggression_MovesThresholdsBetweenTheTempersEnds()
+    {
+        var fighter = BotProfile.Fighter;
+        var careful = fighter.WithAggression(0);
+        var reckless = fighter.WithAggression(1);
+
+        Assert.Equal(0.95, careful.MinHealthToFight, 6);
+        Assert.Equal(0.35, reckless.MinHealthToFight, 6);
+        Assert.Equal(0.1, careful.HealAt, 6);
+        Assert.Equal(0.5, reckless.HealAt, 6);
+        Assert.Equal(0, careful.EvenFightChance);
+        Assert.Equal(1, reckless.EvenFightChance);
+        Assert.Equal(0.3, fighter.WithAggression(0.5).HealAt, 6);
+        Assert.Same(BotProfile.Cautious, BotProfile.Cautious.WithAggression(1));
+    }
+
+    [Fact]
     public void Trace_HasOneTypedLinePerCommand()
     {
         var trace = new StringWriter();
@@ -81,7 +108,7 @@ public sealed class BotRunTests
     /// </summary>
     [Theory]
     [InlineData("cautious", "14c8f8a014d1ef6f12641fa798450b4c58aded3d3407dc1617601435e365bf3d")]
-    [InlineData("fighter", "377adc400ccb7b6364c4b2241cb1f60ed0854a708f8956f89c82c7ce66e54315")]
+    [InlineData("fighter", "4c38065037c925a6d1be3e8d08a4979efa00185e9b1c77b0e97e3636ab81f507")]
     [InlineData("random", "2007d40267d5a5d351b8e8321ea11e4a847b85f9968027f51df365d7459eb4c3")]
     public void Golden_Seed42(string bot, string expectedHash)
     {

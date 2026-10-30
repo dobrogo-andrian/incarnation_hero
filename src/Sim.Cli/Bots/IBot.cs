@@ -11,6 +11,9 @@ public interface IBot
 {
     string Name { get; }
 
+    /// <summary>The bot's hidden aggression for this run (0 careful, 1 reckless), if it rolls one.</summary>
+    double? Aggression => null;
+
     /// <summary>
     /// Commands in order of preference. The runner executes the first one Core accepts, so a bot
     /// leaves validation to Core instead of repeating its checks; a rejected command changes nothing.
