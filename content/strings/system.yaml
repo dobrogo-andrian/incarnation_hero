@@ -812,7 +812,7 @@
   text: { uk: "Скасувати навичку (Esc)" }
 
 - id: str.ui.battle_technique
-  text: { uk: "{key}  {name}\nці: {qi} · енергія: {energy}" }
+  text: { uk: "{key}  {name}\nщит ці: {qi} · енергія: {energy}" }
 
 - id: str.ui.battle_attack
   text: { uk: "Атака\nенергія: {energy}" }
@@ -827,7 +827,7 @@
   text: { uk: "Оберіть, куди спрямувати техніку: підсвічено всі можливі гекси, навівши — видно зону ураження. Можна вдарити й у порожнє місце." }
 
 - id: str.ui.battle_fighter
-  text: { uk: "{name}\nЗдоров'я: {health} / {max_health}\nЩит ці: {shield} / {max_shield}\nЕнергія: {energy} / {capacity}\nОчки руху: {points}" }
+  text: { uk: "{name}\nЗдоров'я: {health} / {max_health}\nПул ці: {pool}\nЩит ці: {shield} / {max_shield}\nЕнергія: {energy} / {capacity}\nОчки руху: {points}" }
 
 - id: str.ui.battle_won
   text: { uk: "Перемога." }

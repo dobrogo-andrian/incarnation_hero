@@ -34,8 +34,8 @@ public static class CombatMath
         Math.Max(0, Math.Min(fighter.ShieldRefill, Math.Min(fighter.MaxShield - shield, qiPool)));
 
     /// <summary>
-    /// The body energy that comes back at the end of a turn (D55): output × the share of health
-    /// left, never under the minimum; energy stops at its maximum.
+    /// The energy that comes back at the end of a turn (D55): output × the share of health left,
+    /// never under the minimum; the body itself does not run dry, the fight's pool stops at its maximum.
     /// </summary>
     public static double EnergyRefill(Combatant fighter, double health, double energy, double minimum)
     {

@@ -22,7 +22,7 @@ public class AiTests
 
     private static Combatant Fighter(string id, string ai, double reaction = 10, double health = 100, double energy = 15,
         double shield = 30, params string[] techniques) =>
-        new(id, 0, health, 100, shield, shield, 0, 0, 10, reaction, 10, 10, energy, 5, energy, "injury.body", 10,
+        new(id, 0, health, 100, shield, shield, 0, 0, 10, reaction, 10, 10, 5, energy, "injury.body", 10,
             techniques.Select(t => new CombatTechnique(t, 1, TestContent.Repo.Get<KnowledgeDef>(t).Combat!)).ToList(),
             TestContent.Repo.Get<AiArchetypeDef>(ai));
 

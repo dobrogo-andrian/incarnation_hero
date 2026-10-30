@@ -39,10 +39,10 @@ insight_fled_share: 0.4
 field_radius: 4                   # a hexagon of 61 hexes; its 24 rim hexes are the way out
 initiative_threshold: 100         # CTB (D53): act when the gauge reaches 100
 initiative_per_reaction: 1        # the gauge fills by reaction a tick: 10 reaction acts every 10 ticks
-energy_resource: resource.body_energy
 energy_output_aspect: aspect.endurance.output
-energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share comes back, up to the body's maximum (D55)
+energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share comes back into the fight's pool (D55)
 energy_refill_min: 2              # comes back whatever the body's state
+energy_capacity_per_output: 1.5   # the fight's pool holds output × 1.5 and starts full; the body never runs dry
 move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, all before the action (D56)
 step_energy: 1                    # every step costs body energy; the movement points still cap a turn's steps
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half

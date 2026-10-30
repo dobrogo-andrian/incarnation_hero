@@ -86,7 +86,7 @@ public sealed class CombatTests
     private static Combatant Fighter(string id, double health, double damage = 10, double reaction = 10, double shield = 0,
         double pool = 0, double refill = 0, double maxShield = -1) =>
         new(id, 0, health, MaxHealth: 100, shield, maxShield < 0 ? shield : maxShield, pool, refill, damage, reaction,
-            Agility: 10, Resilience: 10, Energy: 0, EnergyRefill: 0, MaxEnergy: 0, "injury.body", WeaponDamage: damage, Techniques: [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+            Agility: 10, Resilience: 10, EnergyRefill: 0, MaxEnergy: 0, "injury.body", WeaponDamage: damage, Techniques: [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     private static CombatResult Resolve(Combatant player, CombatConfigDef config, params Combatant[] foes) =>
         FormulaResolver.Resolve(player, foes, config, Xoshiro256StarStar.FromSeed(7));

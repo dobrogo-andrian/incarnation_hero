@@ -78,8 +78,11 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
     public double Shield { get; internal set; } = def.Shield;
     public double QiPool { get; internal set; } = def.QiPool;
 
-    /// <summary>Body energy (D55): every step, strike and technique spends it, and each own turn's end refills it.</summary>
-    public double Energy { get; internal set; } = def.Energy;
+    /// <summary>
+    /// Body energy set aside for the fight (D55), full at the start: every step, strike and technique
+    /// spends it, and each own turn's end refills it, the way qi flows into the shield.
+    /// </summary>
+    public double Energy { get; internal set; } = def.MaxEnergy;
 
     /// <summary>The CTB gauge (D53): it fills by <see cref="InitiativeRate"/> a tick, and the fighter acts at the threshold.</summary>
     public int Initiative { get; internal set; }
@@ -564,7 +567,7 @@ public sealed class Battle
     /// <summary>Movement points a turn: agility × <c>move_points_per_agility</c>, rounded down, at least 1.</summary>
     internal int MovePointsOf(Combatant c) => Math.Max(1, (int)Math.Floor(c.Agility * _config.MovePointsPerAgility));
 
-    /// <summary>End of an own turn: qi flows from the pool into the shield, and the body's energy comes back (D55).</summary>
+    /// <summary>End of an own turn: qi flows from the pool into the shield, and energy comes back from the body (D55).</summary>
     private void FinishTurn(BattleFighter f, List<SimEvent> events)
     {
         double shield = CombatMath.ShieldRefill(f.Def, f.Shield, f.QiPool);

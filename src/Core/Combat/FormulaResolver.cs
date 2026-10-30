@@ -17,7 +17,6 @@ public sealed record Combatant(
     double Reaction,
     double Agility,
     double Resilience,
-    double Energy,
     double EnergyRefill,
     double MaxEnergy,
     string InjuryId,

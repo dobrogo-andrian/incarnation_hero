@@ -451,7 +451,7 @@ public partial class BattleScreen : PanelContainer
         Args =
         [
             new("name", FighterName(f.Id)), new("health", Math.Round(f.Health, 1)), new("max_health", Math.Round(f.Def.MaxHealth, 1)),
-            new("shield", Math.Round(f.Shield, 1)), new("max_shield", Math.Round(f.Def.MaxShield, 1)),
+            new("shield", Math.Round(f.Shield, 1)), new("max_shield", Math.Round(f.Def.MaxShield, 1)), new("pool", Math.Round(f.QiPool, 1)),
             new("energy", Math.Round(f.Energy, 1)), new("capacity", Math.Round(f.Def.MaxEnergy, 1)), new("points", f.MovePoints),
         ],
     });
