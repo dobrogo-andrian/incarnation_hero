@@ -15,7 +15,7 @@ public class ActionTests
     }
 
     private static Combatant Fighter(string id, double reaction = 10) =>
-        new(id, 0, 100, 100, 0, 0, 0, 0, 10, reaction, 10, 10, 100, 5, 15, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+        new(id, 0, 100, 100, 0, 0, 0, 0, 10, reaction, 10, 10, 15, 5, 15, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     private static Battle Start(CombatConfigDef config, double playerReaction = 20, double wolfReaction = 10) =>
         Battle.Start([Fighter("player", playerReaction)], [Fighter("wolf", wolfReaction)], config, Xoshiro256StarStar.FromSeed(5));
@@ -35,7 +35,7 @@ public class ActionTests
         Assert.Empty(outcome.Events.OfType<FighterWaited>());
         var ended = Assert.Single(outcome.Events.OfType<BattleTurnEnded>());
         Assert.Equal("player", ended.FighterId);
-        Assert.Equal(15 - Field(4).GuardEnergy + ended.EnergyRefilled, me.Energy, 9);
+        Assert.Equal(15 - Field(4).StepEnergy - Field(4).GuardEnergy + ended.EnergyRefilled, me.Energy, 9);
         Assert.Equal("wolf", battle.Active!.Id);
     }
 

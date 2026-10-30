@@ -20,9 +20,9 @@ public class AiTests
         return config;
     }
 
-    private static Combatant Fighter(string id, string ai, double reaction = 10, double health = 100, double energyCapacity = 15,
+    private static Combatant Fighter(string id, string ai, double reaction = 10, double health = 100, double energy = 15,
         double shield = 30, params string[] techniques) =>
-        new(id, 0, health, 100, shield, shield, 0, 0, 10, reaction, 10, 10, 100, 5, energyCapacity, "injury.body", 10,
+        new(id, 0, health, 100, shield, shield, 0, 0, 10, reaction, 10, 10, energy, 5, energy, "injury.body", 10,
             techniques.Select(t => new CombatTechnique(t, 1, TestContent.Repo.Get<KnowledgeDef>(t).Combat!)).ToList(),
             TestContent.Repo.Get<AiArchetypeDef>(ai));
 
@@ -64,7 +64,7 @@ public class AiTests
     public void A_cultivator_that_cannot_strike_keeps_out_of_enemy_reach()
     {
         // No energy to attack or guard and no techniques: nothing worth stepping next to the wolf for.
-        var battle = Start(Field(4), Fighter("me", Cautious, reaction: 20, energyCapacity: 2), Fighter("wolf", Beast));
+        var battle = Start(Field(4), Fighter("me", Cautious, reaction: 20, energy: 2), Fighter("wolf", Beast));
         BattleAi.PlayTurn(battle, Ai);
         var me = battle.Fighters[0];
         var wolf = battle.Fighters[1];
@@ -92,9 +92,11 @@ public class AiTests
     [Fact]
     public void A_cultivator_strikes_and_leaps_out_of_a_zone_of_control_instead_of_walking_out()
     {
-        // The wolf (faster) closes in and bites; the cultivator, out of energy for a basic attack,
-        // answers with crane retreat, which strikes and leaves without a free attack.
-        var battle = Start(Field(2), Fighter("me", Cautious, energyCapacity: 2, techniques: "tech.movement.crane_retreat"), Fighter("wolf", Beast, reaction: 20));
+        // The wolf (faster) closes in and bites; the cultivator, with the energy for crane retreat
+        // but not for a basic attack, answers with it: it strikes and leaves without a free attack.
+        var config = Field(2);
+        config.AttackEnergy = 5;
+        var battle = Start(config, Fighter("me", Cautious, energy: 4, techniques: "tech.movement.crane_retreat"), Fighter("wolf", Beast, reaction: 20));
         var ai = Ai;
         while (battle.Active!.Id == "wolf")
             BattleAi.PlayTurn(battle, ai);

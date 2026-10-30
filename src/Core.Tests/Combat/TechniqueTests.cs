@@ -22,8 +22,8 @@ public class TechniqueTests
     private static CombatTechnique Known(string id, int level = 1) =>
         new(id, level, TestContent.Repo.Get<KnowledgeDef>(id).Combat!);
 
-    private static Combatant Fighter(string id, double reaction = 10, double shield = 30, double damage = 10, params CombatTechnique[] techniques) =>
-        new(id, 0, 100, 100, shield, shield, 0, 0, damage, reaction, 10, 10, 100, 5, 15, "injury.body", 10, techniques, TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+    private static Combatant Fighter(string id, double reaction = 10, double shield = 30, double damage = 10, double energy = 15, params CombatTechnique[] techniques) =>
+        new(id, 0, 100, 100, shield, shield, 0, 0, damage, reaction, 10, 10, energy, 5, 15, "injury.body", 10, techniques, TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     private static Battle Start(CombatConfigDef config, Combatant player, int wolves = 1) =>
         Battle.Start([player], Enumerable.Range(1, wolves).Select(i => Fighter($"wolf#{i}", shield: 0)).ToList(), config, Xoshiro256StarStar.FromSeed(11));
@@ -98,6 +98,8 @@ public class TechniqueTests
         Assert.Empty(outcome.Events.OfType<FighterHit>());
         var ended = Assert.Single(outcome.Events.OfType<BattleTurnEnded>());
         Assert.Equal(shield - 10 + ended.ShieldRefilled, battle.Fighters[0].Shield, 9);
+        double energy = TestContent.Repo.Get<KnowledgeDef>(Arc).Combat!.Energy;
+        Assert.Equal(15 - energy + ended.EnergyRefilled, battle.Fighters[0].Energy, 9);
     }
 
     [Fact]
@@ -118,6 +120,9 @@ public class TechniqueTests
         Assert.Equal(RejectReasons.UnknownTechnique, battle.Execute(new UseTechnique(Line, new Hex(1, 0))).RejectReason);
         Assert.Equal(RejectReasons.InvalidTarget, battle.Execute(new UseTechnique(Arc, new Hex(-1, 2))).RejectReason);
         Assert.Null(battle.SkillUnavailable(Arc));
+
+        var tired = Start(Field(1), Fighter("player", reaction: 20, energy: 1, techniques: Known(Arc)));
+        Assert.Equal(RejectReasons.NotEnoughEnergy, tired.SkillUnavailable(Arc));
 
         var empty = Start(Field(1), Fighter("player", reaction: 20, shield: 5, techniques: Known(Arc)));
         Assert.Equal(RejectReasons.NotEnoughQi, empty.Execute(new UseTechnique(Arc, new Hex(1, 0))).RejectReason);

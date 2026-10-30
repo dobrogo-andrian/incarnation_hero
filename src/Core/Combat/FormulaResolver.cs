@@ -19,7 +19,7 @@ public sealed record Combatant(
     double Resilience,
     double Energy,
     double EnergyRefill,
-    double EnergyCapacity,
+    double MaxEnergy,
     string InjuryId,
     double WeaponDamage,
     IReadOnlyList<CombatTechnique> Techniques,

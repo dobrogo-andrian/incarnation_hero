@@ -32,7 +32,7 @@ public sealed class KnowledgeDef : ContentDef, IValidatedDef
             yield return IsMethod ? "a cultivation method needs a method block." : "only a cultivation method has a method block.";
         if (Combat is not null && !IsTechnique)
             yield return "only a technique has a combat block.";
-        if (Combat is { } c && (!TechniqueCombatDef.Shapes.Contains(c.Shape) || c.Range < 1 || c.Damage <= 0 || c.Qi < 0))
+        if (Combat is { } c && (!TechniqueCombatDef.Shapes.Contains(c.Shape) || c.Range < 1 || c.Damage <= 0 || c.Qi < 0 || c.Energy < 0))
             yield return $"combat needs a shape ({string.Join(", ", TechniqueCombatDef.Shapes)}), a range of at least 1, positive damage and qi of zero or more.";
         if (Method is { } m && (m.QualityCeiling <= 0 || m.QualityCeilingPerLevel < 0 || m.PurityCap < 0 || m.PurityCapPerLevel < 0))
             yield return "method needs a positive quality_ceiling and non-negative per-level growth and purity cap.";
@@ -42,7 +42,8 @@ public sealed class KnowledgeDef : ContentDef, IValidatedDef
 /// <summary>
 /// A technique on the hex field (D56): one of a fixed set of shapes, each a branch in C#
 /// (<c>Battle</c>), with its numbers here. Damage = weapon × (1 + level × technique bonus) ×
-/// <see cref="Damage"/> × qi density; the cost comes out of combat qi, the same qi that holds the shield.
+/// <see cref="Damage"/> × qi density. It costs combat qi, the same qi that holds the shield, and body
+/// energy, which pays for its own movement too (D55).
 /// </summary>
 public sealed class TechniqueCombatDef
 {
@@ -68,6 +69,9 @@ public sealed class TechniqueCombatDef
 
     /// <summary>Combat qi it costs.</summary>
     public double Qi { get; set; }
+
+    /// <summary>Body energy it costs.</summary>
+    public double Energy { get; set; }
 }
 
 /// <summary>

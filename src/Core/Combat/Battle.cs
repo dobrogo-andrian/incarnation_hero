@@ -78,11 +78,8 @@ public sealed class BattleFighter(Combatant def, int side, Hex position, int ini
     public double Shield { get; internal set; } = def.Shield;
     public double QiPool { get; internal set; } = def.QiPool;
 
-    /// <summary>Body energy ready to spend; the fight starts with it full (D55).</summary>
-    public double Energy { get; internal set; } = def.EnergyCapacity;
-
-    /// <summary>The body's reserve energy flows from; it does not come back during the fight.</summary>
-    public double EnergyReserve { get; internal set; } = def.Energy;
+    /// <summary>Body energy (D55): every step, strike and technique spends it, and each own turn's end refills it.</summary>
+    public double Energy { get; internal set; } = def.Energy;
 
     /// <summary>The CTB gauge (D53): it fills by <see cref="InitiativeRate"/> a tick, and the fighter acts at the threshold.</summary>
     public int Initiative { get; internal set; }
@@ -209,7 +206,7 @@ public sealed class Battle
             return ActionRefusal(actor, _config.AttackEnergy);
         if (actor.Def.Techniques.FirstOrDefault(t => t.Id == techniqueId) is not { } technique)
             return RejectReasons.UnknownTechnique;
-        return ActionRefusal(actor, 0) ?? (actor.Shield < technique.Combat.Qi ? RejectReasons.NotEnoughQi : null);
+        return ActionRefusal(actor, technique.Combat.Energy) ?? (actor.Shield < technique.Combat.Qi ? RejectReasons.NotEnoughQi : null);
     }
 
     /// <summary>What a command needs once it is allowed: the target, the technique and its plan, or the walk.</summary>
@@ -287,6 +284,7 @@ public sealed class Battle
 
             case UseTechnique use:
                 actor.Shield -= check.Technique!.Combat.Qi;
+                actor.Energy -= check.Technique.Combat.Energy;
                 events.Add(new TechniqueUsed(actor.Id, check.Technique.Id, use.Target));
                 Perform(actor, check.Technique, check.Plan!, events);
                 EndOwnTurn(actor, events);
@@ -314,7 +312,7 @@ public sealed class Battle
     }
 
     /// <summary>
-    /// Every hex the active fighter can walk to with the movement points left, in hex order. Paths
+    /// Every hex the active fighter can walk to with the steps left, in hex order. Paths
     /// do not pass through other fighters; of the paths that fit, the one that provokes the fewest
     /// free attacks wins, then the shorter one. The UI highlights these and the AI picks from them.
     /// </summary>
@@ -324,7 +322,7 @@ public sealed class Battle
             return [];
         var best = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)>();
         var layer = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)> { [mover.Position] = ([], []) };
-        for (int step = 1; step <= mover.MovePoints; step++)
+        for (int step = 1; step <= StepsLeft(mover); step++)
         {
             var next = new SortedDictionary<Hex, (List<Hex> Path, HashSet<string> Provoked)>();
             foreach (var (hex, (path, provoked)) in layer)
@@ -348,11 +346,22 @@ public sealed class Battle
         return best.Select(b => new Reach(b.Key, b.Value.Path, b.Value.Provoked.Count)).ToList();
     }
 
-    /// <summary>Enemies next to <paramref name="hex"/> that would strike <paramref name="mover"/> for leaving it, in fighter order.</summary>
-    private IEnumerable<BattleFighter> Provokers(BattleFighter mover, Hex hex) =>
-        _fighters.Where(f => f.InFight && f.Side != mover.Side && f.Position.DistanceTo(hex) == 1 && !mover.FreeAttackers.Contains(f.Id));
+    /// <summary>Steps the fighter can still take this turn: the movement points left, as far as its energy pays for them.</summary>
+    internal int StepsLeft(BattleFighter f) =>
+        _config.StepEnergy <= 0 ? f.MovePoints : Math.Min(f.MovePoints, (int)Math.Floor(Math.Round(f.Energy / _config.StepEnergy, 6)));
 
-    /// <summary>Step by step: leaving a hex next to an enemy draws its free attack first (D54); a mover brought down stops there.</summary>
+    /// <summary>
+    /// Enemies next to <paramref name="hex"/> that would strike <paramref name="mover"/> for leaving it,
+    /// in fighter order: those with the energy for a basic attack, which the free attack costs them (D54).
+    /// </summary>
+    private IEnumerable<BattleFighter> Provokers(BattleFighter mover, Hex hex) =>
+        _fighters.Where(f => f.InFight && f.Side != mover.Side && f.Position.DistanceTo(hex) == 1 && !mover.FreeAttackers.Contains(f.Id)
+            && f.Energy >= _config.AttackEnergy);
+
+    /// <summary>
+    /// Step by step, each for its energy: leaving a hex next to an enemy draws its free attack first
+    /// (D54); a mover brought down stops there.
+    /// </summary>
     private void Walk(BattleFighter mover, IReadOnlyList<Hex> path, List<SimEvent> events)
     {
         foreach (var to in path)
@@ -360,6 +369,7 @@ public sealed class Battle
             foreach (var enemy in Provokers(mover, mover.Position).ToList())
             {
                 mover.FreeAttackers.Add(enemy.Id);
+                enemy.Energy -= _config.AttackEnergy;
                 events.Add(new FreeAttackProvoked(enemy.Id, mover.Id));
                 Strike(enemy, mover, enemy.Def.WeaponDamage, events);
                 if (mover.Down)
@@ -376,6 +386,7 @@ public sealed class Battle
             events.Add(new FighterMoved(mover.Id, mover.Position, to));
             mover.Position = to;
             mover.MovePoints--;
+            mover.Energy -= _config.StepEnergy;
             BreakEscapes(mover, events);
         }
     }
@@ -553,16 +564,15 @@ public sealed class Battle
     /// <summary>Movement points a turn: agility × <c>move_points_per_agility</c>, rounded down, at least 1.</summary>
     internal int MovePointsOf(Combatant c) => Math.Max(1, (int)Math.Floor(c.Agility * _config.MovePointsPerAgility));
 
-    /// <summary>End of an own turn: qi flows from the pool into the shield, and energy from the reserve (D55).</summary>
+    /// <summary>End of an own turn: qi flows from the pool into the shield, and the body's energy comes back (D55).</summary>
     private void FinishTurn(BattleFighter f, List<SimEvent> events)
     {
         double shield = CombatMath.ShieldRefill(f.Def, f.Shield, f.QiPool);
         f.Shield += shield;
         f.QiPool -= shield;
 
-        double energy = CombatMath.EnergyRefill(f.Def, f.Health, f.Energy, f.EnergyReserve, _config.EnergyRefillMin);
+        double energy = CombatMath.EnergyRefill(f.Def, f.Health, f.Energy, _config.EnergyRefillMin);
         f.Energy += energy;
-        f.EnergyReserve = Math.Max(0, f.EnergyReserve - energy);
         events.Add(new BattleTurnEnded(f.Id, shield, energy));
     }
 }

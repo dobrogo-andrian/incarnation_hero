@@ -812,7 +812,7 @@
   text: { uk: "Скасувати навичку (Esc)" }
 
 - id: str.ui.battle_technique
-  text: { uk: "{key}  {name}\nці: {qi}" }
+  text: { uk: "{key}  {name}\nці: {qi} · енергія: {energy}" }
 
 - id: str.ui.battle_attack
   text: { uk: "Атака\nенергія: {energy}" }

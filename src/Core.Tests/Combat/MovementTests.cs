@@ -14,8 +14,8 @@ public class MovementTests
         return config;
     }
 
-    private static Combatant Fighter(string id, double reaction = 10, double health = 100, double agility = 10) =>
-        new(id, 0, health, 100, 0, 0, 0, 0, 10, reaction, agility, 10, 100, 5, 15, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+    private static Combatant Fighter(string id, double reaction = 10, double health = 100, double agility = 10, double energy = 15) =>
+        new(id, 0, health, 100, 0, 0, 0, 0, 10, reaction, agility, 10, energy, 5, 15, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     /// <summary>The player (reaction 20) acts twice for each turn of the wolf, which only waits.</summary>
     private static Battle Start(CombatConfigDef config, double playerHealth = 100) =>
@@ -34,6 +34,22 @@ public class MovementTests
         Assert.Equal(3, battle.Active!.MovePoints);
         var slow = Battle.Start([Fighter("player", reaction: 20, agility: 2)], [Fighter("wolf")], Field(4), Xoshiro256StarStar.FromSeed(3));
         Assert.Equal(1, slow.Active!.MovePoints);
+    }
+
+    [Fact]
+    public void Every_step_costs_energy_and_the_energy_left_caps_the_steps()
+    {
+        // Three movement points, but energy for two steps.
+        var battle = Battle.Start([Fighter("player", reaction: 20, energy: 2)], [Fighter("wolf")], Field(4), Xoshiro256StarStar.FromSeed(3));
+        var me = battle.Active!;
+        Assert.Equal(3, me.MovePoints);
+        Assert.Equal(2, battle.Reachable().Max(r => r.Path.Count));
+
+        Assert.True(battle.Execute(new Move(new Hex(0, 1))).Accepted);
+        Assert.Equal(2 - 2 * Field(4).StepEnergy, me.Energy, 9);
+        Assert.Equal(1, me.MovePoints);
+        Assert.Empty(battle.Reachable());
+        Assert.Equal(RejectReasons.Unreachable, battle.Execute(new Move(new Hex(0, 0))).RejectReason);
     }
 
     [Fact]
@@ -85,11 +101,23 @@ public class MovementTests
         Assert.Equal(new FreeAttackProvoked("wolf", "player"), Assert.Single(away.Events.OfType<FreeAttackProvoked>()));
         var hit = Assert.Single(away.Events.OfType<FighterHit>());
         Assert.Equal(100 - hit.ToHealth, me.Health, 9);
-        Assert.Equal(15, battle.Fighters[1].Energy);
+        Assert.Equal(15 - Field(1).AttackEnergy, battle.Fighters[1].Energy);
 
         battle.Execute(new Move(new Hex(0, 0)));
         var again = battle.Execute(new Move(new Hex(0, 1)));
         Assert.Empty(again.Events.OfType<FreeAttackProvoked>());
+    }
+
+    [Fact]
+    public void An_enemy_without_the_energy_for_a_strike_gives_no_free_attack()
+    {
+        // Radius 1: the wolf next to the player has energy for no basic attack.
+        var battle = Battle.Start([Fighter("player", reaction: 20)], [Fighter("wolf", energy: 1)], Field(1), Xoshiro256StarStar.FromSeed(3));
+        Assert.All(battle.Reachable(), r => Assert.Equal(0, r.FreeAttacks));
+        var away = battle.Execute(new Move(new Hex(-1, 0)));
+        Assert.True(away.Accepted);
+        Assert.Empty(away.Events.OfType<FreeAttackProvoked>());
+        Assert.Equal(1, battle.Fighters[1].Energy);
     }
 
     [Fact]

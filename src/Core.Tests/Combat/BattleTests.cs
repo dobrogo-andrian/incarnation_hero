@@ -10,8 +10,8 @@ public class BattleTests
     private static CombatConfigDef Config => TestContent.Repo.Get<CombatConfigDef>(CombatConfigDef.CombatId);
 
     private static Combatant Fighter(string id, double reaction = 10, double health = 100, double shield = 0, double maxShield = 0,
-        double qiPool = 0, double shieldRefill = 0, double energy = 100, double energyRefill = 5, double energyCapacity = 15) =>
-        new(id, 0, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energy, energyRefill, energyCapacity, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+        double qiPool = 0, double shieldRefill = 0, double energy = 15, double energyRefill = 5, double maxEnergy = 15) =>
+        new(id, 0, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energy, energyRefill, maxEnergy, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     /// <summary>A field of radius 1: the second side deploys next to the first, so fighters can hit without moving.</summary>
     private static readonly CombatConfigDef Close = CloseConfig();
@@ -81,7 +81,7 @@ public class BattleTests
         Assert.Equal(RejectReasons.InvalidTarget, far.Execute(new Attack("ally")).RejectReason);
         Assert.Equal(RejectReasons.InvalidTarget, far.Execute(new Attack("nobody")).RejectReason);
 
-        var tired = Start([Fighter("player", reaction: 20, energyCapacity: 3)], [Fighter("wolf")], Close);
+        var tired = Start([Fighter("player", reaction: 20, energy: 3)], [Fighter("wolf")], Close);
         Assert.Equal(RejectReasons.NotEnoughEnergy, tired.Execute(new Attack("wolf")).RejectReason);
     }
 
@@ -168,23 +168,22 @@ public class BattleTests
 
         var outcome = battle.Execute(new EndTurn());
 
-        // The pool holds only 3; energy starts full, so none flows.
+        // The pool holds only 3; energy starts full, so none comes back.
         Assert.Equal(new BattleTurnEnded("player", 3, 0), Assert.Single(outcome.Events.OfType<BattleTurnEnded>()));
         Assert.Equal(13, me.Shield);
         Assert.Equal(0, me.QiPool);
         Assert.Equal(15, me.Energy);
-        Assert.Equal(100, me.EnergyReserve);
     }
 
     [Theory]
-    [InlineData(100, 4, 30, 5)]     // full health: the whole output
-    [InlineData(50, 4, 30, 2.5)]    // half health: half of it
-    [InlineData(10, 4, 30, 2)]      // never under the minimum
-    [InlineData(100, 4, 1, 2)]      // a near-empty reserve still gives the minimum
-    [InlineData(100, 14, 30, 1)]    // energy stops at its capacity of 15
-    public void Energy_flows_by_output_and_health_within_the_minimum_and_capacity(double health, double energy, double reserve, double expected)
+    [InlineData(100, 4, 5)]     // full health: the whole output
+    [InlineData(50, 4, 2.5)]    // half health: half of it
+    [InlineData(10, 4, 2)]      // never under the minimum
+    [InlineData(100, 0, 5)]     // an empty body gets it all the same
+    [InlineData(100, 14, 1)]    // energy stops at its maximum of 15
+    public void Energy_comes_back_by_output_and_health_within_the_minimum_and_maximum(double health, double energy, double expected)
     {
-        Assert.Equal(expected, CombatMath.EnergyRefill(Fighter("player"), health, energy, reserve, Config.EnergyRefillMin), 9);
+        Assert.Equal(expected, CombatMath.EnergyRefill(Fighter("player"), health, energy, Config.EnergyRefillMin), 9);
     }
 
     [Fact]
@@ -205,6 +204,6 @@ public class BattleTests
         var player = CombatSystem.Snapshot(sim.State.Player, ctx);
         Assert.Equal(100, player.Energy);
         Assert.Equal(5, player.EnergyRefill);
-        Assert.Equal(15, player.EnergyCapacity);
+        Assert.Equal(100, player.MaxEnergy);
     }
 }

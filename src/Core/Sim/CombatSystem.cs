@@ -121,7 +121,7 @@ public static class CombatSystem
             Resilience: Value(config.ResilienceAspect),
             Energy: current(config.EnergyResource),
             EnergyRefill: Value(config.EnergyOutputAspect) * config.EnergyRefillPerOutput,
-            EnergyCapacity: Math.Max(config.EnergyRefillMin, Value(config.EnergyOutputAspect) * config.EnergyCapacityPerOutput),
+            MaxEnergy: Value(config.EnergyResource),
             injuryId,
             weaponDamage,
             techniques,

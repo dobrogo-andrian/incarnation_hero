@@ -34,14 +34,12 @@ public static class CombatMath
         Math.Max(0, Math.Min(fighter.ShieldRefill, Math.Min(fighter.MaxShield - shield, qiPool)));
 
     /// <summary>
-    /// What flows from the energy reserve into energy ready to spend at the end of a turn (D55):
-    /// output × the share of health left, no more than the reserve holds but never under the
-    /// minimum, which flows even from an empty reserve; energy stops at its capacity.
+    /// The body energy that comes back at the end of a turn (D55): output × the share of health
+    /// left, never under the minimum; energy stops at its maximum.
     /// </summary>
-    public static double EnergyRefill(Combatant fighter, double health, double energy, double reserve, double minimum)
+    public static double EnergyRefill(Combatant fighter, double health, double energy, double minimum)
     {
-        double wanted = fighter.EnergyRefill * Math.Clamp(health / Math.Max(1, fighter.MaxHealth), 0, 1);
-        double flow = Math.Max(minimum, Math.Min(wanted, reserve));
-        return Math.Max(0, Math.Min(flow, fighter.EnergyCapacity - energy));
+        double flow = Math.Max(minimum, fighter.EnergyRefill * Math.Clamp(health / Math.Max(1, fighter.MaxHealth), 0, 1));
+        return Math.Max(0, Math.Min(flow, fighter.MaxEnergy - energy));
     }
 }

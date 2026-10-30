@@ -46,27 +46,30 @@ public static class BattleAi
     {
         var config = battle.Config;
         bool fleeing = Fleeing(me, ai);
-        var froms = battle.Reachable().Select(r => (r.To, r.FreeAttacks)).Prepend((me.Position, 0));
-        foreach (var (from, freeAttacks) in froms)
+        var froms = battle.Reachable().Select(r => (r.To, r.FreeAttacks, Steps: r.Path.Count)).Prepend((me.Position, 0, 0));
+        foreach (var (from, freeAttacks, steps) in froms)
         {
-            double walk = FreeAttacksCost(battle, me, ai, freeAttacks);
+            // The walk spends energy as well: what is left there pays for the action.
+            double stepsEnergy = steps * config.StepEnergy;
+            double energy = me.Energy - stepsEnergy;
+            double walk = FreeAttacksCost(battle, me, ai, freeAttacks) + ai.Energy * stepsEnergy;
             double here = Position(battle, me, ai, from) - walk;
             yield return new Candidate(from, null, here);
 
             if (fleeing)
             {
-                if (battle.Field.IsEdge(from) && me.Energy >= config.FleeEnergy && !Enemies(battle, me).Any(e => e.Position.DistanceTo(from) == 1))
+                if (battle.Field.IsEdge(from) && energy >= config.FleeEnergy && !Enemies(battle, me).Any(e => e.Position.DistanceTo(from) == 1))
                     yield return new Candidate(from, new Flee(), ai.Flee * 100 - walk);
                 continue;
             }
 
-            if (me.Energy >= config.AttackEnergy)
+            if (energy >= config.AttackEnergy)
             {
                 foreach (var enemy in Enemies(battle, me).Where(e => e.Position.DistanceTo(from) == 1))
                     yield return new Candidate(from, new Attack(enemy.Id), here + Strikes(ai, me.Def.WeaponDamage, [enemy]) - ai.Energy * config.AttackEnergy);
             }
 
-            foreach (var technique in me.Def.Techniques.Where(t => me.Shield >= t.Combat.Qi))
+            foreach (var technique in me.Def.Techniques.Where(t => me.Shield >= t.Combat.Qi && energy >= t.Combat.Energy))
             {
                 foreach (var aim in Aims(from, technique.Combat.Range + 1))
                 {
@@ -76,12 +79,12 @@ public static class BattleAi
                         continue;
                     var end = p.Landing ?? (p.Approach.Count > 0 ? p.Approach[^1] : from);
                     double score = Position(battle, me, ai, end) - walk
-                        + Strikes(ai, battle.TechniqueDamage(me, technique), p.Targets) - ai.Qi * technique.Combat.Qi;
+                        + Strikes(ai, battle.TechniqueDamage(me, technique), p.Targets) - ai.Qi * technique.Combat.Qi - ai.Energy * technique.Combat.Energy;
                     yield return new Candidate(from, new UseTechnique(technique.Id, aim), score);
                 }
             }
 
-            if (me.Energy >= config.GuardEnergy)
+            if (energy >= config.GuardEnergy)
             {
                 double spared = Incoming(battle, me, from) * (1 - config.GuardBodyShare);
                 yield return new Candidate(from, new Guard(), here + ai.Risk * spared - ai.Energy * config.GuardEnergy);
@@ -103,7 +106,7 @@ public static class BattleAi
         if (Fleeing(me, ai))
             return -risk - ai.Flee * (battle.Field.Radius - hex.Length);
         int nearest = Enemies(battle, me).Select(e => e.Position.DistanceTo(hex)).DefaultIfEmpty(0).Min();
-        bool canStrike = me.Def.EnergyCapacity >= battle.Config.AttackEnergy && nearest <= battle.MovePointsOf(me.Def) + 1;
+        bool canStrike = me.Def.MaxEnergy >= battle.Config.AttackEnergy && nearest <= battle.MovePointsOf(me.Def) + 1;
         return -risk + (canStrike ? ai.Opportunity * me.Def.WeaponDamage : 0) - ai.Approach * nearest;
     }
 

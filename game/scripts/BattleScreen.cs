@@ -298,7 +298,7 @@ public partial class BattleScreen : PanelContainer
             string key = i < SkillKeys ? (i + 1).ToString() : "";
             AddSkill(technique.Id, _ui.Text(TechniqueButton with
             {
-                Args = [new("key", key), new("name", SimText.Name(technique.Id)), new("qi", technique.Combat.Qi)],
+                Args = [new("key", key), new("name", SimText.Name(technique.Id)), new("qi", technique.Combat.Qi), new("energy", technique.Combat.Energy)],
             }));
         }
         _skillBar.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
@@ -452,7 +452,7 @@ public partial class BattleScreen : PanelContainer
         [
             new("name", FighterName(f.Id)), new("health", Math.Round(f.Health, 1)), new("max_health", Math.Round(f.Def.MaxHealth, 1)),
             new("shield", Math.Round(f.Shield, 1)), new("max_shield", Math.Round(f.Def.MaxShield, 1)),
-            new("energy", Math.Round(f.Energy, 1)), new("capacity", Math.Round(f.Def.EnergyCapacity, 1)), new("points", f.MovePoints),
+            new("energy", Math.Round(f.Energy, 1)), new("capacity", Math.Round(f.Def.MaxEnergy, 1)), new("points", f.MovePoints),
         ],
     });
 

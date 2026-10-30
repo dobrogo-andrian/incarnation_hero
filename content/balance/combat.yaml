@@ -41,10 +41,10 @@ initiative_threshold: 100         # CTB (D53): act when the gauge reaches 100
 initiative_per_reaction: 1        # the gauge fills by reaction a tick: 10 reaction acts every 10 ticks
 energy_resource: resource.body_energy
 energy_output_aspect: aspect.endurance.output
-energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share flows from the reserve (D55)
-energy_refill_min: 2              # flows even from an empty reserve
-energy_capacity_per_output: 1.5   # energy ready to spend holds output × 1.5
+energy_refill_per_output: 0.5     # end of own turn: output × 0.5 × health share comes back, up to the body's maximum (D55)
+energy_refill_min: 2              # comes back whatever the body's state
 move_points_per_agility: 0.3       # 10 agility walks 3 hexes a turn, all before the action (D56)
+step_energy: 1                    # every step costs body energy; the movement points still cap a turn's steps
 guard_energy: 3                   # guard: until the next own turn hits through the shield land at half
 guard_body_share: 0.5
 flee_energy: 4                    # escape from a rim hex with no enemy next to it (§7.6)
