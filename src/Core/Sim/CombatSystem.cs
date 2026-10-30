@@ -6,8 +6,8 @@ using Core.State;
 namespace Core.Sim;
 
 /// <summary>
-/// Fights started by events, hunting and the arena (tech 4.1, D42): builds the fighters' snapshots, lets the resolver
-/// decide on the fight's own subseed from the combat stream, and writes the result back: health
+/// Fights started by events, hunting and the arena (tech 4.1, D42): builds the fighters' snapshots, auto-resolves the
+/// hex battle on the fight's own subseeds from the combat and AI streams, and writes the result back: health
 /// and qi, injuries, combat insight by difficulty, loot of a won fight, or death.
 /// </summary>
 public static class CombatSystem
@@ -22,13 +22,14 @@ public static class CombatSystem
         var config = ctx.Combat;
         var me = Snapshot(player, ctx);
         var foes = Foes(ctx, groupId);
-        var result = FormulaResolver.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)), yields);
+        var result = AutoBattle.Resolve(me, foes, config, Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Combat)),
+            Xoshiro256StarStar.FromSeed(ctx.Rng.NextSubseed(RngStream.Ai)), yields);
 
         double qiBefore = me.Shield + me.QiPool;
         SetCurrent(player, config.HealthResource, result.Health);
         SetCurrent(player, config.ShieldResource, result.Shield);
         SetCurrent(player, config.QiPoolResource, result.QiPool);
-        events.Add(new CombatResolved(groupId, result.End, result.Rounds,
+        events.Add(new CombatResolved(groupId, result.End, result.Turns,
             StateNumbers.Round(me.Health - result.Health), StateNumbers.Round(qiBefore - result.Shield - result.QiPool)));
         foreach (var (injuryId, amount) in result.Injuries)
             InjurySystem.Inflict(player, ctx, injuryId, amount, events);
@@ -76,7 +77,7 @@ public static class CombatSystem
     {
         int technique = player.Knowledge.Where(k => ctx.Content.Get<KnowledgeDef>(k.KnowledgeId).IsTechnique).Select(k => k.Level).DefaultIfEmpty(0).Max();
         var techniques = player.Knowledge.Where(k => k.Level > 0).Select(k => (k.KnowledgeId, k.Level));
-        return Fighter(FormulaResolver.PlayerId, player, ctx, QiStage(player), ctx.Combat.WeaponDamage, technique, techniques, ctx.Combat.PlayerAi, ctx.Combat.BodyInjury,
+        return Fighter(Combatant.PlayerId, player, ctx, QiStage(player), ctx.Combat.WeaponDamage, technique, techniques, ctx.Combat.PlayerAi, ctx.Combat.BodyInjury,
             id => player.Resources.First(r => r.ResourceId == id).Current);
     }
 

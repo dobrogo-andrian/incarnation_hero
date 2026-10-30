@@ -27,7 +27,7 @@ public class SandboxTests
         var profiles = CombatSandbox.Profiles(TestContent.Repo);
         Assert.Equal(["profile.sandbox.novice", "profile.sandbox.stage_1", "profile.sandbox.stage_2"], profiles);
         var novice = CombatSandbox.Profile(TestContent.Repo, profiles[0]);
-        Assert.Equal(FormulaResolver.PlayerId, novice.Id);
+        Assert.Equal(Combatant.PlayerId, novice.Id);
         Assert.Equal(4, novice.Techniques.Count);
         Assert.True(CombatSandbox.Profile(TestContent.Repo, profiles[2]).WeaponDamage > novice.WeaponDamage);
     }
@@ -37,7 +37,7 @@ public class SandboxTests
     {
         var sim = Simulation.NewGame(TestContent.Repo, 3);
         var hero = CombatSandbox.Hero(sim);
-        Assert.Equal(FormulaResolver.PlayerId, hero.Id);
+        Assert.Equal(Combatant.PlayerId, hero.Id);
         Assert.Equal(100, hero.MaxHealth);
     }
 

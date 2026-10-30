@@ -25,6 +25,9 @@
 - id: str.reject.enemy_adjacent
   text: { uk: "Ворог поруч не дасть утекти: спершу відійдіть." }
 
+- id: str.reject.cannot_yield
+  text: { uk: "Здатися можна лише в поєдинку на арені." }
+
 - id: str.reject.unknown_technique
   text: { uk: "Ця техніка вам невідома." }
 
@@ -617,10 +620,10 @@
   text: { uk: "Відкрито нове місце: {place}." }
 
 - id: str.event.combat_won
-  text: { uk: "Бій виграно: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
+  text: { uk: "Бій виграно: {group}. Ходів: {turns}; здоров'я −{health}, ці −{qi}." }
 
 - id: str.event.combat_fled
-  text: { uk: "Ви відступили з бою: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
+  text: { uk: "Ви відступили з бою: {group}. Ходів: {turns}; здоров'я −{health}, ці −{qi}." }
 
 - id: str.event.combat_died
   text: { uk: "Загибель у бою: {group}." }
@@ -708,7 +711,7 @@
   text: { uk: "Тренує: {stats}" }
 
 - id: str.event.combat_yielded
-  text: { uk: "Ви здалися на арені: {group}. Раундів: {rounds}; здоров'я −{health}, ці −{qi}." }
+  text: { uk: "Ви здалися на арені: {group}. Ходів: {turns}; здоров'я −{health}, ці −{qi}." }
 
 - id: str.ui.jobs
   text: { uk: "Біржа праці" }
@@ -764,6 +767,9 @@
 
 - id: str.battle.fled
   text: { uk: "{who} тікає з поля." }
+
+- id: str.battle.yielded
+  text: { uk: "{who} здається: поєдинок скінчено." }
 
 - id: str.battle.shield_broken
   text: { uk: "{who}: щит ці розбито — удари йдуть у тіло." }

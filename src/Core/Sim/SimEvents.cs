@@ -116,5 +116,5 @@ public sealed record RumorHeard(string RumorId) : InterruptEvent
     public override InterruptCategory Category => InterruptCategory.RumorHeard;
 }
 
-/// <summary>A fight is over (D42): how it ended, after how many rounds, and what it cost in health and qi (shield and pool).</summary>
-public sealed record CombatResolved(string GroupId, CombatEnd End, int Rounds, double HealthLost, double QiSpent) : SimEvent;
+/// <summary>A fight is over (D42): how it ended, after how many turns of the hex battle, and what it cost in health and qi (shield and pool).</summary>
+public sealed record CombatResolved(string GroupId, CombatEnd End, int Turns, double HealthLost, double QiSpent) : SimEvent;

@@ -20,6 +20,7 @@ public static class BattleText
     private static readonly LocKey FleeBegun = new("str.battle.flee_begun");
     private static readonly LocKey FleeBroken = new("str.battle.flee_broken");
     private static readonly LocKey Fled = new("str.battle.fled");
+    private static readonly LocKey Yielded = new("str.battle.yielded");
     private static readonly LocKey Down = new("str.battle.down");
     private static readonly LocKey ShieldGone = new("str.battle.shield_broken");
     private static readonly LocKey TimedOut = new("str.battle.timed_out");
@@ -27,7 +28,7 @@ public static class BattleText
     /// <summary>The player's fighter is "the hero"; an enemy carries its number only when the battle has more than one of its kind.</summary>
     public static LocKey Name(Battle battle, string fighterId)
     {
-        if (fighterId == FormulaResolver.PlayerId)
+        if (fighterId == Combatant.PlayerId)
             return Hero;
         int mark = fighterId.LastIndexOf('#');
         if (mark < 0)
@@ -57,6 +58,7 @@ public static class BattleText
             FleeBegun f => FleeBegun with { Args = [Who(f.FighterId)] },
             FleeBroken f => FleeBroken with { Args = [Who(f.FighterId), Who(f.ByFighterId, "by")] },
             FighterFled f => Fled with { Args = [Who(f.FighterId)] },
+            FighterYielded y => Yielded with { Args = [Who(y.FighterId)] },
             FighterDown d => Down with { Args = [Who(d.FighterId)] },
             ShieldBroken s => ShieldGone with { Args = [Who(s.FighterId)] },
             BattleTimedOut t => TimedOut with { Args = [new("turns", t.Turns)] },

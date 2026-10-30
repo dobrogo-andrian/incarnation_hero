@@ -570,7 +570,7 @@ public static class SimText
         RumorHeard r => Heard with { Args = [new("rumor", Name(r.RumorId))] },
         CombatResolved c => (c.End switch { CombatEnd.Won => CombatWon, CombatEnd.Fled => CombatFled, CombatEnd.Yielded => CombatYielded, _ => CombatDied }) with
         {
-            Args = [new("group", Name(c.GroupId)), new("rounds", c.Rounds), new("health", Number(c.HealthLost)), new("qi", Number(c.QiSpent))],
+            Args = [new("group", Name(c.GroupId)), new("turns", c.Turns), new("health", Number(c.HealthLost)), new("qi", Number(c.QiSpent))],
         },
         _ => null,
     };

@@ -21,6 +21,13 @@ public static class BattleAi
         var ai = me.Def.Ai;
         var events = new List<SimEvent>();
 
+        // In a bout to giving up, where it would head for the rim it yields on the spot (§5).
+        if (Fleeing(me, ai) && battle.WhyNot(new Yield()) is null)
+        {
+            Run(new Yield());
+            return events;
+        }
+
         var plan = Candidates(battle, me, ai)
             .Select(c => c with { Score = c.Score + rng.NextDouble() * ai.Noise })
             .MaxBy(c => c.Score)!;

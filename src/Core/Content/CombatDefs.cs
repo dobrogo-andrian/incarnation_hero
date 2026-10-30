@@ -146,8 +146,8 @@ public sealed class LootItemDef
 }
 
 /// <summary>
-/// The stage 1 formula resolver (<c>config.combat</c>, tech 4.1, D42): abstract rounds of the
-/// shield → health → injuries pipeline. Draft numbers until Sim.Cli reports.
+/// Combat rules (<c>config.combat</c>, tech 4.1): the hex battle (D53–D60) and what a fight leaves
+/// on the character: the shield → health → injuries pipeline, insight. Draft numbers until Sim.Cli reports.
 /// </summary>
 public sealed class CombatConfigDef : ContentDef, IValidatedDef
 {
@@ -172,21 +172,21 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     [ContentRef(typeof(ResourceDef))]
     public string ShieldResource { get; set; } = "";
 
-    /// <summary>The pool that refills the shield every round; an empty pool refills nothing (§7.2).</summary>
+    /// <summary>The pool that refills the shield every turn; an empty pool refills nothing (§7.2).</summary>
     [ContentRef(typeof(ResourceDef))]
     public string QiPoolResource { get; set; } = "";
 
-    /// <summary>The shield refills by this aspect × <see cref="RefillPerFlow"/> a round.</summary>
+    /// <summary>The shield refills by this aspect × <see cref="RefillPerFlow"/> at the end of each own turn.</summary>
     [ContentRef(typeof(AspectDef))]
     public string FlowAspect { get; set; } = "";
 
     public double RefillPerFlow { get; set; }
 
-    /// <summary>Turn order (ties by ID).</summary>
+    /// <summary>Fills the initiative gauge (D53).</summary>
     [ContentRef(typeof(AspectDef))]
     public string ReactionAspect { get; set; } = "";
 
-    /// <summary>The player's side of the escape chance (§7.6).</summary>
+    /// <summary>Movement points (D56).</summary>
     [ContentRef(typeof(AspectDef))]
     public string AgilityAspect { get; set; } = "";
 
@@ -208,20 +208,8 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     public double ShieldBreakChance { get; set; }
     public double ShieldBreakAmount { get; set; }
 
-    /// <summary>Below this share of maximum health the player tries to escape instead of attacking.</summary>
-    public double FleeHealthShare { get; set; }
-
-    /// <summary>Escape chance = base + (agility − the fastest enemy's reaction) × per point, clamped.</summary>
-    public double FleeChanceBase { get; set; }
-    public double FleeChancePerPoint { get; set; }
-    public double FleeChanceMin { get; set; }
-    public double FleeChanceMax { get; set; }
-
     /// <summary>Hunting and the arena (§5) take no one below this share of maximum health: a spent body stops them.</summary>
     public double FightMinHealthShare { get; set; }
-
-    /// <summary>A fight still undecided after this many rounds ends with the player withdrawing.</summary>
-    public int MaxRounds { get; set; }
 
     /// <summary>The hex fight's limit: after this many turns side 0 is taken to have withdrawn (D59).</summary>
     public int MaxTurns { get; set; }
@@ -275,20 +263,17 @@ public sealed class CombatConfigDef : ContentDef, IValidatedDef
     /// <summary>Share of a hit through the shield that reaches a guarding body.</summary>
     public double GuardBodyShare { get; set; }
 
-    /// <summary>
-    /// What gets through the qi shield hurts the body this many times over, injuries with it (§7.4):
-    /// the hex fight only; the stage 1 formula resolver keeps 1 until it is replaced.
-    /// </summary>
+    /// <summary>What gets through the qi shield hurts the body this many times over, injuries with it (§7.4).</summary>
     public double BodyDamageMultiplier { get; set; } = 1;
 
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (WeaponDamage <= 0 || MaxRounds < 1 || MaxTurns < 1 || FieldRadius < 1)
-            yield return "needs a positive weapon_damage, max_rounds, max_turns and field_radius.";
+        if (WeaponDamage <= 0 || MaxTurns < 1 || FieldRadius < 1)
+            yield return "needs a positive weapon_damage, max_turns and field_radius.";
         if (InitiativeThreshold < 1 || InitiativePerReaction <= 0 || EnergyRefillPerOutput < 0 || EnergyRefillMin < 0 || EnergyCapacityPerOutput <= 0 || StepEnergy < 0 || AttackEnergy < 0 || GuardEnergy < 0 || FleeEnergy < 0 || MovePointsPerAgility <= 0)
             yield return "needs a positive initiative_threshold, initiative_per_reaction, energy_capacity_per_output and move_points_per_agility, and energy refills and costs of zero or more.";
-        if (DamageSpread is < 0 or >= 1 || FleeHealthShare is < 0 or > 1 || InsightFledShare is < 0 or > 1
-            || ShieldBreakChance is < 0 or > 1 || GuardBodyShare is < 0 or > 1 || BodyDamageMultiplier < 1 || FightMinHealthShare is < 0 or > 1 || FleeChanceMin < 0 || FleeChanceMax > 1 || FleeChanceMin > FleeChanceMax)
-            yield return "damage_spread, flee_health_share, guard_body_share, insight_fled_share, shield_break_chance, fight_min_health_share and the flee chance bounds must be fractions, body_damage_multiplier at least 1.";
+        if (DamageSpread is < 0 or >= 1 || InsightFledShare is < 0 or > 1
+            || ShieldBreakChance is < 0 or > 1 || GuardBodyShare is < 0 or > 1 || BodyDamageMultiplier < 1 || FightMinHealthShare is < 0 or > 1)
+            yield return "damage_spread, guard_body_share, insight_fled_share, shield_break_chance and fight_min_health_share must be fractions, body_damage_multiplier at least 1.";
     }
 }

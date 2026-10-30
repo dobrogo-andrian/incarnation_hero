@@ -31,7 +31,7 @@ public sealed class CombatSandbox
         content.All<EnemyDef>().Select(e => e.Id).Where(id => id.StartsWith(ProfilePrefix, StringComparison.Ordinal)).ToList();
 
     public static Combatant Profile(ContentDb content, string profileId) =>
-        CombatSystem.FromDef(Context(content), content.Get<EnemyDef>(profileId), FormulaResolver.PlayerId);
+        CombatSystem.FromDef(Context(content), content.Get<EnemyDef>(profileId), Combatant.PlayerId);
 
     /// <summary>The hero of <paramref name="sim"/> as they are now: current health, qi and known techniques.</summary>
     public static Combatant Hero(Simulation sim) => CombatSystem.Snapshot(sim.State.Player, Context(sim.Content));

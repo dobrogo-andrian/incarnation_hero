@@ -17,7 +17,7 @@ public sealed class TrainingTests
         - id: enemy.test.killer
           name: { uk: "Убивця" }
           ai: ai.beast_aggressive
-          stats: { stat.might: 100000, stat.speed: 100 }
+          stats: { stat.might: 100000, stat.speed: 100, stat.endurance: 10 }
           weapon_damage: 100000
         - id: grp.test.weak
           name: { uk: "Слабкі" }

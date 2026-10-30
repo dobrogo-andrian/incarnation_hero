@@ -8,9 +8,9 @@ using Core.State;
 namespace Core.Tests.Sim;
 
 /// <summary>
-/// The stage 1 formula resolver (D42). Resolver tests use their own config without damage spread,
-/// so every number is exact; system tests use the repo config. A fresh player has 100 health, a
-/// 50 qi shield, a 100 qi pool and 10 in every aspect.
+/// Fights of the run (D42): snapshots, the auto-resolved hex battle (its own rules: AutoBattleTests)
+/// and what the result writes back. A fresh player has 100 health, a 50 qi shield, a 100 qi pool and
+/// 10 in every aspect.
 /// </summary>
 public sealed class CombatTests
 {
@@ -28,7 +28,7 @@ public sealed class CombatTests
         - id: enemy.test.killer
           name: { uk: "Убивця" }
           ai: ai.beast_aggressive
-          stats: { stat.might: 100000, stat.speed: 100 }
+          stats: { stat.might: 100000, stat.speed: 100, stat.endurance: 10 }
           weapon_damage: 100000
         - id: enemy.test.adept
           name: { uk: "Адепт" }
@@ -64,91 +64,9 @@ public sealed class CombatTests
             lost: { text: { uk: "Поразка" } }
         """);
 
-    private static CombatConfigDef Exact(Action<CombatConfigDef>? change = null)
-    {
-        var config = new CombatConfigDef
-        {
-            DamageSpread = 0,
-            InjuryPerResilience = 1,
-            ShieldBreakInjury = "injury.internal",
-            ShieldBreakChance = 0,
-            ShieldBreakAmount = 3,
-            FleeHealthShare = 0.3,
-            FleeChanceBase = 0.5,
-            FleeChanceMin = 0,
-            FleeChanceMax = 1,
-            MaxRounds = 30,
-        };
-        change?.Invoke(config);
-        return config;
-    }
-
-    private static Combatant Fighter(string id, double health, double damage = 10, double reaction = 10, double shield = 0,
-        double pool = 0, double refill = 0, double maxShield = -1) =>
-        new(id, 0, health, MaxHealth: 100, shield, maxShield < 0 ? shield : maxShield, pool, refill, damage, reaction,
-            Agility: 10, Resilience: 10, EnergyRefill: 0, MaxEnergy: 0, "injury.body", WeaponDamage: damage, Techniques: [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
-
-    private static CombatResult Resolve(Combatant player, CombatConfigDef config, params Combatant[] foes) =>
-        FormulaResolver.Resolve(player, foes, config, Xoshiro256StarStar.FromSeed(7));
-
     private static SimContext Context(Simulation sim) => new(sim.Content, RngStreams.FromStates(sim.State.RngStates));
 
     private static double Current(PlayerState player, string id) => player.Resources.First(r => r.ResourceId == id).Current;
-
-    [Fact]
-    public void Hits_BreakTheShieldFirst_ThenHealth_WhichLeavesInjuriesOverResilience()
-    {
-        // Round 1: 25 → 15, shield 15 → 5. Round 2: 15 → 5, shield takes 5 and health 5 (0.5 injury). Round 3: the foe falls.
-        var result = Resolve(Fighter(FormulaResolver.PlayerId, 100, reaction: 20, shield: 15), Exact(), Fighter("foe", 25, reaction: 1));
-
-        Assert.Equal((CombatEnd.Won, 3, 95.0, 0.0), (result.End, result.Rounds, result.Health, result.Shield));
-        Assert.Equal([("injury.body", 0.5)], result.Injuries);
-    }
-
-    [Fact]
-    public void BreakingTheShield_CanHurtTheMeridians()
-    {
-        var config = Exact(c => c.ShieldBreakChance = 1);
-
-        var result = Resolve(Fighter(FormulaResolver.PlayerId, 100, reaction: 20, shield: 5), config, Fighter("foe", 15, reaction: 1));
-
-        Assert.Equal([("injury.internal", 3.0), ("injury.body", 0.5)], result.Injuries.OrderByDescending(i => i.InjuryId).ToList());
-    }
-
-    [Fact]
-    public void Shield_RefillsFromThePoolEachRound_UntilThePoolIsEmpty()
-    {
-        var config = Exact(c => c.MaxRounds = 3);
-
-        var result = Resolve(Fighter(FormulaResolver.PlayerId, 100, damage: 1, pool: 7, refill: 5, maxShield: 20), config, Fighter("foe", 1000, damage: 0));
-
-        Assert.Equal((CombatEnd.Fled, 3, 7.0, 0.0), (result.End, result.Rounds, result.Shield, result.QiPool));
-    }
-
-    [Fact]
-    public void BelowTheHealthShare_ThePlayerTriesToEscape_InsteadOfAttacking()
-    {
-        var escapes = Resolve(Fighter(FormulaResolver.PlayerId, 20, reaction: 20), Exact(c => c.FleeChanceMin = 1), Fighter("foe", 10));
-        Assert.Equal((CombatEnd.Fled, 1, 20.0), (escapes.End, escapes.Rounds, escapes.Health));
-
-        // Never gets away: 20 → 10 → 0, and the foe it never attacks survives.
-        var dies = Resolve(Fighter(FormulaResolver.PlayerId, 20, reaction: 20), Exact(c => c.FleeChanceMax = 0), Fighter("foe", 10));
-        Assert.Equal((CombatEnd.Died, 2, 0.0), (dies.End, dies.Rounds, dies.Health));
-    }
-
-    [Fact]
-    public void SameSubseed_SameFight()
-    {
-        var config = TestContent.Repo.Get<CombatConfigDef>(CombatConfigDef.CombatId);
-        var player = Fighter(FormulaResolver.PlayerId, 100, shield: 50);
-        Combatant[] foes = [Fighter("a", 60, damage: 8), Fighter("b", 60, damage: 8)];
-
-        var first = FormulaResolver.Resolve(player, foes, config, Xoshiro256StarStar.FromSeed(3));
-        var second = FormulaResolver.Resolve(player, foes, config, Xoshiro256StarStar.FromSeed(3));
-
-        Assert.Equal((first.End, first.Rounds, first.Health, first.Shield), (second.End, second.Rounds, second.Health, second.Shield));
-        Assert.Equal(first.Injuries, second.Injuries);
-    }
 
     [Fact]
     public void Enemies_AreSnapshotsComputedByTheCharacterRules()
@@ -183,12 +101,12 @@ public sealed class CombatTests
         var ctx = Context(sim);
         var player = sim.State.Player;
         var events = new List<SimEvent>();
-        // The foe falls before it acts, yet it is as dangerous as the player: an even fight's insight.
+        // The foe has no energy to strike, yet it is as dangerous as the player: an even fight's insight.
         Assert.Equal(CombatSystem.Snapshot(player, ctx).Threat, CombatSystem.Foes(ctx, "grp.test.weak").Single().Threat);
 
         Assert.True(CombatSystem.Fight(sim.State, ctx, "grp.test.weak", events));
 
-        Assert.Equal(new CombatResolved("grp.test.weak", CombatEnd.Won, 1, 0, 0), events[0]);
+        Assert.Equal((CombatEnd.Won, 0.0, 0.0), events.OfType<CombatResolved>().Select(c => (c.End, c.HealthLost, c.QiSpent)).Single());
         Assert.Contains(new BuffGained(BuffKind.CombatInsight, ctx.Combat.InsightPerDifficulty), events);
         Assert.Contains(new StonesChanged(5), events);
         Assert.Contains(new ItemsChanged("item.pill.qi_gathering", 2), events);

@@ -6,7 +6,7 @@ namespace Core.Combat;
 /// <summary>What one hit did: how much the shield took, how much reached health, and the injury points it left.</summary>
 public sealed record HitResult(double Damage, double Absorbed, double ToHealth, IReadOnlyList<(string InjuryId, double Amount)> Injuries);
 
-/// <summary>Combat rules shared by the formula resolver (D42) and the hex battle, so the two cannot drift apart.</summary>
+/// <summary>Combat rules of the hex battle shared with its AI, so what the AI expects is what happens.</summary>
 public static class CombatMath
 {
     /// <summary>
