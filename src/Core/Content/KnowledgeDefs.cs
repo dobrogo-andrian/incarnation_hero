@@ -3,7 +3,7 @@ namespace Core.Content;
 /// <summary>
 /// Something comprehension raises the level of (§6): a technique (<c>tech.spear.piercing_dragon</c>),
 /// an element (<c>element.fire</c>) or a cultivation method (<c>method.azure_breath</c>). A method
-/// also says what it gives as the active one (<see cref="Method"/>); a technique's level adds to combat damage.
+/// also says what it gives as the active one (<see cref="Method"/>); a technique's level raises its damage on the hex field (D58).
 /// </summary>
 public sealed class KnowledgeDef : ContentDef, IValidatedDef
 {
@@ -17,7 +17,7 @@ public sealed class KnowledgeDef : ContentDef, IValidatedDef
 
     public bool IsMethod => Id.StartsWith("method.", StringComparison.Ordinal);
 
-    /// <summary>Its level adds to combat damage (D42).</summary>
+    /// <summary>A technique: its level raises its damage on the hex field (D58).</summary>
     public bool IsTechnique => Id.StartsWith("tech.", StringComparison.Ordinal);
 
     /// <summary>Required on a cultivation method, forbidden elsewhere.</summary>

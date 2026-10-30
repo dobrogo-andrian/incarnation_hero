@@ -18,7 +18,7 @@ public sealed record Guard : BattleCommand;
 
 /// <summary>
 /// An action on a rim hex with no enemy next to it: the fighter leaves the fight at the start of its
-/// next turn, unless an enemy comes next to it before then (§7.6, D56).
+/// next turn, unless an enemy hits it before then (§7.6, D56, D65).
 /// </summary>
 public sealed record Flee : BattleCommand;
 

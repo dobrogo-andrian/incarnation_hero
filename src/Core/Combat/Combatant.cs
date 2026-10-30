@@ -5,7 +5,6 @@ namespace Core.Combat;
 /// <summary>A fighter as a fight sees it: numbers taken from the character when the fight starts (tech 4.1).</summary>
 public sealed record Combatant(
     string Id,
-    int Stage,
     double Health,
     double MaxHealth,
     double Shield,

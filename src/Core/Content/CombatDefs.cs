@@ -22,9 +22,6 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     /// <summary>Damage of its weapon, claws or fangs; <c>config.combat.weapon_damage</c> when not given.</summary>
     public double? WeaponDamage { get; set; }
 
-    /// <summary>The technique level counted into the fighter's threat, and so combat insight (D42); the hex battle strikes with <see cref="Techniques"/>.</summary>
-    public int TechniqueLevel { get; set; }
-
     /// <summary>Techniques it fights with on the hex field, by level (D56): cultivators have them, beasts do not.</summary>
     [ContentRef(typeof(KnowledgeDef))]
     public Dictionary<string, int> Techniques { get; set; } = [];
@@ -39,8 +36,8 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
 
     public IEnumerable<string> Validate(ContentDb db)
     {
-        if (Stage < 0 || TechniqueLevel < 0 || WeaponDamage <= 0 || Stats.Values.Any(v => v < 0))
-            yield return "needs a stage, technique level and stats of zero or more and a positive weapon_damage.";
+        if (Stage < 0 || WeaponDamage <= 0 || Stats.Values.Any(v => v < 0))
+            yield return "needs a stage and stats of zero or more and a positive weapon_damage.";
         if (Ai.Length == 0)
             yield return "needs an ai archetype.";
         if (Techniques.Any(t => t.Value < 1 || db.Get<KnowledgeDef>(t.Key).Combat is null))

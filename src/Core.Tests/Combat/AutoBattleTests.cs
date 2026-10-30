@@ -13,7 +13,7 @@ public class AutoBattleTests
     private static AiArchetypeDef Ai(string id) => TestContent.Repo.Get<AiArchetypeDef>(id);
 
     private static Combatant Fighter(string id, double health = 100, double weapon = 10, string ai = "ai.cultivator_cautious") =>
-        new(id, 0, health, 100, 0, 0, 0, 0, weapon, 10, 10, 10, 5, 15, "injury.body", weapon, [], Ai(ai));
+        new(id, health, 100, 0, 0, 0, 0, weapon, 10, 10, 10, 5, 15, "injury.body", weapon, [], Ai(ai));
 
     private static CombatResult Resolve(Combatant player, Combatant foe, BattleTerms terms = BattleTerms.ToDeath, ulong seed = 1) =>
         AutoBattle.Resolve(player, [foe], Config, Xoshiro256StarStar.FromSeed(seed), Xoshiro256StarStar.FromSeed(seed + 100), terms);

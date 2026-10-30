@@ -11,7 +11,7 @@ public class BattleTests
 
     private static Combatant Fighter(string id, double reaction = 10, double health = 100, double shield = 0, double maxShield = 0,
         double qiPool = 0, double shieldRefill = 0, double energyRefill = 5, double maxEnergy = 15) =>
-        new(id, 0, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energyRefill, maxEnergy, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+        new(id, health, 100, shield, maxShield, qiPool, shieldRefill, 10, reaction, 10, 10, energyRefill, maxEnergy, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     /// <summary>A field of radius 1: the second side deploys next to the first, so fighters can hit without moving.</summary>
     private static readonly CombatConfigDef Close = CloseConfig();

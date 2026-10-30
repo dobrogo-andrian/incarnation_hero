@@ -13,7 +13,6 @@ namespace Core.Character;
 public sealed record StatStanding(
     string RankId,
     int RankIndex,
-    int RankCount,
     double RankBase,
     double Pool,
     double Filled,
@@ -35,7 +34,7 @@ public static class StatProgress
         var ranks = progress.Ranks.Select(db.Get<StatRankDef>).ToList();
         var rank = ranks[value.Rank];
         double rankBase = ranks.Take(value.Rank).Sum(r => r.Pool);
-        return new(rank.Id, value.Rank, ranks.Count, rankBase, rank.Pool, StateNumbers.Round(value.Base - rankBase), value.Overflow,
+        return new(rank.Id, value.Rank, rankBase, rank.Pool, StateNumbers.Round(value.Base - rankBase), value.Overflow,
             rank.Breakthrough, progress.OverflowDecayPerWeek, value.Deficit, rank.Collapse, progress.DeficitHealPerWeek);
     }
 

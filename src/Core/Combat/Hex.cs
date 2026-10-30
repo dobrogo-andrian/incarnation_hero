@@ -7,7 +7,6 @@ namespace Core.Combat;
 /// </summary>
 public readonly record struct Hex(int Q, int R) : IComparable<Hex>
 {
-    public static readonly Hex Zero = new(0, 0);
 
     /// <summary>The six neighbour offsets, counter-clockwise from +Q. Their order is part of determinism.</summary>
     public static readonly IReadOnlyList<Hex> Directions = [new(1, 0), new(1, -1), new(0, -1), new(-1, 0), new(-1, 1), new(0, 1)];

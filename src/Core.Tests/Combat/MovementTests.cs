@@ -15,7 +15,7 @@ public class MovementTests
     }
 
     private static Combatant Fighter(string id, double reaction = 10, double health = 100, double agility = 10, double energy = 15) =>
-        new(id, 0, health, 100, 0, 0, 0, 0, 10, reaction, agility, 10, 5, energy, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
+        new(id, health, 100, 0, 0, 0, 0, 10, reaction, agility, 10, 5, energy, "injury.body", 10, [], TestContent.Repo.Get<AiArchetypeDef>("ai.cultivator_cautious"));
 
     /// <summary>The player (reaction 20) acts twice for each turn of the wolf, which only waits.</summary>
     private static Battle Start(CombatConfigDef config, double playerHealth = 100) =>

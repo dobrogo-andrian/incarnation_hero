@@ -98,7 +98,7 @@ public static class CombatSystem
     public static Combatant FromDef(SimContext ctx, EnemyDef def, string id)
     {
         var body = new EnemyBody(ctx, def);
-        return Fighter(id, body, ctx, def.Stage, def.WeaponDamage ?? ctx.Combat.WeaponDamage, def.TechniqueLevel,
+        return Fighter(id, body, ctx, def.Stage, def.WeaponDamage ?? ctx.Combat.WeaponDamage, 0,
             def.Techniques.Select(t => (t.Key, t.Value)), def.Ai, def.Injury ?? ctx.Combat.BodyInjury, valueId => ctx.Rules.Value(body, valueId));
     }
 
@@ -116,7 +116,6 @@ public static class CombatSystem
             .ToList();
         return new Combatant(
             id,
-            stage,
             Health: current(config.HealthResource),
             MaxHealth: Value(config.HealthResource),
             Shield: current(config.ShieldResource),
