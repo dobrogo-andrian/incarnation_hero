@@ -5,7 +5,7 @@ using Core.Sim;
 
 namespace Core.Tests.Combat;
 
-/// <summary>The AI behaviour checklist of stage 2 (tech 9), plus the turn limit and whole AI-only fights.</summary>
+/// <summary>The AI behaviour checklist (tech 9), plus the turn limit and whole AI-only fights.</summary>
 public class AiTests
 {
     private const string Beast = "ai.beast_aggressive";

@@ -42,7 +42,7 @@ public sealed record FighterMoved(string FighterId, Hex From, Hex To) : SimEvent
 /// <summary>The mover left a hex next to this enemy, which strikes for free (D54); a <see cref="FighterHit"/> follows.</summary>
 public sealed record FreeAttackProvoked(string AttackerId, string MoverId) : SimEvent;
 
-/// <summary>The turn is over: qi flowed into the shield and energy out of the reserve (D55).</summary>
+/// <summary>The turn is over: qi flowed into the shield and energy back into the fight's pool (D55).</summary>
 public sealed record BattleTurnEnded(string FighterId, double ShieldRefilled, double EnergyRefilled) : SimEvent;
 
 public sealed record FighterWaited(string FighterId) : SimEvent;

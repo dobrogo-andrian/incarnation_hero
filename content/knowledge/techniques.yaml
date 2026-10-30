@@ -1,7 +1,7 @@
 # Techniques (§6). On the hex field (D56) each has a shape from a fixed set and its numbers:
 # damage = weapon × (1 + level × technique_bonus_per_level) × damage × qi density; qi comes out
-# of combat qi, the same qi that holds the shield, and energy out of body energy, which pays
-# for the technique's own movement too (D55). Draft numbers.
+# of combat qi, the same qi that holds the shield, and energy out of the fight's energy pool, which
+# pays for the technique's own movement too (D55). Draft numbers.
 
 - id: tech.spear.piercing_dragon
   name: { uk: "Пронизливий дракон" }

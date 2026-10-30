@@ -132,7 +132,7 @@ public class TechniqueTests
     [Fact]
     public void The_basic_attack_is_the_weapon_alone()
     {
-        // Damage (the formula resolver's, with the technique bonus) is ignored on the hex field.
+        // Damage (the threat's, with the technique bonus) does not strike on the hex field.
         var battle = Start(Field(1), Fighter("player", reaction: 20, damage: 99));
         var hit = battle.Execute(new Attack("wolf#1")).Events.OfType<FighterHit>().Single();
         Assert.InRange(hit.Damage, 8, 12);

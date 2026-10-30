@@ -5,7 +5,7 @@ using Core.Rng;
 namespace Core.Sim;
 
 /// <summary>
-/// The "test fight" of stage 2 (D56): a hex battle of the player's side against an enemy group,
+/// The "test fight" (D56): a hex battle of the player's side against an enemy group,
 /// outside the run. The player's side is a sandbox profile (<c>profile.*</c>, written like an enemy)
 /// or a snapshot of the current hero; nothing is written back. The enemies are played by the AI (D59).
 /// </summary>

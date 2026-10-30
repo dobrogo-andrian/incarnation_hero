@@ -1,4 +1,4 @@
-# Hand-made region for stage 1 (§9, D29): a hub and 5 zones. Names and numbers are a draft.
+# Hand-made region (§9, D29) until region generation: a hub and 6 zones, one of them hidden. Names and numbers are a draft.
 # Danger grows away from the hub; place quality stays at or below its zone's danger (tech 4.2).
 # Meditation draws `density` from a place's reserve each week (D30), so regen stays below density:
 # weak places run dry within weeks, the spirit vein lasts about a year.

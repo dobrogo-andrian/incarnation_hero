@@ -5,7 +5,7 @@ using Core.Sim;
 using Godot;
 
 /// <summary>
-/// The stage 1 playtest screen (D44): a slim status bar on top; side tabs on the left; in the
+/// The main screen (D44): a slim status bar on top; side tabs on the left; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
 /// player steps into one; the run's summary in the centre once it is over; the test fight (D56) over

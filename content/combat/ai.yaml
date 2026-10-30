@@ -29,6 +29,6 @@
   qi: 0.3
   energy: 0.2
   approach: 0.5
-  flee_health_share: 0.35       # withdraws once a third of health is gone
+  flee_health_share: 0.35       # withdraws at 35% of health or less
   flee: 10
   noise: 0.5

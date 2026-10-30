@@ -4,7 +4,7 @@ using Godot;
 
 /// <summary>
 /// The top bar (D44): week, age, life left, zone, stones and stage scale on a line of their own, which
-/// wraps rather than cuts; below it resting and the stage 2 test fight (D56), and at the right skipping
+/// wraps rather than cuts; below it resting and the test fight (D56), and at the right skipping
 /// the weeks being shown (D47), the settings (<see cref="SettingsPopup"/>) and quitting the game,
 /// which loses nothing since every command is already saved.
 /// </summary>

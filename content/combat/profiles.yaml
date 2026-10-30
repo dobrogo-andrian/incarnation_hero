@@ -1,4 +1,4 @@
-# The player's side of the stage 2 test fight (D56): heroes written like enemies, so the snapshot
+# The player's side of the test fight (D56): heroes written like enemies, so the snapshot
 # is built by the same rule. The current hero of the run is offered beside them. Draft numbers.
 
 - id: profile.sandbox.novice

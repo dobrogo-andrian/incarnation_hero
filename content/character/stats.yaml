@@ -135,7 +135,7 @@
   pool: 20
 
 # Ranked purity (D49): the body scale mirrored downwards. Meditation gives 0.1 × density a week, so its
-# overflow levels off near 1.9 × density: higher ranks need denser places or purifying pills.
+# overflow levels off near 2 × density: higher ranks need denser places or purifying pills.
 - id: stat_progress.purity
   overflow_decay_per_week: 0.05
   deficit_heal_per_week: 0.05

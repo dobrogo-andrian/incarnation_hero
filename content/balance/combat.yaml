@@ -29,7 +29,7 @@ insight_per_difficulty: 25        # an even fight gives 25 points of combat insi
 insight_max: 60
 insight_fled_share: 0.4
 
-# Hex combat (stage 2, D53–D56).
+# Hex combat (D53–D56).
 field_radius: 4                   # a hexagon of 61 hexes; its 24 rim hexes are the way out
 initiative_threshold: 100         # CTB (D53): act when the gauge reaches 100
 initiative_per_reaction: 1        # the gauge fills by reaction a tick: 10 reaction acts every 10 ticks

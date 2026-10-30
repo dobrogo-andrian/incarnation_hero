@@ -22,7 +22,7 @@ public sealed class EnemyDef : ContentDef, IValidatedDef
     /// <summary>Damage of its weapon, claws or fangs; <c>config.combat.weapon_damage</c> when not given.</summary>
     public double? WeaponDamage { get; set; }
 
-    /// <summary>The technique level the formula resolver adds to damage (D42); the hex battle uses <see cref="Techniques"/>.</summary>
+    /// <summary>The technique level counted into the fighter's threat, and so combat insight (D42); the hex battle strikes with <see cref="Techniques"/>.</summary>
     public int TechniqueLevel { get; set; }
 
     /// <summary>Techniques it fights with on the hex field, by level (D56): cultivators have them, beasts do not.</summary>

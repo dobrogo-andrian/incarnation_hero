@@ -7,7 +7,7 @@ using Godot;
 using static Widgets;
 
 /// <summary>
-/// The stage 2 test fight (D56), over the run's screen below the status bar and outside the run:
+/// The test fight (D56), over the run's screen below the status bar and outside the run:
 /// pick the hero (a sandbox profile or a snapshot of the current hero) and an enemy group, then fight
 /// on the hex field. The player clicks a lit hex to step and an adjacent enemy to strike. The skill
 /// bar under the field holds the techniques (keys 1–5) and, apart at the far right, the basic attack

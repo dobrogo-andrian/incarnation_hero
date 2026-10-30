@@ -460,7 +460,7 @@
 - id: str.shell.content_errors
   text: { uk: "Помилки контенту, гру не запущено:" }
 
-# Stage 1 playtest UI (D44).
+# Main screen UI (D44).
 
 - id: str.ui.tab_character
   text: { uk: "Персонаж" }
