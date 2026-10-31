@@ -168,8 +168,6 @@ public sealed class RunRecorder
     private static string StoneSink(Command command) => command switch
     {
         Buy => "shop",
-        RestoreQiWithStones => "qi_restore",
-        RefillPlaceWithStones => "place_refill",
         _ => "other",
     };
 

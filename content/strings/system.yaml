@@ -88,20 +88,11 @@
 - id: str.reject.not_sold_here
   text: { uk: "Тут таке не продають." }
 
-- id: str.reject.invalid_amount
-  text: { uk: "Кількість має бути додатною." }
-
 - id: str.reject.not_enough_stones
   text: { uk: "Бракує духовних каменів." }
 
-- id: str.reject.too_dangerous_here
-  text: { uk: "Тут надто небезпечно, щоб поглинати ці каменів." }
-
-- id: str.reject.qi_pool_full
-  text: { uk: "Пул ці вже повний." }
-
-- id: str.reject.place_full
-  text: { uk: "Резерв ці місця вже повний." }
+- id: str.reject.nothing_to_restore
+  text: { uk: "Відновлювати нічого: вже повне." }
 
 - id: str.reject.nothing_to_study
   text: { uk: "Немає з чого вчитися: потрібен фоліант при собі або стихія для відчуття." }
@@ -358,6 +349,9 @@
 - id: str.view.pill_heals
   text: { uk: "Лікує ({injury}): {points}" }
 
+- id: str.view.pill_restores
+  text: { uk: "Відновлює ({resource}): {points}" }
+
 - id: str.view.pill_stat
   text: { uk: "{stat}: +{points}" }
 
@@ -608,15 +602,6 @@
 
 - id: str.ui.until_done
   text: { uk: "Без обмеження" }
-
-- id: str.ui.stones
-  text: { uk: "Каменів" }
-
-- id: str.ui.refill_place
-  text: { uk: "Наповнити місце каменями" }
-
-- id: str.ui.restore_qi
-  text: { uk: "Відновити пул ці каменями" }
 
 - id: str.ui.buy
   text: { uk: "Купити" }

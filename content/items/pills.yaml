@@ -27,3 +27,13 @@
 - id: item.pill.meridian_soothing
   name: { uk: "Пігулка заспокоєння меридіан" }
   pill: { energy: 0, toxicity: 8, repeat_factor: 1, heals: { injury.internal: 15 } }
+
+# Qi restoring pills (D18): refill the qi pool at once, anywhere outside a fight; the only quick way
+# to refill it, since stones are a currency alone. Draft numbers.
+- id: item.pill.qi_restoring
+  name: { uk: "Пігулка відновлення ці" }
+  pill: { energy: 0, toxicity: 2, repeat_factor: 1, restores: { resource.qi_pool: 40 } }
+
+- id: item.pill.great_qi_restoring
+  name: { uk: "Велика пігулка відновлення ці" }
+  pill: { energy: 0, toxicity: 5, repeat_factor: 1, restores: { resource.qi_pool: 100 } }

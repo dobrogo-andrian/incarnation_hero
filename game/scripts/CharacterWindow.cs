@@ -8,7 +8,7 @@ using static Widgets;
 /// <summary>
 /// The character window, opened from the status bar or with C: on the left the figure with its
 /// slots (the active method, §6 and D35; weapon and armor are shown but stay empty until weapons
-/// are items) above the stats; on the right the stones and the carried items on shelves by kind,
+/// are items) above the stats; on the right the stones (a currency only, D18) and the carried items on shelves by kind,
 /// and below them what the picked item or slot does with its actions. A method folio dragged onto
 /// the method slot makes its method the active one, a pill dropped on the figure is taken; both are
 /// the same commands the buttons send.
@@ -33,11 +33,12 @@ public partial class CharacterWindow : PanelContainer
 
     private static readonly Vector2 SlotSize = new(170, 84);
     private static readonly Vector2 CardSize = new(180, 72);
+    private static readonly Color NoticeColor = new(0.95f, 0.55f, 0.45f);
     private static readonly Color FigureColor = new(0.32f, 0.36f, 0.40f);
 
     private readonly VBoxContainer _figure = new();
     private readonly StatsView _stats = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-    private readonly VBoxContainer _stones = new();
+    private readonly Label _stones = new();
     private readonly HBoxContainer _shelves = new();
     private readonly VBoxContainer _shelf = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
     private readonly VBoxContainer _details = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -45,6 +46,9 @@ public partial class CharacterWindow : PanelContainer
     private UiContext _ui = null!;
     private PlayerView _view = null!;
     private Shelf _openShelf = Shelf.Pills;
+
+    /// <summary>Why Core refused the last command, shown above the details: the journal is under the window.</summary>
+    public string? Notice { get; set; }
 
     /// <summary>The picked item ID or slot; presentation state only, dropped once it is gone.</summary>
     private string? _picked;
@@ -59,7 +63,7 @@ public partial class CharacterWindow : PanelContainer
             BgColor = new Color(0.23f, 0.24f, 0.26f),
             ContentMarginLeft = 20, ContentMarginRight = 20, ContentMarginTop = 16, ContentMarginBottom = 16,
         });
-        foreach (var box in new BoxContainer[] { _figure, _stones, _shelves, _details })
+        foreach (var box in new BoxContainer[] { _figure, _shelves, _details })
             box.AddThemeConstantOverride("separation", 8);
 
         var title = Title(ui.Text("str.ui.character"));
@@ -103,7 +107,7 @@ public partial class CharacterWindow : PanelContainer
         _view = view;
         if (!Visible)
             return;
-        foreach (var box in new Container[] { _figure, _stones, _shelves, _shelf, _details })
+        foreach (var box in new Container[] { _figure, _shelves, _shelf, _details })
             foreach (var child in box.GetChildren())
                 child.QueueFree();
         bool free = view.Mode == GameMode.Overworld;
@@ -112,7 +116,7 @@ public partial class CharacterWindow : PanelContainer
 
         AddFigure(view, free);
         _stats.Refresh(_ui, view);
-        AddStones(view, free);
+        _stones.Text = _ui.Text(SimText.StonesText(view));
         AddShelf(view, free);
         AddDetails(view, free);
     }
@@ -162,14 +166,6 @@ public partial class CharacterWindow : PanelContainer
         return button;
     }
 
-    private void AddStones(PlayerView view, bool free)
-    {
-        var choices = _ui.Choices;
-        _stones.AddChild(Row(new Label { Text = _ui.Text(SimText.StonesText(view)) },
-            Amount(choices.Stones, 9999, v => choices.Stones = v),
-            Button(_ui.Text("str.ui.restore_qi"), () => _ui.Send(new RestoreQiWithStones(choices.Stones)), free)));
-    }
-
     /// <summary>The shelf picker and the picked shelf's items as cards; weapons and armor do not exist yet.</summary>
     private void AddShelf(PlayerView view, bool free)
     {
@@ -210,6 +206,12 @@ public partial class CharacterWindow : PanelContainer
     /// <summary>What the picked item or slot does, with the actions it allows.</summary>
     private void AddDetails(PlayerView view, bool free)
     {
+        if (Notice is not null)
+        {
+            var notice = Text(Notice);
+            notice.AddThemeColorOverride("font_color", NoticeColor);
+            _details.AddChild(notice);
+        }
         switch (_picked)
         {
             case null:
@@ -256,6 +258,7 @@ public partial class CharacterWindow : PanelContainer
 
     private void Pick(string picked)
     {
+        Notice = null;
         _picked = _picked == picked ? null : picked;
         Refresh(_view);
     }

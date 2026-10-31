@@ -53,7 +53,7 @@ public sealed record CombatSummary(
 
 public sealed record CombatGroupSummary(int Won, int Fled, int Beaten, int Died);
 
-/// <summary>Stones earned by source (an event, <c>loot:grp.*</c>) and spent by sink (an event, shop, qi_restore, place_refill).</summary>
+/// <summary>Stones earned by source (an event, <c>loot:grp.*</c>) and spent by sink (an event, shop).</summary>
 public sealed record StonesSummary(
     int Start,
     int End,

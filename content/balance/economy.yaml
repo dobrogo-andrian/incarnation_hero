@@ -1,9 +1,5 @@
-# Spirit stones (§13, D17–D19). Draft numbers until Sim.Cli reports (Q7).
+# Spirit stones (§13, D17–D19): only a currency; the qi pool is refilled by pills (D18). Draft numbers until Sim.Cli reports (Q7).
 
 id: config.economy
 start_stones: 30
 start_items: { item.pill.qi_gathering: 2 }
-stone_restores: resource.qi_pool
-qi_per_stone: 10                 # D18: stones refill the pool at once
-stone_restore_max_danger: 1      # not in zones of danger 2 and above (§13.4)
-place_reserve_per_stone: 5       # D19: up to the place's capacity, never beyond

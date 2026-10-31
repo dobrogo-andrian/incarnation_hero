@@ -71,6 +71,7 @@ public static class SimText
     private static readonly LocKey PillCeilingLine = new("str.view.pill_ceiling");
     private static readonly LocKey PillHealsLine = new("str.view.pill_heals");
     private static readonly LocKey PillStatLine = new("str.view.pill_stat");
+    private static readonly LocKey PillRestoresLine = new("str.view.pill_restores");
     private static readonly LocKey PillRepeatLine = new("str.view.pill_repeat");
     private static readonly LocKey PillToxicityLine = new("str.view.pill_toxicity");
     private static readonly LocKey FolioSubjectLine = new("str.view.folio_subject");
@@ -255,22 +256,17 @@ public static class SimText
     {
         var lines = new List<ExplainedLine>();
         foreach (var resource in view.Resources)
-        {
-            var text = ResourceLine with
-            {
-                Args =
-                [
-                    new("resource", Name(resource.ResourceId)),
-                    new("current", Number(resource.Current)),
-                    new("max", Number(resource.Max.Value)),
-                ],
-            };
-            lines.Add(new(text, BreakdownLines(resource.Max)));
-        }
+            lines.Add(new(ResourceText(resource), BreakdownLines(resource.Max)));
         foreach (var injury in view.Injuries)
             lines.Add(ExplainedLine.Plain(InjuryLine with { Args = [new("injury", Name(injury.InjuryId)), new("value", Number(injury.Value)), new("max", Number(injury.Max))] }));
         return lines;
     }
+
+    /// <summary>A resource against its maximum: "Токсини: 16 / 20".</summary>
+    public static LocKey ResourceText(ResourceView resource) => ResourceLine with
+    {
+        Args = [new("resource", Name(resource.ResourceId)), new("current", Number(resource.Current)), new("max", Number(resource.Max.Value))],
+    };
 
     /// <summary>A stat with its value and aspects, then, for a ranked stat, its scale, overflow and deficit.</summary>
     public static IReadOnlyList<ExplainedLine> StatLines(StatView stat) =>
@@ -456,7 +452,7 @@ public static class SimText
 
     /// <summary>
     /// What a carried item does, for the inventory: a pill's energy (the next one's), ceiling bonus,
-    /// healing, stats and toxicity; a folio's subject with its level against the folio's ceiling, and its speed.
+    /// healing, restoring, stats and toxicity; a folio's subject with its level against the folio's ceiling, and its speed.
     /// </summary>
     public static IReadOnlyList<LocKey> ItemDetails(ItemView item, PlayerView view, ContentDb db)
     {
@@ -470,6 +466,8 @@ public static class SimText
                 lines.Add(PillCeilingLine with { Args = [new("bonus", Number(pill.CeilingBonus))] });
             foreach (var (injury, points) in pill.Heals.OrderBy(h => h.Key, StringComparer.Ordinal))
                 lines.Add(PillHealsLine with { Args = [new("injury", Name(injury)), new("points", Number(points))] });
+            foreach (var (resource, points) in pill.Restores.OrderBy(r => r.Key, StringComparer.Ordinal))
+                lines.Add(PillRestoresLine with { Args = [new("resource", Name(resource)), new("points", Number(points))] });
             foreach (var (stat, points) in pill.Stats.OrderBy(s => s.Key, StringComparer.Ordinal))
                 lines.Add(PillStatLine with { Args = [new("stat", Name(stat)), new("points", Number(points))] });
             if (pill.RepeatFactor < 1)

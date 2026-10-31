@@ -53,13 +53,11 @@ public sealed class RandomBot(ContentDb content, Xoshiro256StarStar rng) : IBot
                 commands.Add(Start(new MeditateActivity(direction.Id, place.PlaceId, subject)));
             }
             commands.Add(new AttemptBreakthrough(Simulation.QiVectorId, place.PlaceId, AcceptDeathRisk: rng.Chance(0.5)));
-            commands.Add(new RefillPlaceWithStones(place.PlaceId, rng.NextInt(1, 6)));
         }
         commands.AddRange(_memory.KnownZones().Select(z => new Travel(z.Id)));
         commands.AddRange(view.Items.Select(i => new UsePill(i.ItemId)));
         commands.AddRange(view.ShopOffers.Select(o => new Buy(o.ItemId)));
         commands.AddRange(view.Knowledge.Select(k => new SetActiveMethod(k.KnowledgeId)));
-        commands.Add(new RestoreQiWithStones(rng.NextInt(1, 6)));
         return commands;
     }
 

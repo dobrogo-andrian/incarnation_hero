@@ -35,8 +35,6 @@ public sealed class Choices
 
     public bool UntilDone { get; set; }
 
-    public int Stones { get; set; } = 5;
-
     public string? BreakthroughPlace { get; set; }
 
     public bool AcceptDeathRisk { get; set; }

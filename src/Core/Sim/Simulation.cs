@@ -89,8 +89,6 @@ public sealed class Simulation
             ChooseEventOption c => EventSystem.Choose(State, _ctx, c.Index),
             UsePill c => ItemSystem.UsePill(State.Player, _ctx, c.ItemId),
             Buy c => EconomySystem.Buy(State.Player, _ctx, c.ItemId),
-            RestoreQiWithStones c => EconomySystem.RestoreQi(State.Player, _ctx, c.Stones),
-            RefillPlaceWithStones c => EconomySystem.RefillPlace(State, _ctx, c.PlaceId, c.Stones),
             _ => throw new NotSupportedException($"No handler for {command.GetType().Name}."),
         };
 

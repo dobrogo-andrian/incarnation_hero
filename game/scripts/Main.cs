@@ -195,6 +195,7 @@ public partial class Main : Control
         var before = _session.Sim.View;
         var battle = _session.Sim.Battle;
         var outcome = _session.Execute(command);
+        _character.Notice = outcome.RejectReason is { } refused ? _ui.Text(refused) : null;
         if (outcome.RejectReason is { } reason)
         {
             _journal.Add(_ui.Text(reason));

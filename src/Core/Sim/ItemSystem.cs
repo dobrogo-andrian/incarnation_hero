@@ -29,9 +29,9 @@ public static class ItemSystem
 
     /// <summary>
     /// Takes a carried pill: its energy joins the pill-energy buff, a breakthrough pill raises the next
-    /// breakthrough's ceiling (the strongest one counts), a healing pill heals injuries (§8), and its
-    /// toxins build up; a purifying pill gives stat points, shrinking with repeats like energy (D49).
-    /// Refused when the toxins would go over their maximum, the tolerance (§4.4), or when a pill that only heals has nothing to heal.
+    /// breakthrough's ceiling (the strongest one counts), a healing pill heals injuries (§8), a
+    /// restoring pill refills a resource such as the qi pool (D18), and its toxins build up; a purifying pill gives stat points, shrinking with repeats like energy (D49).
+    /// Refused when the toxins would go over their maximum, the tolerance (§4.4), or when a pill that only heals or restores has nothing left to do.
     /// </summary>
     public static CommandOutcome UsePill(PlayerState player, SimContext ctx, string itemId)
     {
@@ -39,8 +39,10 @@ public static class ItemSystem
             return CommandOutcome.Reject(RejectReasons.NoSuchItem);
         if (ctx.Content.Get<ItemDef>(itemId).Pill is not { } pill)
             return CommandOutcome.Reject(RejectReasons.NotAPill);
-        if (pill.Energy + pill.CeilingBonus <= 0 && pill.Stats.Count == 0 && pill.Heals.Keys.All(id => InjurySystem.Value(player, id) == 0))
-            return CommandOutcome.Reject(RejectReasons.NothingToHeal);
+        if (pill.Energy + pill.CeilingBonus <= 0 && pill.Stats.Count == 0
+            && pill.Heals.Keys.All(id => InjurySystem.Value(player, id) == 0)
+            && pill.Restores.Keys.All(id => player.Resources.First(r => r.ResourceId == id).Current >= ctx.Rules.Value(player, id)))
+            return CommandOutcome.Reject(pill.Restores.Count > 0 ? RejectReasons.NothingToRestore : RejectReasons.NothingToHeal);
 
         string toxinsId = ctx.Config.ToxinsResource;
         double toxins = player.Resources.First(r => r.ResourceId == toxinsId).Current;
@@ -57,6 +59,8 @@ public static class ItemSystem
         var events = new List<SimEvent> { new PillTaken(itemId, energy) };
         foreach (var (injuryId, amount) in pill.Heals.OrderBy(h => h.Key, StringComparer.Ordinal))
             InjurySystem.Heal(player, ctx, injuryId, amount, events);
+        foreach (var (resourceId, amount) in pill.Restores.OrderBy(r => r.Key, StringComparer.Ordinal))
+            ResourceSystem.Restore(player, ctx, resourceId, amount);
         double strength = Math.Pow(pill.RepeatFactor, Count(player.PillsTaken, itemId) - 1);
         foreach (var (statId, amount) in pill.Stats.OrderBy(s => s.Key, StringComparer.Ordinal))
         {

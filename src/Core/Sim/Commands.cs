@@ -54,12 +54,6 @@ public sealed record UsePill(string ItemId) : OverworldCommand;
 /// <summary>Buys one item in a shop of the current zone (§13.3).</summary>
 public sealed record Buy(string ItemId) : OverworldCommand;
 
-/// <summary>Burns up to <paramref name="Stones"/> spirit stones to refill the qi pool (D18).</summary>
-public sealed record RestoreQiWithStones(int Stones) : OverworldCommand;
-
-/// <summary>Burns up to <paramref name="Stones"/> spirit stones to refill a meditation place's reserve (D19).</summary>
-public sealed record RefillPlaceWithStones(string PlaceId, int Stones) : OverworldCommand;
-
 /// <summary>
 /// Goes into seclusion at <paramref name="PlaceId"/> to break through the vector's stage (§4.5),
 /// replacing any current activity. When the forecast is in the fatal zone, it starts only with

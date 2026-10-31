@@ -7,7 +7,7 @@ using static Widgets;
 /// <summary>
 /// The centre panel's actions for the picked point (D44): a zone's danger and journey with "set
 /// out", the current settlement's entrance or the current wild zone's places and hunting grounds;
-/// inside a place, meditation and refilling its reserve; in the tea house, asking around; in a
+/// inside a place, meditation; in the tea house, asking around; in a
 /// shop, its offers; on a hunting ground, at the arena or the job board, training (D52).
 /// The place itself (name, description) is drawn where the map was. Rebuilt from the PlayerView on
 /// every refresh, with the player's picks kept in <see cref="Choices"/>.
@@ -135,7 +135,7 @@ public partial class PointPanel : VBoxContainer
         }
     }
 
-    /// <summary>Meditation in a direction (comprehension also names its subject), and refilling the reserve with stones.</summary>
+    /// <summary>Meditation in a direction (comprehension also names its subject).</summary>
     private void ShowPlace(UiContext ui, PlaceView place, bool free)
     {
         var choices = ui.Choices;
@@ -155,12 +155,6 @@ public partial class PointPanel : VBoxContainer
         AddChild(Duration(ui));
         AddChild(Button(ui.Text("str.ui.meditate"), () =>
             ui.Send(new StartActivity(new MeditateActivity(choices.Direction!, place.PlaceId, subject is null ? null : choices.Subject), choices.ActivityWeeks)), free));
-
-        AddChild(new HSeparator());
-        AddChild(Row(
-            new Label { Text = ui.Text("str.ui.stones") },
-            Amount(choices.Stones, 9999, v => choices.Stones = v),
-            Button(ui.Text("str.ui.refill_place"), () => ui.Send(new RefillPlaceWithStones(place.PlaceId, choices.Stones)), free)));
     }
 
     /// <summary>Carried folios first, then every element, which can be sensed without a folio (§6).</summary>

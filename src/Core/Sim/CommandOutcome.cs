@@ -35,11 +35,8 @@ public static class RejectReasons
     public static readonly LocKey NotAPill = new("str.reject.not_a_pill");
     public static readonly LocKey ToxinsTooHigh = new("str.reject.toxins_too_high");
     public static readonly LocKey NotSoldHere = new("str.reject.not_sold_here");
-    public static readonly LocKey InvalidAmount = new("str.reject.invalid_amount");
     public static readonly LocKey NotEnoughStones = new("str.reject.not_enough_stones");
-    public static readonly LocKey TooDangerousHere = new("str.reject.too_dangerous_here");
-    public static readonly LocKey QiPoolFull = new("str.reject.qi_pool_full");
-    public static readonly LocKey PlaceFull = new("str.reject.place_full");
+    public static readonly LocKey NothingToRestore = new("str.reject.nothing_to_restore");
     public static readonly LocKey NothingToStudy = new("str.reject.nothing_to_study");
     public static readonly LocKey StudyCapReached = new("str.reject.study_cap_reached");
     public static readonly LocKey NoNextStage = new("str.reject.no_next_stage");
