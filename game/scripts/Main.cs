@@ -5,7 +5,8 @@ using Core.Sim;
 using Godot;
 
 /// <summary>
-/// The main screen (D44): a slim status bar on top; side tabs on the left; in the
+/// The main screen (D44): a slim status bar on top; on the left the character at a glance
+/// (<see cref="CharacterPreview"/>) above the side tabs; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
 /// player steps into one; the character window over the columns (C); the run's summary in the centre once it is over; a fight on offer in the
@@ -28,7 +29,8 @@ public partial class Main : Control
     private RunSession _session = null!;
 
     private readonly StatusBar _status = new();
-    private readonly SideTabs _tabs = new();
+    private readonly CharacterPreview _preview = new();
+    private readonly SideTabs _tabs = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly PointPanel _panel = new();
     private readonly EventDialog _dialog = new();
     private readonly FightPanel _fight = new();
@@ -127,6 +129,7 @@ public partial class Main : Control
         _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed, ToggleCharacter);
         _character.Setup(_ui, ToggleCharacter);
         _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Send, Refresh, newSeed);
+        _preview.Setup(_ui, ToggleCharacter);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
         _map.ExitPressed += () => { _regionMap = true; Pick(null); };
@@ -151,7 +154,11 @@ public partial class Main : Control
 
         var columns = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         columns.AddThemeConstantOverride("separation", 20);
-        columns.AddChild(_tabs);
+        var left = new VBoxContainer();
+        left.AddThemeConstantOverride("separation", 12);
+        left.AddChild(_preview);
+        left.AddChild(_tabs);
+        columns.AddChild(left);
         columns.AddChild(center);
         columns.AddChild(right);
 
@@ -307,6 +314,7 @@ public partial class Main : Control
         if (_battle.Visible && _character.Visible)
             _character.SetOpen(view, false);
         _character.Refresh(view);
+        _preview.Refresh(_ui, view);
         _tabs.Refresh(_ui, view);
     }
 

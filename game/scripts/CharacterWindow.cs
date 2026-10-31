@@ -318,7 +318,7 @@ public partial class CharacterWindow : PanelContainer
     private Shelf ShelfOf(string itemId) => Def(itemId).Pill is not null ? Shelf.Pills : Shelf.Folios;
 
     /// <summary>A plain figure, head and body, until there is art for it.</summary>
-    private static void DrawSilhouette(Control figure)
+    public static void DrawSilhouette(Control figure)
     {
         var size = figure.Size;
         float cx = size.X / 2, head = size.Y * 0.11f;
