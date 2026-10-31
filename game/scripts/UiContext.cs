@@ -33,7 +33,7 @@ public sealed class Choices
 
     public int Weeks { get; set; } = 4;
 
-    public bool UntilDone { get; set; } = true;
+    public bool UntilDone { get; set; }
 
     public string? BreakthroughPlace { get; set; }
 

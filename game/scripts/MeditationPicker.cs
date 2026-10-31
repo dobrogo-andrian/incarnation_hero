@@ -28,15 +28,20 @@ public partial class MeditationPicker : PopupPanel
 
     public void Open(UiContext ui, PlayerView view, Control under)
     {
+        // Removed at once, not just queued, so the popup sizes to the new content.
         foreach (var child in _content.GetChildren())
+        {
+            _content.RemoveChild(child);
             child.QueueFree();
+        }
         _content.AddChild(new Label { Text = ui.Text("str.ui.meditate_pick") });
         _content.AddChild(new Label
         {
             Text = ui.Text("str.ui.meditate_pick_hint"),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            CustomMinimumSize = new Vector2(380, 0),
+            CustomMinimumSize = new Vector2(460, 0),
         });
+        _content.AddChild(Widgets.Duration(ui));
 
         string recovery = ui.Db.Get<RunConfigDef>(RunConfigDef.RunId).RecoveryMeditation;
         foreach (var direction in ui.Db.All<MeditationDirectionDef>().Where(d => d.Id != recovery))
