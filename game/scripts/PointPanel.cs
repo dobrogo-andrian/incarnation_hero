@@ -148,7 +148,7 @@ public partial class PointPanel : VBoxContainer
         string? subject = null;
         if (choices.Direction is { } directionId && ui.Db.Get<MeditationDirectionDef>(directionId).Studies)
         {
-            var subjects = StudySubjects(ui).ToList();
+            var subjects = StudySubjects(ui, _view!).ToList();
             subject = choices.Subject = Pick(subjects, choices.Subject);
             AddChild(Row(new Label { Text = ui.Text("str.ui.subject") }, Options(subjects, subject, id => choices.Subject = id)));
         }
@@ -158,8 +158,8 @@ public partial class PointPanel : VBoxContainer
     }
 
     /// <summary>Carried folios first, then every element, which can be sensed without a folio (§6).</summary>
-    private IEnumerable<(string Id, string Text)> StudySubjects(UiContext ui) =>
-        _view!.Items.Where(i => ui.Db.Get<ItemDef>(i.ItemId).Folio is not null).Select(i => (i.ItemId, ui.Name(i.ItemId)))
+    public static IEnumerable<(string Id, string Text)> StudySubjects(UiContext ui, PlayerView view) =>
+        view.Items.Where(i => ui.Db.Get<ItemDef>(i.ItemId).Folio is not null).Select(i => (i.ItemId, ui.Name(i.ItemId)))
             .Concat(ui.Db.All<KnowledgeDef>().Where(k => k.IsElement).Select(k => (k.Id, ui.Name(k.Id))));
 
     private void ShowShop(UiContext ui, PlayerView view, string shopId, bool free)

@@ -31,6 +31,12 @@ public sealed class MeditationDirectionDef : ContentDef, IValidatedDef
 
     public double PurgeRatio { get; set; }
 
+    /// <summary>Can be done at an open place of a dangerous zone, not only in a shelter (D73).</summary>
+    public bool InTheOpen { get; set; }
+
+    /// <summary>Its weeks also rest the body: injuries heal at their rest rate (D73).</summary>
+    public bool Rests { get; set; }
+
     public IEnumerable<string> Validate(ContentDb db)
     {
         if ((Target is null) != Studies)

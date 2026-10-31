@@ -222,15 +222,16 @@ public sealed class ContentValidatorTests
     public void Zones_NeedRegionMapPoints_AndASettlementALocalMapForEverythingInIt()
     {
         var errors = Validate("""
-            - { id: zone.wild, name: { uk: "Д" } }
+            - { id: zone.wild, name: { uk: "Д" }, danger: 1 }
             - { id: place.wild, name: { uk: "Д" }, zone: zone.wild, density: 1, capacity: 1 }
             - { id: zone.town, name: { uk: "М" }, settlement: true, map: { x: 50, y: 120 }, local_map: { exit: { x: 1, y: 1 } } }
             - { id: place.town, name: { uk: "М" }, zone: zone.town, density: 1, capacity: 1 }
             - { id: shop.town, name: { uk: "К" }, zone: zone.town, map: { x: 1, y: 1 } }
             """);
 
-        Assert.Equal(4, errors.Count);
+        Assert.Equal(5, errors.Count);
         Assert.Contains(errors, e => e.Message.Contains("'zone.wild' needs a point on the region map"));
+        Assert.Contains(errors, e => e.Message.Contains("'zone.wild' is dangerous, so it needs ambushers"));
         Assert.Contains(errors, e => e.Message.Contains("map point must lie within 0..100"));
         Assert.Contains(errors, e => e.Message.Contains("'zone.town' is a settlement, so it needs a local_map with inquire and exit points"));
         Assert.Contains(errors, e => e.Message.Contains("'zone.town' is a settlement, so 'place.town' needs a point on its local map"));

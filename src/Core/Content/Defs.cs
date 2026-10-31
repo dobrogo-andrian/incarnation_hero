@@ -140,9 +140,15 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     /// </summary>
     public double MeditationDepletedFloor { get; set; }
 
-    /// <summary>The meditation the main screen's "meditate" starts at the zone's best place (D72).</summary>
+    /// <summary>
+    /// The meditation the main screen's "meditate" starts while the body needs it (D72, D73); it
+    /// must work in the open and rest the body, since it replaces resting.
+    /// </summary>
     [ContentRef(typeof(MeditationDirectionDef))]
     public string RecoveryMeditation { get; set; } = "";
+
+    /// <summary>Weekly chance of an ambush per point of zone danger while meditating in the open (D73).</summary>
+    public double AmbushChancePerDanger { get; set; }
 
     /// <summary>Share of combat insight points that fades each week, travel included (§4.3).</summary>
     public double CombatInsightDecay { get; set; }
@@ -180,6 +186,10 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     {
         if (KnowledgeLevelPoints.Count == 0 || KnowledgeLevelPoints.Any(p => p <= 0))
             yield return "knowledge_level_points needs at least one positive entry.";
+        if (db.TryGet<MeditationDirectionDef>(RecoveryMeditation, out var recovery) && !(recovery.InTheOpen && recovery.Rests))
+            yield return $"recovery_meditation '{RecoveryMeditation}' must be in_the_open and rest.";
+        if (AmbushChancePerDanger is < 0 or > 1)
+            yield return "ambush_chance_per_danger must be from 0 to 1.";
         if (!db.Contains(StartZone))
             yield break;
 

@@ -27,32 +27,38 @@
   name: { uk: "Бамбуковий гай" }
   danger: 1
   map: { x: 24, y: 66 }
+  ambushers: { grp.beast.lone_wolf: 2, grp.beast.grey_wolves: 1 }
 
 - id: zone.river_valley
   name: { uk: "Річкова долина" }
   danger: 1
   map: { x: 74, y: 70 }
+  ambushers: { grp.beast.wild_boar: 2, grp.beast.river_serpent: 1 }
 
 - id: zone.misty_hills
   name: { uk: "Туманні пагорби" }
   danger: 2
   map: { x: 36, y: 40 }
+  ambushers: { grp.beast.mist_leopard: 2, grp.beast.grey_wolves: 1 }
 
 - id: zone.old_battlefield
   name: { uk: "Старе поле битви" }
   danger: 2
   map: { x: 80, y: 40 }
+  ambushers: { grp.human.relic_hunters: 2, grp.bandits.road: 1 }
 
 - id: zone.spirit_peak
   name: { uk: "Пік духовної жили" }
   danger: 3
   map: { x: 56, y: 12 }
+  ambushers: { grp.beast.mist_leopard: 1, grp.human.relic_hunters: 1 }
 
 - id: zone.ancient_tomb
   name: { uk: "Гробниця Забутого Майстра" }
   danger: 3
   hidden: true
   map: { x: 90, y: 14 }
+  ambushers: { grp.human.tomb_keeper: 1 }
 
 - id: route.hub.bamboo_grove
   a: zone.hub
@@ -95,6 +101,8 @@
   weeks: 2
 
 # Meditation places: wild spots are weak, caves medium, the spirit vein strong (§9).
+# In a dangerous zone only recovery works out in the open, with ambushers about; a shelter
+# (cave, grotto, the vein's crevice, a hidden spot) is safe and allows every direction (D73).
 
 - id: place.hub.quiet_courtyard
   name: { uk: "Тихий двір" }
@@ -128,6 +136,7 @@
   density: 2
   capacity: 60
   regen_per_week: 0.5
+  shelter: true
 
 - id: place.old_battlefield.altar
   name: { uk: "Розбитий вівтар" }
@@ -144,6 +153,7 @@
   density: 4
   capacity: 200
   regen_per_week: 1
+  shelter: true
 
 - id: place.ancient_tomb.sealed_hall
   name: { uk: "Запечатана зала" }
@@ -152,6 +162,7 @@
   density: 3.5
   capacity: 150
   regen_per_week: 1
+  shelter: true
 
 # Hidden places: a little better than what their zone offers in the open.
 - id: place.bamboo_grove.hidden_spring
@@ -161,6 +172,7 @@
   density: 2
   capacity: 25
   regen_per_week: 0.5
+  shelter: true
   hidden: true
 
 - id: place.misty_hills.hermit_grotto
@@ -170,4 +182,5 @@
   density: 3
   capacity: 80
   regen_per_week: 0.75
+  shelter: true
   hidden: true

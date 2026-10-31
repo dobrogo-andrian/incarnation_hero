@@ -17,15 +17,6 @@ public static class ResourceSystem
         }
     }
 
-    /// <summary>
-    /// True once <paramref name="resourceId"/> and every resource that returns on its own (health, body
-    /// energy…) are at their maximums: recovery has nothing left to do (D72).
-    /// </summary>
-    public static bool Whole(PlayerState player, SimContext ctx, string resourceId) =>
-        player.Resources
-            .Where(r => r.ResourceId == resourceId || ctx.Content.Get<ResourceDef>(r.ResourceId).RegenPerWeek > 0)
-            .All(r => r.Current >= ctx.Rules.Value(player, r.ResourceId));
-
     /// <summary>Adds <paramref name="amount"/> to a resource, up to its current maximum.</summary>
     public static void Restore(PlayerState player, SimContext ctx, string resourceId, double amount)
     {

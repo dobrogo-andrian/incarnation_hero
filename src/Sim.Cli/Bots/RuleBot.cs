@@ -277,12 +277,13 @@ public sealed class RuleBot : IBot
         yield return new StartActivity(new MeditateActivity(_purification.Id, place.Id), ChunkWeeks);
     }
 
-    /// <summary>The best known place within the profile's danger, preferring one here if it is good enough.</summary>
+    /// <summary>The best known place for cultivation within the profile's danger (a shelter or a safe zone, D73), preferring one here if it is good enough.</summary>
     private PlaceDef? TargetPlace(PlayerView view, TrackView track)
     {
         int maxDanger = _profile.MaxDanger(track.StageIndex);
         var candidates = _content.All<PlaceDef>()
-            .Where(p => _memory.IsKnown(p) && _content.Get<ZoneDef>(p.Zone) is var zone && _memory.IsKnown(zone) && zone.Danger <= maxDanger)
+            .Where(p => _memory.IsKnown(p) && _content.Get<ZoneDef>(p.Zone) is var zone && _memory.IsKnown(zone) && zone.Danger <= maxDanger
+                && !MeditationSystem.Exposed(p, _content))
             .ToList();
         if (candidates.Count == 0)
             return null;
@@ -294,8 +295,9 @@ public sealed class RuleBot : IBot
     private double Score(PlaceDef place, int week) =>
         _memory.ExpectedReserve(place, week) >= place.Density * MinReserveWeeks ? place.Density : place.Density * _run.MeditationDepletedFloor;
 
+    /// <summary>The best place here for cultivation: open ground of a dangerous zone allows only recovery (D73).</summary>
     private PlaceDef? BestPlaceHere(PlayerView view) =>
-        view.Places.Select(p => _content.Get<PlaceDef>(p.PlaceId)).MaxBy(p => Score(p, view.Week));
+        view.Places.Select(p => _content.Get<PlaceDef>(p.PlaceId)).Where(p => !MeditationSystem.Exposed(p, _content)).MaxBy(p => Score(p, view.Week));
 
     /// <summary>Healthy enough to pick a fight or roam into one.</summary>
     private bool Fit(PlayerView view) => Share(Resource(view, _healthResource)) >= _profile.MinHealthToFight;

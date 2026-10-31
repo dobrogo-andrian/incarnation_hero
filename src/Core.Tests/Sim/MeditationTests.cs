@@ -5,14 +5,22 @@ namespace Core.Tests.Sim;
 
 public sealed class MeditationTests
 {
-    /// <summary>A hub place with round numbers: draws 2 a week, holds 5, never refills.</summary>
+    /// <summary>A hub place with round numbers: draws 2 a week, holds 5, never refills; and a shelter in the grove.</summary>
     private static readonly Core.Content.ContentDb Content = TestContent.Quiet(TestContent.WithExtra("""
-        id: place.hub.test
-        name: { uk: "Тест" }
-        zone: zone.hub
-        density: 2
-        capacity: 5
-        regen_per_week: 0
+        - id: place.hub.test
+          name: { uk: "Тест" }
+          zone: zone.hub
+          density: 2
+          capacity: 5
+          regen_per_week: 0
+
+        - id: place.bamboo_grove.test_shelter
+          name: { uk: "Тестове укриття" }
+          zone: zone.bamboo_grove
+          density: 0.5
+          capacity: 50
+          regen_per_week: 0
+          shelter: true
         """));
 
     private static Simulation NewGame()
@@ -104,11 +112,87 @@ public sealed class MeditationTests
     }
 
     [Fact]
-    public void Recovery_IsRejected_WhenHealthAndQiAreAlreadyFull()
+    public void Recovery_IsRejected_AndNotOffered_WhenTheBodyAndQiAreWhole()
     {
         var sim = NewGame();
 
-        Assert.Equal(RejectReasons.NothingToRestore, sim.Execute(Meditate("meditation.recovery", 1)).RejectReason);
+        Assert.Equal(RejectReasons.NothingToRecover, sim.Execute(Meditate("meditation.recovery", 1)).RejectReason);
+        Assert.Null(MeditationSystem.Recovery(sim.View, sim.Content));
+    }
+
+    [Fact]
+    public void Recovery_RestsTheBody_HealingInjuriesAsRestDid()
+    {
+        var resting = NewGame();
+        var meditating = NewGame();
+        foreach (var sim in new[] { resting, meditating })
+            InjurySystem.Inflict(sim.State.Player, new SimContext(sim.Content, Core.Rng.RngStreams.FromStates(sim.State.RngStates)), "injury.body", 10, []);
+
+        resting.Execute(TestContent.Wait(1));
+        meditating.Execute(Meditate("meditation.recovery", 1));
+
+        Assert.Equal(resting.State.Player.Injuries.Single().Value, meditating.State.Player.Injuries.Single().Value);
+        Assert.True(meditating.State.Player.Injuries.Single().Value < 10);
+    }
+
+    [Fact]
+    public void OpenGroundOfADangerousZone_AllowsOnlyRecovery_AShelterAllowsEverything()
+    {
+        var sim = NewGame();
+        sim.State.Player.ZoneId = "zone.bamboo_grove";
+        sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool").Current = 50;
+
+        Assert.Equal(RejectReasons.TooExposed, sim.Execute(Meditate("meditation.purification", 1, "place.bamboo_grove.clearing")).RejectReason);
+        Assert.Equal("place.bamboo_grove.test_shelter", MeditationSystem.BestPlace(sim.View, sim.Content, "meditation.purification"));
+        Assert.Equal("place.bamboo_grove.clearing", MeditationSystem.BestPlace(sim.View, sim.Content, "meditation.recovery"));
+        Assert.True(sim.Execute(Meditate("meditation.purification", 1, "place.bamboo_grove.test_shelter")).Accepted);
+        Assert.True(sim.Execute(Meditate("meditation.recovery", 1, "place.bamboo_grove.clearing")).Accepted);
+    }
+
+    [Fact]
+    public void RecoveryInTheOpenOfADangerousZone_CanBeAmbushed_ByTheZonesAmbushers_ButNotInAShelter()
+    {
+        var content = TestContent.Quiet(TestContent.WithExtra("""
+            id: place.bamboo_grove.test_shelter
+            name: { uk: "Тестове укриття" }
+            zone: zone.bamboo_grove
+            density: 0.5
+            capacity: 50
+            regen_per_week: 0
+            shelter: true
+            """));
+        content.Get<Core.Content.RunConfigDef>(Core.Content.RunConfigDef.RunId).AmbushChancePerDanger = 1;
+        Simulation InTheGrove()
+        {
+            var sim = Simulation.NewGame(content, 1);
+            sim.Execute(new SetInterruptStops([]));
+            sim.State.Player.ZoneId = "zone.bamboo_grove";
+            sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool").Current = 50;
+            return sim;
+        }
+
+        var open = InTheGrove();
+        var outcome = open.Execute(Meditate("meditation.recovery", 3, "place.bamboo_grove.clearing"));
+        var offered = Assert.Single(outcome.Events.OfType<FightOffered>());
+        Assert.Contains(offered.GroupId, content.Get<Core.Content.ZoneDef>("zone.bamboo_grove").Ambushers.Keys);
+        Assert.Equal(GameMode.Combat, open.State.Mode);
+
+        var sheltered = InTheGrove();
+        sheltered.Execute(Meditate("meditation.recovery", 3, "place.bamboo_grove.test_shelter"));
+        Assert.Equal(GameMode.Overworld, sheltered.State.Mode);
+    }
+
+    [Fact]
+    public void Contemplation_GrowsPerceptionTenTimesFasterThanItsSideGain()
+    {
+        var contemplating = NewGame();
+        var purifying = NewGame();
+
+        contemplating.Execute(Meditate("meditation.contemplation", 1));
+        purifying.Execute(Meditate("meditation.purification", 1));
+
+        double Perception(Simulation s) => s.State.Player.Stats.Single(st => st.StatId == "stat.perception").Base;
+        Assert.Equal(Perception(purifying) * 10, Perception(contemplating), 9);
     }
 
     [Fact]
@@ -131,6 +215,7 @@ public sealed class MeditationTests
     public void RecoveryHere_PicksThePlaceThatGivesTheMost_AsItsReserveRunsDry()
     {
         var sim = NewGame();
+        sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool").Current = 50;
 
         Assert.Equal(new MeditateActivity(TestContent.Config.RecoveryMeditation, "place.hub.test"), MeditationSystem.Recovery(sim.View, sim.Content));
 

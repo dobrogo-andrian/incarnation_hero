@@ -20,6 +20,13 @@ public sealed class ZoneDef : ContentDef, IValidatedDef
     public LocalMapDef? LocalMap { get; set; }
 
     /// <summary>
+    /// Who may fall on a player meditating out in the open here, by weight (D73); a dangerous zone
+    /// (danger above 0) needs at least one.
+    /// </summary>
+    [ContentRef(typeof(EnemyGroupDef))]
+    public Dictionary<string, double> Ambushers { get; set; } = [];
+
+    /// <summary>
     /// Meditation needs a place (D30), so every zone offers at least one. Every zone is drawn on the
     /// region map, and a settlement also on its local map, with every place and shop on it.
     /// </summary>
@@ -29,6 +36,8 @@ public sealed class ZoneDef : ContentDef, IValidatedDef
             yield return "has no meditation place.";
         if (Map is null)
             yield return "needs a point on the region map (map).";
+        if (Danger > 0 && (Ambushers.Count == 0 || Ambushers.Values.Any(w => w <= 0)))
+            yield return "is dangerous, so it needs ambushers with positive weights.";
         if (!Settlement)
             yield break;
         if (LocalMap is not { Inquire: not null, Exit: not null })
@@ -118,6 +127,12 @@ public sealed class PlaceDef : ContentDef, IValidatedDef, IDescribedDef
 
     /// <summary>Unknown, so unusable, until revealed (D40).</summary>
     public bool Hidden { get; set; }
+
+    /// <summary>
+    /// Sheltered from the zone's dangers (D73): no ambushes, and every meditation direction works
+    /// here even in a dangerous zone, where open places allow only those meant for the open.
+    /// </summary>
+    public bool Shelter { get; set; }
 
     /// <summary>Its point on a settlement's local map (D44); wild zones have no local map.</summary>
     public MapPoint? Map { get; set; }

@@ -14,6 +14,7 @@ start_aspect_profile: aspect_profile.balanced   # without an active method (A2)
 start_zone: zone.hub
 meditation_depleted_floor: 0.2   # D30: meditation on an exhausted place still gives 20%
 recovery_meditation: meditation.recovery   # D72: what "meditate" on the main screen starts
+ambush_chance_per_danger: 0.05   # D73: meditating in the open of a danger-2 zone, 10% a week
 combat_insight_decay: 0.1        # D31: combat insight loses 10% of its points a week
 combat_insight_min_points: 1     # below this it is gone
 

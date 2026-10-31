@@ -37,6 +37,8 @@ public static class RejectReasons
     public static readonly LocKey NotSoldHere = new("str.reject.not_sold_here");
     public static readonly LocKey NotEnoughStones = new("str.reject.not_enough_stones");
     public static readonly LocKey NothingToRestore = new("str.reject.nothing_to_restore");
+    public static readonly LocKey NothingToRecover = new("str.reject.nothing_to_recover");
+    public static readonly LocKey TooExposed = new("str.reject.too_exposed");
     public static readonly LocKey NothingToStudy = new("str.reject.nothing_to_study");
     public static readonly LocKey StudyCapReached = new("str.reject.study_cap_reached");
     public static readonly LocKey NoNextStage = new("str.reject.no_next_stage");

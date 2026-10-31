@@ -17,6 +17,7 @@ public static class EventSystem
         null or BreakthroughActivity => null,
         TravelActivity => EventContexts.Travel,
         _ when db.Get<ZoneDef>(state.Player.ZoneId).Settlement => EventContexts.Settlement,
+        MeditateActivity m when db.Get<MeditationDirectionDef>(m.DirectionId).Rests => EventContexts.Rest,
         MeditateActivity => EventContexts.Meditation,
         WaitActivity => EventContexts.Rest,
         _ => null,

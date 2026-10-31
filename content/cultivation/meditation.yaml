@@ -13,6 +13,8 @@
   name: { uk: "Відновлення" }
   rate: 5
   target: resource.qi_pool     # on top of the pool's natural regeneration
+  in_the_open: true            # D73: works anywhere, at the risk of an ambush in a dangerous zone
+  rests: true                  # replaces resting: injuries heal at their rest rate
   side_gains: { stat.perception: 0.01 }
 
 - id: meditation.assimilation
@@ -26,6 +28,11 @@
   rate: 5
   studies: true                # the activity names a carried folio or an element to sense (§6)
   side_gains: { stat.perception: 0.05 }
+
+- id: meditation.contemplation
+  name: { uk: "Споглядання" }
+  rate: 0.1
+  target: stat.perception      # D73: perception on purpose, ten times the side gain of other directions
 
 - id: meditation.healing
   name: { uk: "Зцілення" }
