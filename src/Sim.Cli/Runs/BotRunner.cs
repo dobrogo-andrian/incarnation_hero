@@ -25,6 +25,8 @@ public static class BotRunner
     public static (RunSummary Summary, Simulation Sim) Play(ContentDb content, string botName, ulong seed, TextWriter? trace = null)
     {
         var sim = Simulation.NewGame(content, seed);
+        // Bots always auto-resolve (D67), so their training fights never stop the training to ask.
+        sim.Execute(new SetAutoFights([FightKind.Hunt, FightKind.Arena]));
         var bot = BotRegistry.Create(botName, content, seed);
         var recorder = new RunRecorder(sim, bot);
 

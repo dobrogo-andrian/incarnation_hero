@@ -47,6 +47,14 @@ public sealed class TrainingTests
 
     private static Simulation NewGame() => Simulation.NewGame(Content, 1);
 
+    /// <summary>A new game whose hunts and arena bouts are auto-resolved unasked, as long training runs would set it.</summary>
+    private static Simulation AutoFought()
+    {
+        var sim = NewGame();
+        sim.Execute(new SetAutoFights([FightKind.Hunt, FightKind.Arena]));
+        return sim;
+    }
+
     private static double Health(Simulation sim) => sim.State.Player.Resources.First(r => r.ResourceId == "resource.health").Current;
 
     private static double Base(Simulation sim, string statId) => sim.State.Player.Stats.First(s => s.StatId == statId).Base;
@@ -81,7 +89,7 @@ public sealed class TrainingTests
     [Fact]
     public void Hunting_MeetsPrey_AndAWonFightGivesItsLoot()
     {
-        var sim = NewGame();
+        var sim = AutoFought();
         int stones = sim.State.Player.Stones;
 
         var outcome = sim.Execute(new StartActivity(new HuntActivity("hunt.test.easy"), 2));
@@ -92,12 +100,11 @@ public sealed class TrainingTests
     }
 
     [Fact]
-    public void AHuntsFight_NotAutoResolved_IsOffered_AndEndsTheHunt()
+    public void AHuntsFight_IsOfferedByDefault_AndEndsTheHunt()
     {
         var sim = NewGame();
         int stones = sim.State.Player.Stones;
-        Assert.Equal([FightKind.Hunt, FightKind.Arena], sim.View.AutoFights);
-        Assert.True(sim.Execute(new SetAutoFights([FightKind.Arena])).Accepted);
+        Assert.Empty(sim.View.AutoFights);
 
         var outcome = sim.Execute(new StartActivity(new HuntActivity("hunt.test.easy"), 5));
 
@@ -118,7 +125,6 @@ public sealed class TrainingTests
     {
         var sim = NewGame();
         int stones = sim.State.Player.Stones;
-        sim.Execute(new SetAutoFights([]));
 
         sim.Execute(new StartActivity(new ArenaActivity("arena.test", 0), 3));
         Assert.Equal(BattleTerms.Bout, sim.View.Fight!.Terms);
@@ -135,7 +141,7 @@ public sealed class TrainingTests
         var sim = NewGame();
 
         Assert.Equal(RejectReasons.EventFightsAsk, sim.Execute(new SetAutoFights([FightKind.Event])).RejectReason);
-        Assert.Equal([FightKind.Hunt, FightKind.Arena], sim.State.AutoFights);
+        Assert.Empty(sim.State.AutoFights);
     }
 
     [Fact]
@@ -151,7 +157,7 @@ public sealed class TrainingTests
     [Fact]
     public void ArenaBout_TakesTheFee_AndAWinPaysThePrize()
     {
-        var sim = NewGame();
+        var sim = AutoFought();
         int stones = sim.State.Player.Stones;
 
         var outcome = sim.Execute(new StartActivity(new ArenaActivity("arena.test", 0), 1));
@@ -164,7 +170,7 @@ public sealed class TrainingTests
     [Fact]
     public void ArenaBout_EndsInYielding_NeverInDeath_AndTheSpentBodyEndsTheBouts()
     {
-        var sim = NewGame();
+        var sim = AutoFought();
 
         var outcome = sim.Execute(new StartActivity(new ArenaActivity("arena.test", 1), 10));
 

@@ -80,8 +80,8 @@ public sealed class GameState
     /// <summary>Interrupt categories that stop a running activity. Others are reported and time goes on.</summary>
     public List<InterruptCategory> StoppingInterrupts { get; set; } = [.. Enum.GetValues<InterruptCategory>()];
 
-    /// <summary>Kinds of fight auto-resolved without asking (D67); an event's fight always asks.</summary>
-    public List<FightKind> AutoFights { get; set; } = [FightKind.Hunt, FightKind.Arena];
+    /// <summary>Kinds of fight auto-resolved without asking (D67); none by default, and an event's fight always asks.</summary>
+    public List<FightKind> AutoFights { get; set; } = [];
 
     /// <summary>Set when the run is over (<see cref="GameMode.RunEnd"/>).</summary>
     public RunEndCause? EndCause { get; set; }

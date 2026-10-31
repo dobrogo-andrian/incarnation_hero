@@ -26,8 +26,13 @@ public partial class FightPanel : VBoxContainer
         AddChild(Title(ui.Text(lines[0])));
         foreach (var line in lines.Skip(1))
             AddChild(Text(ui.Text(line)));
-        AddChild(Row(
-            Button(ui.Text("str.ui.fight_by_hand"), () => ui.Send(new FightByHand())),
-            Button(ui.Text("str.ui.fight_auto"), () => ui.Send(new AutoResolveFight()))));
+        // Fighting by hand is the game; the AI is the side door (D67).
+        var byHand = Button(ui.Text("str.ui.fight_by_hand"), () => ui.Send(new FightByHand()));
+        byHand.AddThemeFontSizeOverride("font_size", 22);
+        byHand.CustomMinimumSize = new Vector2(260, 52);
+        var auto = Button(ui.Text("str.ui.fight_auto"), () => ui.Send(new AutoResolveFight()));
+        auto.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+        auto.Flat = true;
+        AddChild(Row(byHand, auto));
     }
 }

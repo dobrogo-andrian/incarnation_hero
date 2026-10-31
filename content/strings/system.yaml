@@ -517,7 +517,7 @@
   text: { uk: "Битися самому" }
 
 - id: str.ui.fight_auto
-  text: { uk: "Авторезолв" }
+  text: { uk: "Доручити бій AI" }
 
 - id: str.ui.speed_title
   text: { uk: "Плин часу" }
