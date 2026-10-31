@@ -4,7 +4,7 @@ using Godot;
 using static Widgets;
 
 /// <summary>
-/// The "breakthrough" tab: stage scales with the forecast, the active method (set in the
+/// The cultivation page of the <see cref="CharacterWindow"/>: stage scales with the forecast, the active method (set in the
 /// <see cref="CharacterWindow"/>), foundation, knowledge and buffs; and, once a scale is full,
 /// seclusion at a place here — accepting the risk of death when the forecast says it is fatal (§4.5).
 /// </summary>

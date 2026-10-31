@@ -632,8 +632,8 @@
 - id: str.ui.inv_armor
   text: { uk: "Обладунки" }
 
-- id: str.ui.inv_empty
-  text: { uk: "Тут поки нічого немає." }
+- id: str.ui.stats
+  text: { uk: "Стати" }
 
 - id: str.ui.inv_soon
   text: { uk: "Зброї й обладунків у світі ще немає: усі б'ються простою зброєю. З'являться згодом." }

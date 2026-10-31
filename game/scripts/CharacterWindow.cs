@@ -6,10 +6,11 @@ using Godot;
 using static Widgets;
 
 /// <summary>
-/// The character window, opened from the status bar or with C: on the left the figure with its
+/// The character window, opened from the status bar or with C. On the left the figure with its
 /// slots (the active method, §6 and D35; weapon and armor are shown but stay empty until weapons
-/// are items) above the stats; on the right the stones (a currency only, D18) and the carried items on shelves by kind,
-/// and below them what the picked item or slot does with its actions. A method folio dragged onto
+/// are items) above either the stats or cultivation with the breakthrough (<see cref="BreakthroughTab"/>);
+/// in the middle the stones (a currency only, D18) and the inventory, a column of square cells
+/// per shelf; on the right what the picked item or slot does, with its actions. A method folio dragged onto
 /// the method slot makes its method the active one, a pill dropped on the figure is taken; both are
 /// the same commands the buttons send.
 /// </summary>
@@ -31,21 +32,27 @@ public partial class CharacterWindow : PanelContainer
 
     private static readonly LocKey MethodPick = new("str.ui.method_pick");
 
+    private const int InventoryColumns = 4;
+    private const int InventoryCells = 24;
+
     private static readonly Vector2 SlotSize = new(170, 84);
-    private static readonly Vector2 CardSize = new(180, 72);
+    private static readonly Vector2 CellSize = new(92, 92);
     private static readonly Color NoticeColor = new(0.95f, 0.55f, 0.45f);
     private static readonly Color FigureColor = new(0.32f, 0.36f, 0.40f);
 
     private readonly VBoxContainer _figure = new();
+    private readonly HBoxContainer _pages = new();
     private readonly StatsView _stats = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+    private readonly BreakthroughTab _cultivation = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
     private readonly Label _stones = new();
     private readonly HBoxContainer _shelves = new();
-    private readonly VBoxContainer _shelf = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+    private readonly VBoxContainer _shelf = new();
     private readonly VBoxContainer _details = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
 
     private UiContext _ui = null!;
     private PlayerView _view = null!;
     private Shelf _openShelf = Shelf.Pills;
+    private bool _showCultivation;
 
     /// <summary>Why Core refused the last command, shown above the details: the journal is under the window.</summary>
     public string? Notice { get; set; }
@@ -63,36 +70,38 @@ public partial class CharacterWindow : PanelContainer
             BgColor = new Color(0.23f, 0.24f, 0.26f),
             ContentMarginLeft = 20, ContentMarginRight = 20, ContentMarginTop = 16, ContentMarginBottom = 16,
         });
-        foreach (var box in new BoxContainer[] { _figure, _shelves, _details })
+        foreach (var box in new BoxContainer[] { _figure, _pages, _shelves, _shelf, _details })
             box.AddThemeConstantOverride("separation", 8);
 
         var title = Title(ui.Text("str.ui.character"));
         title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         var header = Row(title, Button(ui.Text("str.ui.close"), close));
 
-        var left = new VBoxContainer { CustomMinimumSize = new Vector2(600, 0) };
+        var left = new VBoxContainer { CustomMinimumSize = new Vector2(580, 0) };
         left.AddThemeConstantOverride("separation", 12);
         left.AddChild(_figure);
-        left.AddChild(new HSeparator());
-        left.AddChild(Scroll(_stats));
+        left.AddChild(_pages);
+        var page = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        page.AddChild(_stats);
+        page.AddChild(_cultivation);
+        left.AddChild(Scroll(page));
 
-        var right = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        right.AddThemeConstantOverride("separation", 10);
-        right.AddChild(Title(ui.Text("str.ui.inventory")));
-        right.AddChild(_stones);
-        right.AddChild(_shelves);
-        var shelf = Scroll(_shelf);
-        shelf.CustomMinimumSize = new Vector2(0, 250);
-        shelf.SizeFlagsVertical = SizeFlags.Fill;
-        right.AddChild(shelf);
-        right.AddChild(new HSeparator());
-        right.AddChild(Scroll(_details));
+        var inventory = new VBoxContainer();
+        inventory.AddThemeConstantOverride("separation", 10);
+        inventory.AddChild(Title(ui.Text("str.ui.inventory")));
+        inventory.AddChild(_stones);
+        inventory.AddChild(_shelves);
+        inventory.AddChild(Scroll(_shelf));
 
         var body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         body.AddThemeConstantOverride("separation", 20);
         body.AddChild(left);
         body.AddChild(new VSeparator());
-        body.AddChild(right);
+        body.AddChild(inventory);
+        body.AddChild(new VSeparator());
+        var details = Scroll(_details);
+        details.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        body.AddChild(details);
 
         var root = new VBoxContainer();
         root.AddThemeConstantOverride("separation", 12);
@@ -107,7 +116,7 @@ public partial class CharacterWindow : PanelContainer
         _view = view;
         if (!Visible)
             return;
-        foreach (var box in new Container[] { _figure, _shelves, _shelf, _details })
+        foreach (var box in new Container[] { _figure, _pages, _shelves, _shelf, _details })
             foreach (var child in box.GetChildren())
                 child.QueueFree();
         bool free = view.Mode == GameMode.Overworld;
@@ -115,7 +124,7 @@ public partial class CharacterWindow : PanelContainer
             _picked = null;
 
         AddFigure(view, free);
-        _stats.Refresh(_ui, view);
+        AddPages(view);
         _stones.Text = _ui.Text(SimText.StonesText(view));
         AddShelf(view, free);
         AddDetails(view, free);
@@ -166,7 +175,27 @@ public partial class CharacterWindow : PanelContainer
         return button;
     }
 
-    /// <summary>The shelf picker and the picked shelf's items as cards; weapons and armor do not exist yet.</summary>
+    /// <summary>The stats or the cultivation page under the figure, picked by two toggles.</summary>
+    private void AddPages(PlayerView view)
+    {
+        foreach (var (cultivation, title) in new[] { (false, "str.ui.stats"), (true, "str.ui.tab_cultivation") })
+        {
+            var button = new Button { Text = _ui.Text(title), ToggleMode = true, ButtonPressed = cultivation == _showCultivation };
+            button.Pressed += () => { _showCultivation = cultivation; Refresh(_view); };
+            _pages.AddChild(button);
+        }
+        _stats.Visible = !_showCultivation;
+        _cultivation.Visible = _showCultivation;
+        if (_showCultivation)
+            _cultivation.Refresh(_ui, view);
+        else
+            _stats.Refresh(_ui, view);
+    }
+
+    /// <summary>
+    /// The shelf picker and the picked shelf as a column of square cells, its items first and the
+    /// rest empty, as in a classic inventory; weapons and armor do not exist yet.
+    /// </summary>
     private void AddShelf(PlayerView view, bool free)
     {
         foreach (var (shelf, title) in Shelves)
@@ -177,29 +206,41 @@ public partial class CharacterWindow : PanelContainer
         }
 
         var items = view.Items.Where(i => ShelfOf(i.ItemId) == _openShelf).ToList();
-        if (items.Count == 0)
-        {
-            _shelf.AddChild(Text(_ui.Text(_openShelf is Shelf.Weapons or Shelf.Armor ? "str.ui.inv_soon" : "str.ui.inv_empty")));
-            return;
-        }
-        var grid = new GridContainer { Columns = 6 };
-        grid.AddThemeConstantOverride("h_separation", 8);
-        grid.AddThemeConstantOverride("v_separation", 8);
+        var grid = new GridContainer { Columns = InventoryColumns };
+        grid.AddThemeConstantOverride("h_separation", 6);
+        grid.AddThemeConstantOverride("v_separation", 6);
         _shelf.AddChild(grid);
         foreach (var item in items)
         {
-            var card = new ItemButton
+            string name = _ui.Name(item.ItemId);
+            var cell = new ItemButton
             {
-                Text = $"{_ui.Name(item.ItemId)}\n× {item.Count}",
+                Text = $"{name}\n× {item.Count}",
+                TooltipText = name,
                 DragId = free ? item.ItemId : null,
-                CustomMinimumSize = CardSize,
+                CustomMinimumSize = CellSize,
                 ToggleMode = true,
                 ButtonPressed = _picked == item.ItemId,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                ClipText = true,
             };
-            Cell(card);
-            card.Pressed += () => Pick(item.ItemId);
-            grid.AddChild(card);
+            cell.AddThemeFontSizeOverride("font_size", 13);
+            Cell(cell);
+            cell.Pressed += () => Pick(item.ItemId);
+            grid.AddChild(cell);
+        }
+        int cells = Math.Max(InventoryCells, (items.Count + InventoryColumns - 1) / InventoryColumns * InventoryColumns);
+        for (int i = items.Count; i < cells; i++)
+        {
+            var empty = new Button { CustomMinimumSize = CellSize, Disabled = true, FocusMode = FocusModeEnum.None };
+            Cell(empty);
+            grid.AddChild(empty);
+        }
+        if (_openShelf is Shelf.Weapons or Shelf.Armor)
+        {
+            var soon = Text(_ui.Text("str.ui.inv_soon"));
+            soon.CustomMinimumSize = new Vector2(InventoryColumns * (CellSize.X + 6), 0);
+            _shelf.AddChild(soon);
         }
     }
 
