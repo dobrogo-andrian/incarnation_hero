@@ -7,16 +7,17 @@ using Godot;
 /// The two ways to spend time from the main screen, under the character preview (D72, D73): meditate,
 /// which recovers health, injuries and qi at the zone's best place anywhere while the body needs it
 /// and otherwise offers a direction (<see cref="MeditationPicker"/>), and seek adventure in a
-/// settlement for likelier events and rumors. Both run until something interrupts them or there is
-/// nothing left to do; resting has no button of its own any more.
+/// settlement for likelier events and rumors. Both run until something interrupts them, there is
+/// nothing left to do, or the chosen weeks pass (the shared <see cref="Widgets.Duration"/>); below them the
+/// zone's danger and the qi density of the place meditation goes to (D74).
 /// </summary>
-public partial class QuickActivities : HBoxContainer, IViewPart
+public partial class QuickActivities : VBoxContainer, IViewPart
 {
     private readonly MeditationPicker _picker = new();
 
     public QuickActivities()
     {
-        AddThemeConstantOverride("separation", 8);
+        AddThemeConstantOverride("separation", 6);
         AddChild(_picker);
     }
 
@@ -35,18 +36,19 @@ public partial class QuickActivities : HBoxContainer, IViewPart
         meditate = Wide(Widgets.Button(ui.Text("str.ui.meditate_here"), () =>
         {
             if (recovery is not null)
-                ui.Send(new StartActivity(recovery, null));
+                ui.Send(new StartActivity(recovery, ui.Choices.ActivityWeeks));
             else
                 _picker.Open(ui, view, meditate);
         }, free));
         meditate.TooltipText = ui.Text(recovery is null ? "str.ui.meditate_pick_hint" : "str.ui.meditate_here_hint");
-        AddChild(meditate);
 
         bool settlement = ui.Db.Get<ZoneDef>(view.Zone.ZoneId).Settlement;
         var adventure = Wide(Widgets.Button(ui.Text("str.ui.adventure"),
-            () => ui.Send(new StartActivity(new AdventureActivity(), null)), free && settlement));
+            () => ui.Send(new StartActivity(new AdventureActivity(), ui.Choices.ActivityWeeks)), free && settlement));
         adventure.TooltipText = ui.Text(settlement ? "str.ui.adventure_hint" : "str.ui.adventure_not_here");
-        AddChild(adventure);
+        AddChild(Widgets.Row(meditate, adventure));
+        AddChild(Widgets.Duration(ui));
+        AddChild(new Label { Text = ui.Text(SimText.MeditationHereText(view, ui.Db)), AutowrapMode = TextServer.AutowrapMode.WordSmart });
     }
 
     private static Button Wide(Button button)

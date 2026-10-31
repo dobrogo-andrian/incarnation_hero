@@ -22,10 +22,14 @@ public static class RumorSystem
         }
     }
 
-    /// <summary>How the week's rumors come, given its event context and the activity it was spent on; null brings none.</summary>
-    public static RumorOriginDef? OriginOf(string? context, Activity activity, SimContext ctx) => context switch
+    /// <summary>
+    /// How the week's rumors come, given its event context and the activity it was spent on; null brings
+    /// none. Meditation in a settlement still hears its rumors, though its events are its own (D74).
+    /// </summary>
+    public static RumorOriginDef? OriginOf(string? context, Activity activity, GameState state, SimContext ctx) => context switch
     {
         EventContexts.Settlement => activity is AdventureActivity ? ctx.Rumors.Adventure : ctx.Rumors.Settlement,
+        EventContexts.Meditation when ctx.Content.Get<ZoneDef>(state.Player.ZoneId).Settlement => ctx.Rumors.Settlement,
         _ => null,
     };
 

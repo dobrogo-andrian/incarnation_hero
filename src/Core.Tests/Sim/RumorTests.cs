@@ -208,6 +208,18 @@ public sealed class RumorTests
     }
 
     [Fact]
+    public void MeditationInASettlement_StillHearsRumors_ThoughItRollsNoSettlementEvents()
+    {
+        var content = TestContent.WithExtra(Extra);
+        content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId).Settlement.WeekChance = 1;
+        var sim = Simulation.NewGame(WithAdventureRumorsOnly(content), 1);
+
+        var outcome = sim.Execute(new StartActivity(new MeditateActivity("meditation.purification", "place.hub.quiet_courtyard"), 3));
+
+        Assert.Contains(outcome.Events, e => e is RumorHeard);
+    }
+
+    [Fact]
     public void Settlement_BringsNoMore_WhileTheLimitIsFollowed()
     {
         var content = TestContent.WithExtra(Extra);

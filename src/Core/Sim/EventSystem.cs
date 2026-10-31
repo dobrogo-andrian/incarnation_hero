@@ -16,9 +16,9 @@ public static class EventSystem
     {
         null or BreakthroughActivity => null,
         TravelActivity => EventContexts.Travel,
-        _ when db.Get<ZoneDef>(state.Player.ZoneId).Settlement => EventContexts.Settlement,
-        MeditateActivity m when db.Get<MeditationDirectionDef>(m.DirectionId).Rests => EventContexts.Rest,
+        // Meditation is interrupted only by danger (D74), in a settlement too: its own pool holds only dangerous events.
         MeditateActivity => EventContexts.Meditation,
+        _ when db.Get<ZoneDef>(state.Player.ZoneId).Settlement => EventContexts.Settlement,
         WaitActivity => EventContexts.Rest,
         _ => null,
     };

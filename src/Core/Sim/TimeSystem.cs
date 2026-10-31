@@ -68,7 +68,7 @@ public static class TimeSystem
         ActivitySystem.AdvanceWeek(state, ctx, events);
         if (state.Mode is GameMode.RunEnd or GameMode.Combat)
             return;
-        RumorSystem.RollWeek(state, ctx, RumorSystem.OriginOf(context, activity, ctx), events);
+        RumorSystem.RollWeek(state, ctx, RumorSystem.OriginOf(context, activity, state, ctx), events);
         if (!RumorSystem.TryMeet(state, ctx, activity, events))
             EventSystem.RollWeek(state, ctx, context, events);
     }

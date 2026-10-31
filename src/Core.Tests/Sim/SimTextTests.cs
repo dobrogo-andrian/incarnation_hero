@@ -12,6 +12,19 @@ public sealed class SimTextTests
         SimText.ViewLines(sim.View, TestContent.Calm).Select(Loc.Resolve);
 
     [Fact]
+    public void MeditationHere_ShowsDanger_AndTheDensityAndCoverOfThePlaceMeditationGoesTo()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        string Here() => Loc.Resolve(SimText.MeditationHereText(sim.View, TestContent.Calm));
+
+        Assert.Equal("Небезпека зони: 0  ·  Ці: щільність 1 — Тихий двір, безпечно", Here());
+        sim.State.Player.ZoneId = "zone.misty_hills";
+        Assert.Equal("Небезпека зони: 2  ·  Ці: щільність 2 — Печера туману, укриття", Here());
+        sim.State.Player.ZoneId = "zone.river_valley";
+        Assert.Equal("Небезпека зони: 1  ·  Ці: щільність 1.5 — Валун над водою, під відкритим небом", Here());
+    }
+
+    [Fact]
     public void ViewLines_ResolveToUkrainianText()
     {
         var sim = Simulation.NewGame(TestContent.Calm, 1);

@@ -236,7 +236,7 @@ public sealed class EventTests
 
     [Theory]
     [InlineData("zone.hub", "wait", EventContexts.Settlement)]
-    [InlineData("zone.hub", "meditate", EventContexts.Settlement)]
+    [InlineData("zone.hub", "meditate", EventContexts.Meditation)]
     [InlineData("zone.bamboo_grove", "wait", EventContexts.Rest)]
     [InlineData("zone.bamboo_grove", "meditate", EventContexts.Meditation)]
     [InlineData("zone.bamboo_grove", "travel", EventContexts.Travel)]
@@ -263,7 +263,6 @@ public sealed class EventTests
     public void WeeklyRoll_OpensAnEvent_ThatEndsTheActivityAndStopsTimeUntilItCloses()
     {
         var sim = Simulation.NewGame(TestContent.Repo, 5);
-        Assert.True(Script.Run(sim, new Travel("zone.bamboo_grove")));
 
         var rest = TestContent.Wait(null);
         var outcome = sim.Execute(rest);
@@ -271,7 +270,7 @@ public sealed class EventTests
             outcome = sim.Execute(rest);
 
         var started = outcome.Events.OfType<EventStarted>().Last();
-        Assert.Contains(EventContexts.Rest, TestContent.Repo.Get<EventDef>(started.EventId).Contexts);
+        Assert.Contains(EventContexts.Settlement, TestContent.Repo.Get<EventDef>(started.EventId).Contexts);
         Assert.Equal(GameMode.EventDialog, sim.State.Mode);
         Assert.Equal(new ActivityInterrupted(new WaitActivity()), outcome.Events[^1]);
         Assert.Null(sim.State.Activity);

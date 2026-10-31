@@ -98,18 +98,36 @@ public static class Widgets
         return spin;
     }
 
-    /// <summary>Weeks of an activity, or "until done" (null weeks), bound to <paramref name="choices"/>.</summary>
+    /// <summary>
+    /// Weeks of an activity, or "until done" (null weeks), bound to the shared choices: a slider over
+    /// the first year and a field beside it that takes up to ten years (D74).
+    /// </summary>
     public static HBoxContainer Duration(UiContext ui)
     {
+        const int SliderWeeks = 52, MaxWeeks = 520;
         var choices = ui.Choices;
-        var weeks = Amount(choices.Weeks, 52 * 20, v => choices.Weeks = v);
-        weeks.Editable = !choices.UntilDone;
+        choices.Weeks = Math.Clamp(choices.Weeks, 1, MaxWeeks);
+        var slider = new HSlider
+        {
+            MinValue = 1, MaxValue = SliderWeeks, Step = 1, Value = Math.Min(choices.Weeks, SliderWeeks),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(120, 0),
+        };
+        var weeks = Amount(choices.Weeks, MaxWeeks, v => choices.Weeks = v);
+        slider.ValueChanged += v => weeks.Value = v;
+        weeks.ValueChanged += v => slider.SetValueNoSignal(Math.Min(v, SliderWeeks));
         var open = new CheckBox { Text = ui.Text("str.ui.until_done"), ButtonPressed = choices.UntilDone };
+        void Lock(bool on)
+        {
+            weeks.Editable = !on;
+            slider.Editable = !on;
+        }
+        Lock(choices.UntilDone);
         open.Toggled += on =>
         {
             choices.UntilDone = on;
-            weeks.Editable = !on;
+            Lock(on);
         };
-        return Row(new Label { Text = ui.Text("str.ui.weeks") }, weeks, open);
+        return Row(new Label { Text = ui.Text("str.ui.weeks") }, slider, weeks, open);
     }
 }

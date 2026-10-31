@@ -223,6 +223,22 @@ public static class SimText
     public static LocKey ZoneText(PlayerView view) =>
         ZoneLine with { Args = [new("zone", Name(view.Zone.ZoneId)), new("danger", view.Zone.Danger)] };
 
+    /// <summary>
+    /// The zone's danger and the qi density of the place "meditate" would go to, sheltered or out in the
+    /// open (D74); the main screen shows it under the meditate and adventure buttons.
+    /// </summary>
+    public static LocKey MeditationHereText(PlayerView view, ContentDb db)
+    {
+        string recovery = db.Get<RunConfigDef>(RunConfigDef.RunId).RecoveryMeditation;
+        if (MeditationSystem.BestPlace(view, db, recovery) is not { } placeId)
+            return new("str.view.meditation_here_none", [new("danger", view.Zone.Danger)]);
+        var place = view.Places.First(p => p.PlaceId == placeId);
+        string cover = view.Zone.Danger == 0 ? "str.view.cover_safe"
+            : db.Get<PlaceDef>(placeId).Shelter ? "str.view.cover_shelter" : "str.view.cover_open";
+        return new("str.view.meditation_here",
+            [new("danger", view.Zone.Danger), new("density", Number(place.Density)), new("place", Name(placeId)), new("cover", new LocKey(cover))]);
+    }
+
     /// <summary>The known meditation places of the current zone with their reserves.</summary>
     public static IReadOnlyList<LocKey> PlaceLines(PlayerView view) => view.Places.Select(PlaceText).ToList();
 

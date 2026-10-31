@@ -5,7 +5,7 @@ using Godot;
 
 /// <summary>
 /// What "meditate" offers once the body and qi are whole (D73): every direction but recovery, each
-/// started at the zone's best place it is allowed at and run until interrupted; comprehension names
+/// started at the zone's best place it is allowed at for the chosen weeks; comprehension names
 /// its subject, a carried folio or an element. A direction with no allowed place here (open ground of
 /// a dangerous zone, no shelter known) is shown disabled with the reason.
 /// </summary>
@@ -62,6 +62,6 @@ public partial class MeditationPicker : PopupPanel
     private void Start(UiContext ui, string direction, string place, string? subject)
     {
         Hide();
-        ui.Send(new StartActivity(new MeditateActivity(direction, place, subject), null));
+        ui.Send(new StartActivity(new MeditateActivity(direction, place, subject), ui.Choices.ActivityWeeks));
     }
 }
