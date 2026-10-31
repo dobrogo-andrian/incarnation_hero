@@ -126,7 +126,7 @@ public partial class Main : Control
 
     private void BuildLayout(Func<ulong> newSeed)
     {
-        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed, ToggleCharacter);
+        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed);
         _character.Setup(_ui, ToggleCharacter);
         _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Send, Refresh, newSeed);
         _preview.Setup(_ui, ToggleCharacter);
