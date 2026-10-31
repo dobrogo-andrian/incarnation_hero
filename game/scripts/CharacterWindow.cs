@@ -8,7 +8,8 @@ using static Widgets;
 /// <summary>
 /// The character window, opened from the status bar or with C. On the left the figure with its
 /// slots (the active method, §6 and D35; weapon and armor are shown but stay empty until weapons
-/// are items) above either the stats or cultivation with the breakthrough (<see cref="BreakthroughTab"/>);
+/// are items) with health, qi and the other resources beside it (<see cref="ConditionView"/>), above
+/// either the stats or cultivation with the breakthrough (<see cref="BreakthroughTab"/>);
 /// in the middle the stones (a currency only, D18) and the inventory, a column of square cells
 /// per shelf; on the right what the picked item or slot does, with its actions. A method folio dragged onto
 /// the method slot makes its method the active one, a pill dropped on the figure is taken; both are
@@ -41,6 +42,7 @@ public partial class CharacterWindow : PanelContainer
     private static readonly Color FigureColor = new(0.32f, 0.36f, 0.40f);
 
     private readonly VBoxContainer _figure = new();
+    private readonly ConditionView _condition = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(260, 0) };
     private readonly HBoxContainer _pages = new();
     private readonly StatsView _stats = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
     private readonly BreakthroughTab _cultivation = new() { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -77,9 +79,11 @@ public partial class CharacterWindow : PanelContainer
         title.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         var header = Row(title, Button(ui.Text("str.ui.close"), close));
 
-        var left = new VBoxContainer { CustomMinimumSize = new Vector2(580, 0) };
+        var top = Row(_figure, _condition);
+        top.AddThemeConstantOverride("separation", 24);
+        var left = new VBoxContainer { CustomMinimumSize = new Vector2(860, 0) };
         left.AddThemeConstantOverride("separation", 12);
-        left.AddChild(_figure);
+        left.AddChild(top);
         left.AddChild(_pages);
         var page = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         page.AddChild(_stats);
@@ -124,6 +128,7 @@ public partial class CharacterWindow : PanelContainer
             _picked = null;
 
         AddFigure(view, free);
+        _condition.Refresh(_ui, view);
         AddPages(view);
         _stones.Text = _ui.Text(SimText.StonesText(view));
         AddShelf(view, free);

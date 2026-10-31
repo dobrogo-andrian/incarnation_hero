@@ -55,6 +55,23 @@ public static class Widgets
         return row;
     }
 
+    /// <summary>A thin bar filling to <paramref name="value"/> of <paramref name="max"/> in <paramref name="color"/>, its numbers in the tooltip.</summary>
+    public static ProgressBar Bar(double max, double value, Color color, string tooltip, float height = 10)
+    {
+        var bar = new ProgressBar
+        {
+            MaxValue = max,
+            Value = value,
+            ShowPercentage = false,
+            CustomMinimumSize = new Vector2(0, height),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            TooltipText = tooltip,
+            MouseFilter = Control.MouseFilterEnum.Pass,
+        };
+        bar.AddThemeStyleboxOverride("fill", new StyleBoxFlat { BgColor = color });
+        return bar;
+    }
+
     /// <summary>The picked ID if it is still offered, else the first option (null when there are none).</summary>
     public static string? Pick(IReadOnlyList<(string Id, string Text)> options, string? picked) =>
         options.Any(o => o.Id == picked) ? picked : options.FirstOrDefault().Id;

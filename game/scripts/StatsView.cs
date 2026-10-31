@@ -7,8 +7,8 @@ using static Widgets;
 /// The stats in the character window: stats with their aspects, a ranked stat (D48) with its rank, scale and overflow
 /// towards the next rank as bars, and for purity (D49) its deficit towards the rank below as a red bar
 /// filling leftwards; a resource that wears the stat away (toxins on purity) is drawn over the end of
-/// its scale in violet instead of a line of its own; then the other resources and injuries. A ranked
-/// stat's numbers live in the bars' tooltip.
+/// its scale in violet instead of among the resources (<see cref="ConditionView"/>). A ranked stat's
+/// numbers live in the bars' tooltip.
 /// </summary>
 public partial class StatsView : VBoxContainer, IViewPart
 {
@@ -21,20 +21,19 @@ public partial class StatsView : VBoxContainer, IViewPart
     {
         foreach (var child in GetChildren())
             child.QueueFree();
-        var shown = new HashSet<string>();
         foreach (var stat in view.Stats)
         {
             AddChild(Explained(ui, [SimText.StatTitle(stat)]));
             if (stat.Standing is not { } standing)
                 continue;
             var eroding = view.Resources.Where(r => stat.ErodedBy.Contains(r.ResourceId)).ToList();
-            shown.UnionWith(eroding.Select(r => r.ResourceId));
             string tooltip = ui.Lines([.. eroding.Select(SimText.ResourceText), .. SimText.StandingLines(stat), .. SimText.StandingHelp(stat)]);
             AddChild(Bars(tooltip, standing, eroding));
         }
-        AddChild(new HSeparator());
-        AddChild(Explained(ui, SimText.ConditionLines(view with { Resources = view.Resources.Where(r => !shown.Contains(r.ResourceId)).ToList() })));
     }
+
+    /// <summary>A resource drawn over a stat's scale (<see cref="DrawErosion"/>) instead of among the others.</summary>
+    public static bool ShownOnAStat(PlayerView view, string resourceId) => view.Stats.Any(s => s.ErodedBy.Contains(resourceId));
 
     /// <summary>
     /// A stat without overflow (D50) has its scale alone. Otherwise the scale takes most of the row; the overflow bar to its right fills towards the breakthrough,
@@ -69,21 +68,5 @@ public partial class StatsView : VBoxContainer, IViewPart
         float filled = scale.Size.X * (float)(scale.Value / scale.MaxValue);
         float start = Math.Max(0, filled - width);
         scale.DrawRect(new Rect2(start, 0, width, scale.Size.Y), ErosionColor);
-    }
-
-    private static ProgressBar Bar(double max, double value, Color color, string tooltip)
-    {
-        var bar = new ProgressBar
-        {
-            MaxValue = max,
-            Value = value,
-            ShowPercentage = false,
-            CustomMinimumSize = new Vector2(0, 10),
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            TooltipText = tooltip,
-            MouseFilter = MouseFilterEnum.Pass,
-        };
-        bar.AddThemeStyleboxOverride("fill", new StyleBoxFlat { BgColor = color });
-        return bar;
     }
 }
