@@ -123,7 +123,7 @@ public partial class Main : Control
 
     private void BuildLayout(Func<ulong> newSeed)
     {
-        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); });
+        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed);
         _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Send, Refresh, newSeed);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
@@ -261,11 +261,9 @@ public partial class Main : Control
 
     private void OnNewRunPressed()
     {
-        if (_session.TryStartNewRun())
-        {
-            _journal.Clear();
-            _shownZone = null;
-        }
+        _session.StartNewRun();
+        _journal.Clear();
+        _shownZone = null;
         Refresh();
     }
 

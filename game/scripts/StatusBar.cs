@@ -5,8 +5,9 @@ using Godot;
 /// <summary>
 /// The top bar (D44): week, age, life left, zone, stones and stage scale on a line of their own, which
 /// wraps rather than cuts; below it resting and the test fight (D56), and at the right skipping
-/// the weeks being shown (D47), the settings (<see cref="SettingsPopup"/>) and quitting the game,
-/// which loses nothing since every command is already saved.
+/// the weeks being shown (D47), the settings (<see cref="SettingsPopup"/>), abandoning the run for a
+/// new one once the player confirms it, and quitting the game, which loses nothing since every
+/// command is already saved.
 /// </summary>
 public partial class StatusBar : VBoxContainer
 {
@@ -19,6 +20,8 @@ public partial class StatusBar : VBoxContainer
     private readonly Button _skip = new();
     private readonly Button _settings = new();
     private readonly SettingsPopup _popup = new();
+    private readonly Button _newRun = new();
+    private readonly ConfirmationDialog _confirmNewRun = new();
     private readonly Button _quit = new();
 
     private UiContext _ui = null!;
@@ -26,7 +29,7 @@ public partial class StatusBar : VBoxContainer
     private bool _playing;
 
     /// <summary>Labels the controls and wires them to <paramref name="ui"/>; called once before the first <see cref="Refresh"/>.</summary>
-    public void Setup(UiContext ui, Action skip, Action sandbox)
+    public void Setup(UiContext ui, Action skip, Action sandbox, Action newRun)
     {
         _ui = ui;
         AddThemeConstantOverride("separation", 4);
@@ -35,18 +38,25 @@ public partial class StatusBar : VBoxContainer
         _sandbox.Text = ui.Text("str.ui.sandbox");
         _skip.Text = ui.Text("str.ui.skip");
         _settings.Text = ui.Text("str.ui.settings");
+        _newRun.Text = ui.Text("str.shell.new_run");
+        _confirmNewRun.Title = ui.Text("str.shell.new_run");
+        _confirmNewRun.DialogText = ui.Text("str.ui.new_run_confirm");
+        _confirmNewRun.OkButtonText = ui.Text("str.ui.new_run_ok");
+        _confirmNewRun.CancelButtonText = ui.Text("str.ui.cancel");
         _quit.Text = ui.Text("str.ui.quit");
         _restWeek.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), 1));
         _restOpen.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), null));
         _sandbox.Pressed += sandbox;
         _skip.Pressed += skip;
         _settings.Pressed += OpenSettings;
+        _newRun.Pressed += () => _confirmNewRun.PopupCentered();
+        _confirmNewRun.Confirmed += newRun;
         _quit.Pressed += () => GetTree().Quit();
 
         var controls = new HBoxContainer();
         controls.AddThemeConstantOverride("separation", 8);
         var gap = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        foreach (var node in new Node[] { _restWeek, _restOpen, _sandbox, gap, _skip, _settings, _quit, _popup })
+        foreach (var node in new Node[] { _restWeek, _restOpen, _sandbox, gap, _skip, _settings, _newRun, _quit, _popup, _confirmNewRun })
             controls.AddChild(node);
         foreach (var node in new Node[] { _info, controls })
             AddChild(node);
@@ -72,6 +82,9 @@ public partial class StatusBar : VBoxContainer
         _restWeek.Disabled = _restOpen.Disabled = playing || fighting || view.Mode != GameMode.Overworld;
         _restWeek.Visible = _restOpen.Visible = !over;
         _sandbox.Disabled = playing || fighting;
+        // A finished run offers its new run on the summary instead.
+        _newRun.Visible = !over;
+        _newRun.Disabled = playing || fighting;
         _skip.Visible = playing;
     }
 

@@ -531,6 +531,15 @@
 - id: str.ui.skip
   text: { uk: "Пропустити" }
 
+- id: str.ui.new_run_confirm
+  text: { uk: "Почати новий забіг? Цей забіг буде втрачено назавжди." }
+
+- id: str.ui.new_run_ok
+  text: { uk: "Почати новий" }
+
+- id: str.ui.cancel
+  text: { uk: "Скасувати" }
+
 - id: str.ui.quit
   text: { uk: "Вийти з гри" }
 

@@ -66,14 +66,13 @@ public sealed class RunSession
         return outcome;
     }
 
-    /// <summary>Replaces a finished run with a new one in the same slot. Refused while the run is still going.</summary>
-    public bool TryStartNewRun()
+    /// <summary>
+    /// Replaces the run in the slot with a new one. A run still going is abandoned for good (ironman),
+    /// so the UI asks the player first.
+    /// </summary>
+    public void StartNewRun()
     {
-        if (Sim.State.Mode != GameMode.RunEnd)
-            return false;
-
         Sim = Simulation.NewGame(_content, _newSeed());
         _store.Save(Sim.State);
-        return true;
     }
 }

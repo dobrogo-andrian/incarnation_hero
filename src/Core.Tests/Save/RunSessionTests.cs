@@ -86,18 +86,22 @@ public sealed class RunSessionTests : IDisposable
     }
 
     [Fact]
-    public void TryStartNewRun_IsRefusedWhileTheRunGoesOn()
+    public void StartNewRun_WhileTheRunGoesOn_AbandonsIt()
     {
         var store = NewStore();
-        var session = Open(store);
+        ulong seed = 7;
+        var session = RunSession.OpenOrStart(store, TestContent.Repo, () => seed++);
         session.Execute(TestContent.Wait(2));
 
-        Assert.False(session.TryStartNewRun());
-        Assert.Equal(2, store.Load().State!.Week);
+        session.StartNewRun();
+
+        var saved = store.Load().State!;
+        Assert.Equal((GameMode.Overworld, 0, 8UL), (saved.Mode, saved.Week, saved.Seed));
+        Assert.Equal(0, session.Sim.State.Week);
     }
 
     [Fact]
-    public void TryStartNewRun_AfterDeath_ReplacesTheSavedRun()
+    public void StartNewRun_AfterDeath_ReplacesTheSavedRun()
     {
         var store = NewStore();
         ulong seed = 7;
@@ -106,7 +110,7 @@ public sealed class RunSessionTests : IDisposable
         while (session.Sim.State.Mode != GameMode.RunEnd)
             session.Execute(TestContent.Proceed(session.Sim.View, TestContent.Wait(null)));
 
-        Assert.True(session.TryStartNewRun());
+        session.StartNewRun();
 
         var saved = store.Load().State!;
         Assert.Equal(GameMode.Overworld, saved.Mode);
