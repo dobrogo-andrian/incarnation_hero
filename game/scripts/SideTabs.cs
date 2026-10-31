@@ -8,7 +8,8 @@ public interface IViewPart
 }
 
 /// <summary>
-/// The side tabs, always at hand (D44): character, cultivation and breakthrough, items, rumors.
+/// The side tabs, always at hand (D44): cultivation and breakthrough, rumors; the character and
+/// the items live in the <see cref="CharacterWindow"/>.
 /// Each tab scrolls; text tabs show one SimText section, the others add their actions.
 /// </summary>
 public partial class SideTabs : TabContainer
@@ -19,9 +20,7 @@ public partial class SideTabs : TabContainer
     public void Setup(UiContext ui)
     {
         CustomMinimumSize = new Vector2(440, 0);
-        Add(ui, "str.ui.tab_character", new CharacterTab());
         Add(ui, "str.ui.tab_cultivation", new BreakthroughTab());
-        Add(ui, "str.ui.tab_items", new ItemsTab());
         Add(ui, "str.ui.tab_rumors", new TextTab { Lines = (_, view) => SimText.SocialLines(view).Select(ExplainedLine.Plain) });
     }
 

@@ -170,8 +170,8 @@ public static class BreakthroughSystem
         {
             var method = db.Get<KnowledgeDef>(methodId).Method!;
             int level = KnowledgeSystem.Level(player, methodId);
-            ceiling = method.QualityCeiling + method.QualityCeilingPerLevel * level;
-            purityCap = method.PurityCap + method.PurityCapPerLevel * level;
+            ceiling = method.CeilingAt(level);
+            purityCap = method.PurityCapAt(level);
         }
 
         int ageWeeks = player.AgeWeeks + weeksAhead;

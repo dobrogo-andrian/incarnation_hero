@@ -64,6 +64,19 @@ public static class SimText
     private static readonly LocKey NoDeficit = new("str.view.no_deficit");
     private static readonly LocKey MethodLine = new("str.view.method");
     private static readonly LocKey NoMethodLine = new("str.view.no_method");
+    private static readonly LocKey MethodLevelLine = new("str.view.method_level");
+    private static readonly LocKey MethodLimitsLine = new("str.view.method_limits");
+    private static readonly LocKey CountLine = new("str.view.item_count");
+    private static readonly LocKey PillEnergyLine = new("str.view.pill_energy");
+    private static readonly LocKey PillCeilingLine = new("str.view.pill_ceiling");
+    private static readonly LocKey PillHealsLine = new("str.view.pill_heals");
+    private static readonly LocKey PillStatLine = new("str.view.pill_stat");
+    private static readonly LocKey PillRepeatLine = new("str.view.pill_repeat");
+    private static readonly LocKey PillToxicityLine = new("str.view.pill_toxicity");
+    private static readonly LocKey FolioSubjectLine = new("str.view.folio_subject");
+    private static readonly LocKey FolioLevelLine = new("str.view.folio_level");
+    private static readonly LocKey FolioSpeedLine = new("str.view.folio_speed");
+    private static readonly LocKey FolioMethodLine = new("str.view.folio_method");
     private static readonly LocKey Seclusion = new("str.activity.breakthrough");
     private static readonly LocKey BreakthroughDeath = new("str.end.breakthrough_death");
     private static readonly LocKey Succeeded = new("str.event.breakthrough_succeeded");
@@ -440,6 +453,63 @@ public static class SimText
             ? PillLine with { Args = [.. args, new("energy", Number(energy))] }
             : ItemLine with { Args = args };
     }
+
+    /// <summary>
+    /// What a carried item does, for the inventory: a pill's energy (the next one's), ceiling bonus,
+    /// healing, stats and toxicity; a folio's subject with its level against the folio's ceiling, and its speed.
+    /// </summary>
+    public static IReadOnlyList<LocKey> ItemDetails(ItemView item, PlayerView view, ContentDb db)
+    {
+        var def = db.Get<ItemDef>(item.ItemId);
+        var lines = new List<LocKey> { CountLine with { Args = [new("count", item.Count)] } };
+        if (def.Pill is { } pill)
+        {
+            if (item.NextPillEnergy is > 0 and double energy)
+                lines.Add(PillEnergyLine with { Args = [new("energy", Number(energy))] });
+            if (pill.CeilingBonus > 0)
+                lines.Add(PillCeilingLine with { Args = [new("bonus", Number(pill.CeilingBonus))] });
+            foreach (var (injury, points) in pill.Heals.OrderBy(h => h.Key, StringComparer.Ordinal))
+                lines.Add(PillHealsLine with { Args = [new("injury", Name(injury)), new("points", Number(points))] });
+            foreach (var (stat, points) in pill.Stats.OrderBy(s => s.Key, StringComparer.Ordinal))
+                lines.Add(PillStatLine with { Args = [new("stat", Name(stat)), new("points", Number(points))] });
+            if (pill.RepeatFactor < 1)
+                lines.Add(PillRepeatLine);
+            lines.Add(PillToxicityLine with { Args = [new("toxicity", Number(pill.Toxicity))] });
+        }
+        if (def.Folio is { } folio)
+        {
+            lines.Add(FolioSubjectLine with { Args = [new("subject", Name(folio.Subject))] });
+            lines.Add(FolioLevelLine with { Args = [new("level", LevelOf(view, folio.Subject)), new("max", folio.MaxLevel)] });
+            lines.Add(FolioSpeedLine with { Args = [new("speed", Number(folio.Speed))] });
+            if (db.Get<KnowledgeDef>(folio.Subject).Method is not null)
+                lines.Add(FolioMethodLine);
+        }
+        return lines;
+    }
+
+    /// <summary>
+    /// What the method slot holds: the active method's level, breakthrough quality ceiling and purity
+    /// cap, or the ceiling and cap without a method (§6, D35).
+    /// </summary>
+    public static IReadOnlyList<LocKey> MethodDetails(PlayerView view, ContentDb db)
+    {
+        if (view.ActiveMethodId is not { } methodId)
+        {
+            var config = db.Get<BreakthroughConfigDef>(BreakthroughConfigDef.BreakthroughId);
+            return [NoMethodLine, MethodLimitsLine with { Args = [new("ceiling", Number(config.NoMethodQualityCeiling)), new("cap", Number(config.NoMethodPurityCap))] }];
+        }
+        var method = db.Get<KnowledgeDef>(methodId).Method!;
+        int level = LevelOf(view, methodId);
+        return
+        [
+            MethodLine with { Args = [new("method", Name(methodId))] },
+            MethodLevelLine with { Args = [new("level", level)] },
+            MethodLimitsLine with { Args = [new("ceiling", Number(method.CeilingAt(level))), new("cap", Number(method.PurityCapAt(level)))] },
+        ];
+    }
+
+    private static int LevelOf(PlayerView view, string knowledgeId) =>
+        view.Knowledge.FirstOrDefault(k => k.KnowledgeId == knowledgeId)?.Level ?? 0;
 
     public static LocKey StonesText(PlayerView view) => StonesLine with { Args = [new("stones", view.Stones)] };
 

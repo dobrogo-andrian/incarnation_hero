@@ -144,4 +144,10 @@ public sealed class MethodDef
     public double PurityCap { get; set; }
 
     public double PurityCapPerLevel { get; set; }
+
+    /// <summary>The breakthrough quality ceiling the method gives at <paramref name="level"/>.</summary>
+    public double CeilingAt(int level) => QualityCeiling + QualityCeilingPerLevel * level;
+
+    /// <summary>The purity that counts towards breakthrough quality at <paramref name="level"/>.</summary>
+    public double PurityCapAt(int level) => PurityCap + PurityCapPerLevel * level;
 }

@@ -346,6 +346,45 @@
 - id: str.view.pill
   text: { uk: "{item}, кількість: {count}, енергія наступної: {energy}" }
 
+- id: str.view.item_count
+  text: { uk: "Кількість: {count}" }
+
+- id: str.view.pill_energy
+  text: { uk: "Енергія для засвоєння: {energy}" }
+
+- id: str.view.pill_ceiling
+  text: { uk: "Стеля якості наступного прориву: +{bonus}" }
+
+- id: str.view.pill_heals
+  text: { uk: "Лікує ({injury}): {points}" }
+
+- id: str.view.pill_stat
+  text: { uk: "{stat}: +{points}" }
+
+- id: str.view.pill_repeat
+  text: { uk: "Кожна наступна така пігулка діє слабше." }
+
+- id: str.view.pill_toxicity
+  text: { uk: "Токсичність: {toxicity}" }
+
+- id: str.view.folio_subject
+  text: { uk: "Вивчає: {subject}" }
+
+- id: str.view.folio_level
+  text: { uk: "Рівень зараз: {level}, стеля фоліанта: {max}" }
+
+- id: str.view.folio_speed
+  text: { uk: "Швидкість вивчення: × {speed}" }
+
+- id: str.view.folio_method
+  text: { uk: "Метод культивації: вивчений до рівня 1, кладеться в слот методу, і через нього йде прорив." }
+
+- id: str.view.method_level
+  text: { uk: "Рівень методу: {level}" }
+
+- id: str.view.method_limits
+  text: { uk: "Стеля якості прориву: {ceiling}, чистота враховується до {cap}" }
+
 - id: str.view.offer
   text: { uk: "{shop}: {item}, ціна в каменях: {price}" }
 
@@ -471,14 +510,8 @@
 
 # Main screen UI (D44).
 
-- id: str.ui.tab_character
-  text: { uk: "Персонаж" }
-
 - id: str.ui.tab_cultivation
   text: { uk: "Прорив" }
-
-- id: str.ui.tab_items
-  text: { uk: "Речі" }
 
 - id: str.ui.tab_rumors
   text: { uk: "Чутки" }
@@ -590,6 +623,56 @@
 
 - id: str.ui.use_pill
   text: { uk: "Прийняти" }
+
+# The character window: the figure with its slots, the stats, and the inventory by kind.
+
+- id: str.ui.character
+  text: { uk: "Персонаж" }
+
+- id: str.ui.close
+  text: { uk: "Закрити" }
+
+- id: str.ui.inventory
+  text: { uk: "Речі" }
+
+- id: str.ui.inv_pills
+  text: { uk: "Пігулки" }
+
+- id: str.ui.inv_folios
+  text: { uk: "Фоліанти" }
+
+- id: str.ui.inv_weapons
+  text: { uk: "Зброя" }
+
+- id: str.ui.inv_armor
+  text: { uk: "Обладунки" }
+
+- id: str.ui.inv_empty
+  text: { uk: "Тут поки нічого немає." }
+
+- id: str.ui.inv_soon
+  text: { uk: "Зброї й обладунків у світі ще немає: усі б'ються простою зброєю. З'являться згодом." }
+
+- id: str.ui.slot_weapon
+  text: { uk: "Зброя" }
+
+- id: str.ui.slot_armor
+  text: { uk: "Обладунок" }
+
+- id: str.ui.slot_soon
+  text: { uk: "згодом" }
+
+- id: str.ui.pick_hint
+  text: { uk: "Оберіть річ або слот, щоб побачити, що вони дають. Фоліант методу можна перетягнути в слот методу, пігулку — на постать." }
+
+- id: str.ui.method_set
+  text: { uk: "Покласти в слот методу" }
+
+- id: str.ui.method_pick
+  text: { uk: "Покласти: {method}" }
+
+- id: str.ui.method_clear
+  text: { uk: "Зняти метод" }
 
 - id: str.ui.inquire_start
   text: { uk: "Розпитувати" }

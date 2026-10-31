@@ -4,9 +4,9 @@ using Godot;
 using static Widgets;
 
 /// <summary>
-/// The "breakthrough" tab: stage scales with the forecast, foundation, knowledge and buffs; the
-/// active method; and, once a scale is full, seclusion at a place here — accepting the risk of
-/// death when the forecast says it is fatal (§4.5).
+/// The "breakthrough" tab: stage scales with the forecast, the active method (set in the
+/// <see cref="CharacterWindow"/>), foundation, knowledge and buffs; and, once a scale is full,
+/// seclusion at a place here — accepting the risk of death when the forecast says it is fatal (§4.5).
 /// </summary>
 public partial class BreakthroughTab : VBoxContainer, IViewPart
 {
@@ -22,23 +22,8 @@ public partial class BreakthroughTab : VBoxContainer, IViewPart
         bool free = view.Mode == GameMode.Overworld;
 
         AddChild(Explained(ui, SimText.CultivationLines(view, ui.Db)));
-        AddMethodPicker(ui, view, free);
         foreach (var track in view.Tracks.Where(t => t.Forecast is not null))
             AddBreakthrough(ui, view, track, free);
-    }
-
-    /// <summary>Studied methods, or none; picking one sends the instant command at once.</summary>
-    private void AddMethodPicker(UiContext ui, PlayerView view, bool free)
-    {
-        const string none = "";
-        var methods = view.Knowledge.Where(k => k.KnowledgeId.StartsWith("method.", StringComparison.Ordinal))
-            .Select(k => (k.KnowledgeId, ui.Name(k.KnowledgeId)))
-            .Prepend((none, ui.Text("str.ui.no_method")))
-            .ToList();
-        var picker = Options(methods, view.ActiveMethodId ?? none, id => ui.Send(new SetActiveMethod(id == none ? null : id)));
-        picker.Disabled = !free;
-        AddChild(new HSeparator());
-        AddChild(Row(new Label { Text = ui.Text("str.ui.method") }, picker));
     }
 
     private void AddBreakthrough(UiContext ui, PlayerView view, TrackView track, bool free)

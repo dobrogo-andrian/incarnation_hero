@@ -4,11 +4,11 @@ using Godot;
 using static Widgets;
 
 /// <summary>
-/// The "character" tab: stats with their aspects, a ranked stat (D48) with its rank, scale and overflow
+/// The stats in the character window: stats with their aspects, a ranked stat (D48) with its rank, scale and overflow
 /// towards the next rank as bars, and for purity (D49) its deficit towards the rank below as a red bar
 /// filling leftwards; then resources and injuries. A ranked stat's numbers live in the bars' tooltip.
 /// </summary>
-public partial class CharacterTab : VBoxContainer, IViewPart
+public partial class StatsView : VBoxContainer, IViewPart
 {
     private static readonly Color ScaleColor = new(0.45f, 0.7f, 0.5f);
     private static readonly Color OverflowColor = new(0.9f, 0.6f, 0.25f);

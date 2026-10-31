@@ -185,6 +185,34 @@ public sealed class SimTextTests
     }
 
     [Fact]
+    public void ItemDetails_TellWhatAPillAndAMethodFolioDo()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        sim.State.Player.Stones = 100;
+        Assert.True(sim.Execute(new Buy("item.folio.azure_breath")).Accepted);
+        string Details(string itemId) =>
+            string.Join(" | ", SimText.ItemDetails(sim.View.Items.Single(i => i.ItemId == itemId), sim.View, TestContent.Calm).Select(Loc.Resolve));
+
+        Assert.Equal("Кількість: 2 | Енергія для засвоєння: 30 | Кожна наступна така пігулка діє слабше. | Токсичність: 8", Details("item.pill.qi_gathering"));
+        Assert.Equal(
+            "Кількість: 1 | Вивчає: Метод лазурового подиху | Рівень зараз: 0, стеля фоліанта: 5 | Швидкість вивчення: × 0.8"
+            + " | Метод культивації: вивчений до рівня 1, кладеться в слот методу, і через нього йде прорив.",
+            Details("item.folio.azure_breath"));
+    }
+
+    [Fact]
+    public void MethodDetails_FollowTheActiveMethodAndItsLevel()
+    {
+        var sim = Simulation.NewGame(TestContent.Calm, 1);
+        string Details() => string.Join(" | ", SimText.MethodDetails(sim.View, TestContent.Calm).Select(Loc.Resolve));
+        Assert.Equal("Метод культивації: немає | Стеля якості прориву: 45, чистота враховується до 20", Details());
+
+        sim.State.Player.Knowledge.Add(new KnowledgeLevel { KnowledgeId = "method.azure_breath", Level = 2 });
+        Assert.True(sim.Execute(new SetActiveMethod("method.azure_breath")).Accepted);
+        Assert.Equal("Метод культивації: Метод лазурового подиху | Рівень методу: 2 | Стеля якості прориву: 66, чистота враховується до 70", Details());
+    }
+
+    [Fact]
     public void InterruptName_ResolvesForEveryCategory()
     {
         foreach (var category in Enum.GetValues<InterruptCategory>())

@@ -4,7 +4,7 @@ using Godot;
 
 /// <summary>
 /// The top bar (D44): week, age, life left, zone, stones and stage scale on a line of their own, which
-/// wraps rather than cuts; below it resting and the test fight (D56), and at the right skipping
+/// wraps rather than cuts; below it the character window (<see cref="CharacterWindow"/>), resting and the test fight (D56), and at the right skipping
 /// the weeks being shown (D47), the settings (<see cref="SettingsPopup"/>), abandoning the run for a
 /// new one once the player confirms it, and quitting the game, which loses nothing since every
 /// command is already saved.
@@ -14,6 +14,7 @@ public partial class StatusBar : VBoxContainer
     private const string Separator = "   ·   ";
 
     private readonly Label _info = new() { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+    private readonly Button _character = new();
     private readonly Button _restWeek = new();
     private readonly Button _restOpen = new();
     private readonly Button _sandbox = new();
@@ -29,10 +30,11 @@ public partial class StatusBar : VBoxContainer
     private bool _playing;
 
     /// <summary>Labels the controls and wires them to <paramref name="ui"/>; called once before the first <see cref="Refresh"/>.</summary>
-    public void Setup(UiContext ui, Action skip, Action sandbox, Action newRun)
+    public void Setup(UiContext ui, Action skip, Action sandbox, Action newRun, Action character)
     {
         _ui = ui;
         AddThemeConstantOverride("separation", 4);
+        _character.Text = ui.Text("str.ui.character");
         _restWeek.Text = ui.Text("str.shell.wait_week");
         _restOpen.Text = ui.Text("str.shell.wait_until_interrupt");
         _sandbox.Text = ui.Text("str.ui.sandbox");
@@ -47,6 +49,7 @@ public partial class StatusBar : VBoxContainer
         _restWeek.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), 1));
         _restOpen.Pressed += () => ui.Send(new StartActivity(new WaitActivity(), null));
         _sandbox.Pressed += sandbox;
+        _character.Pressed += character;
         _skip.Pressed += skip;
         _settings.Pressed += OpenSettings;
         _newRun.Pressed += () => _confirmNewRun.PopupCentered();
@@ -56,7 +59,7 @@ public partial class StatusBar : VBoxContainer
         var controls = new HBoxContainer();
         controls.AddThemeConstantOverride("separation", 8);
         var gap = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        foreach (var node in new Node[] { _restWeek, _restOpen, _sandbox, gap, _skip, _settings, _newRun, _quit, _popup, _confirmNewRun })
+        foreach (var node in new Node[] { _character, _restWeek, _restOpen, _sandbox, gap, _skip, _settings, _newRun, _quit, _popup, _confirmNewRun })
             controls.AddChild(node);
         foreach (var node in new Node[] { _info, controls })
             AddChild(node);
@@ -82,6 +85,7 @@ public partial class StatusBar : VBoxContainer
         _restWeek.Disabled = _restOpen.Disabled = playing || fighting || view.Mode != GameMode.Overworld;
         _restWeek.Visible = _restOpen.Visible = !over;
         _sandbox.Disabled = playing || fighting;
+        _character.Disabled = playing || fighting;
         // A finished run offers its new run on the summary instead.
         _newRun.Visible = !over;
         _newRun.Disabled = playing || fighting;

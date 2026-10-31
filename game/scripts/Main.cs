@@ -8,7 +8,7 @@ using Godot;
 /// The main screen (D44): a slim status bar on top; side tabs on the left; in the
 /// centre the picked point's actions (or the open event) above the journal, so everything that
 /// happens is read in one place; the map on the right, replaced by the place itself once the
-/// player steps into one; the run's summary in the centre once it is over; a fight on offer in the
+/// player steps into one; the character window over the columns (C); the run's summary in the centre once it is over; a fight on offer in the
 /// centre too (D67), and the hex fight over everything once it is taken by hand, or as the test fight
 /// (D56) when opened from the status bar. All rules, saving
 /// included, stay in Core; this node loads content, owns the run session, sends commands and
@@ -38,6 +38,7 @@ public partial class Main : Control
     private readonly LocationView _location = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly RunSummary _summary = new();
     private readonly BattleScreen _battle = new();
+    private readonly CharacterWindow _character = new();
     private readonly Control _blocker = new() { MouseFilter = MouseFilterEnum.Stop, Visible = false };
 
     /// <summary>Events of the last command not yet shown; empty when nothing is being played back.</summary>
@@ -123,7 +124,8 @@ public partial class Main : Control
 
     private void BuildLayout(Func<ulong> newSeed)
     {
-        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed);
+        _status.Setup(_ui, FinishPlayback, () => { _battle.Open(); Refresh(); }, OnNewRunPressed, ToggleCharacter);
+        _character.Setup(_ui, ToggleCharacter);
         _battle.Setup(_ui, () => CombatSandbox.Hero(_session.Sim), Send, Refresh, newSeed);
         _tabs.Setup(_ui);
         _map.PointPressed += Pick;
@@ -157,6 +159,7 @@ public partial class Main : Control
         // The test fight covers the columns too, leaving the status bar in sight.
         var stack = new MarginContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         stack.AddChild(columns);
+        stack.AddChild(_character);
         stack.AddChild(_blocker);
         stack.AddChild(_battle);
 
@@ -300,7 +303,30 @@ public partial class Main : Control
         _dialog.Refresh(_ui, view);
         _fight.Refresh(_ui, view);
         _status.Refresh(view, playing: false, fighting: _battle.Visible);
+        if (_battle.Visible && _character.Visible)
+            _character.SetOpen(view, false);
+        _character.Refresh(view);
         _tabs.Refresh(_ui, view);
+    }
+
+    /// <summary>Opens the character window over the columns, or closes it; not over a fight or while weeks are shown.</summary>
+    private void ToggleCharacter()
+    {
+        if (!_character.Visible && (_battle.Visible || _playback.Count > 0))
+            return;
+        _character.SetOpen(_session.Sim.View, !_character.Visible);
+    }
+
+    /// <summary>C opens or closes the character window, Esc closes it; keys typed into a field never reach here.</summary>
+    public override void _UnhandledKeyInput(InputEvent e)
+    {
+        if (e is not InputEventKey { Pressed: true, Echo: false } key)
+            return;
+        if (key.Keycode == Key.C || key.Keycode == Key.Escape && _character.Visible)
+        {
+            ToggleCharacter();
+            GetViewport().SetInputAsHandled();
+        }
     }
 
     /// <summary>Run and fight seeds come from the shell; Core itself never reads the clock or OS randomness.</summary>
