@@ -189,8 +189,8 @@
 - id: str.summary.wait
   text: { uk: "Відпочинок" }
 
-- id: str.summary.inquire
-  text: { uk: "Розпитування" }
+- id: str.summary.adventure
+  text: { uk: "Пошук пригод" }
 
 - id: str.summary.travel
   text: { uk: "Подорожі" }
@@ -412,8 +412,8 @@
 - id: str.activity.meditate_study
   text: { uk: "Медитація ({direction}: {subject}), {place}" }
 
-- id: str.activity.inquire
-  text: { uk: "Розпитування про чутки" }
+- id: str.activity.adventure
+  text: { uk: "Пошук пригод" }
 
 - id: str.activity.breakthrough
   text: { uk: "Усамітнення для прориву, {place}" }
@@ -659,8 +659,23 @@
 - id: str.ui.method_clear
   text: { uk: "Зняти метод" }
 
-- id: str.ui.inquire_start
-  text: { uk: "Розпитувати" }
+- id: str.ui.adventure
+  text: { uk: "Шукати пригод" }
+
+- id: str.ui.meditate_here
+  text: { uk: "Медитувати" }
+
+- id: str.ui.meditate_here_hint
+  text: { uk: "Медитація відновлення в найкращому місці медитації цієї зони: ці повертається швидше, що вища щільність місця; здоров'я — як завжди. Триває, доки все не відновиться або щось не перерве." }
+
+- id: str.ui.adventure_hint
+  text: { uk: "Блукати поселенням у пошуках пригод: частіше трапляються події й чутки. Триває до першої з них." }
+
+- id: str.ui.adventure_not_here
+  text: { uk: "Шукати пригод можна лише в поселенні." }
+
+- id: str.ui.no_place_to_meditate
+  text: { uk: "У цій зоні немає відомого місця медитації." }
 
 - id: str.ui.places_here
   text: { uk: "Місця медитації:" }

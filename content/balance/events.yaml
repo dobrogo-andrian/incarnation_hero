@@ -2,6 +2,7 @@
 
 id: config.events
 week_chance: { travel: 0.15, meditation: 0.03, settlement: 0.05, rest: 0.05 }
+adventure_week_chance: 0.2               # seeking adventure in a settlement (D72), instead of settlement
 recent_weeks: 104                         # an event shown within two years…
 recent_weight_factor: 0.25                # …is four times less likely to come again
 chance_range_width: 0.4                   # shown chance of success: 40 points wide with no perception,

@@ -27,7 +27,7 @@ static int Run(string[] options)
     if (!TryParseOptions(options, out var values)
         || !ulong.TryParse(values.GetValueOrDefault("--seed"), out ulong seed)
         || !TryParseWeeks(values.GetValueOrDefault("--weeks", "0"), out int? weeks)
-        || !TryParseWeeks(values.GetValueOrDefault("--inquire", "0"), out int? inquireWeeks))
+        || !TryParseWeeks(values.GetValueOrDefault("--adventure", "0"), out int? adventureWeeks))
         return Usage();
 
     var db = LoadContent(values.GetValueOrDefault("--content", "content"));
@@ -36,7 +36,7 @@ static int Run(string[] options)
 
     var sim = Simulation.NewGame(db, seed);
     var localizer = Localizer.FromContent(db);
-    if (inquireWeeks != 0 && !RunToEnd(sim, new StartActivity(new InquireActivity(), inquireWeeks), localizer))
+    if (adventureWeeks != 0 && !RunToEnd(sim, new StartActivity(new AdventureActivity(), adventureWeeks), localizer))
         return 1;
     if (values.TryGetValue("--travel", out string? zone) && !RunToEnd(sim, new Travel(zone), localizer))
         return 1;
@@ -220,7 +220,7 @@ static int Usage()
     Console.Error.WriteLine("""
         Usage:
           sim validate <contentDir>
-          sim run --seed <N> [--inquire <W|end>] [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId> [--subject <folio or element>]] [--content <dir>]
+          sim run --seed <N> [--adventure <W|end>] [--travel <zoneId>] [--pills <itemId,...>] [--weeks <W|end>] [--meditate <directionId> [--subject <folio or element>]] [--content <dir>]
             Asks around the starting settlement for rumors first, travels, takes the pills in order,
             then spends the weeks waiting, or meditating at the zone's first place; in events and
             rumors met on arrival, takes the first available choice. Content defaults to ./content.

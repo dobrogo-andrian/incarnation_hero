@@ -44,7 +44,7 @@ public enum RunEndCause
 /// </summary>
 public sealed class GameState
 {
-    public const int CurrentSchemaVersion = 17;
+    public const int CurrentSchemaVersion = 18;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
     public ulong Seed { get; set; }

@@ -59,7 +59,7 @@ public partial class PointPanel : VBoxContainer
                 break;
             case InquireTarget:
                 AddChild(Duration(ui));
-                AddChild(Button(ui.Text("str.ui.inquire_start"), () => ui.Send(new StartActivity(new InquireActivity(), ui.Choices.ActivityWeeks)), free));
+                AddChild(Button(ui.Text("str.ui.adventure"), () => ui.Send(new StartActivity(new AdventureActivity(), ui.Choices.ActivityWeeks)), free));
                 break;
             case HuntTarget hunt:
                 ShowHunt(ui, ui.Db.Get<HuntDef>(hunt.HuntId), free);

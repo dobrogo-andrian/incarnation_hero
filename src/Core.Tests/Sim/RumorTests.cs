@@ -168,30 +168,43 @@ public sealed class RumorTests
     }
 
     [Fact]
-    public void Inquiry_OnlyInASettlement()
+    public void Adventure_OnlyInASettlement()
     {
         var sim = NewGame();
         sim.State.Player.ZoneId = "zone.bamboo_grove";
 
-        Assert.Equal(RejectReasons.NotInSettlement, sim.Execute(new StartActivity(new InquireActivity(), 5)).RejectReason);
+        Assert.Equal(RejectReasons.NotInSettlement, sim.Execute(new StartActivity(new AdventureActivity(), 5)).RejectReason);
     }
 
     [Fact]
-    public void Inquiry_BringsARumorFromItsSources_AndTheNewRumorStopsTime()
+    public void Adventure_BringsARumorFromItsSources_AndTheNewRumorStopsTime()
     {
         var sim = Simulation.NewGame(TestContent.WithExtra(Extra), 1);
-        var inquiry = sim.Content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId).Inquiry;
+        var adventure = sim.Content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId).Adventure;
 
-        var inquire = new StartActivity(new InquireActivity(), null);
-        var outcome = sim.Execute(inquire);
+        var seek = new StartActivity(new AdventureActivity(), null);
+        var outcome = sim.Execute(seek);
         while (sim.State.Rumors.Count == 0)
-            outcome = sim.Execute(TestContent.Proceed(sim.View, inquire));
+            outcome = sim.Execute(TestContent.Proceed(sim.View, seek));
 
         var rumor = Assert.Single(sim.State.Rumors);
         Assert.Contains(new RumorHeard(rumor.RumorId), outcome.Events);
-        Assert.Contains(rumor.SourceId, inquiry.Sources.Keys);
-        Assert.Equal(new ActivityInterrupted(new InquireActivity()), outcome.Events[^1]);
+        Assert.Contains(rumor.SourceId, adventure.Sources.Keys);
+        Assert.Equal(new ActivityInterrupted(new AdventureActivity()), outcome.Events[^1]);
         Assert.Null(sim.State.Activity);
+    }
+
+    [Fact]
+    public void Adventure_BringsEventsAtItsOwnChance_NotTheSettlements()
+    {
+        var content = TestContent.Quiet(TestContent.WithExtra(Extra));
+        content.Get<EventsConfigDef>(EventsConfigDef.EventsId).AdventureWeekChance = 1;
+        var sim = Simulation.NewGame(content, 1);
+
+        var outcome = sim.Execute(new StartActivity(new AdventureActivity(), 3));
+
+        Assert.Contains(outcome.Events, e => e is EventStarted);
+        Assert.Equal(1, sim.State.Week);
     }
 
     [Fact]
@@ -199,12 +212,12 @@ public sealed class RumorTests
     {
         var content = TestContent.WithExtra(Extra);
         var config = content.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId);
-        config.Inquiry.WeekChance = 1;
+        config.Adventure.WeekChance = 1;
         config.MaxActive = 1;
-        var sim = Simulation.NewGame(WithInquiryOnly(content), 1);
+        var sim = Simulation.NewGame(WithAdventureRumorsOnly(content), 1);
         Hear(sim, "rumor.test.grove");
 
-        var outcome = sim.Execute(new StartActivity(new InquireActivity(), 4));
+        var outcome = sim.Execute(new StartActivity(new AdventureActivity(), 4));
 
         Assert.DoesNotContain(outcome.Events, e => e is RumorHeard);
         Assert.Single(sim.State.Rumors);
@@ -229,7 +242,7 @@ public sealed class RumorTests
     {
         var sim = NewGame();
         Hear(sim, "rumor.test.grove");
-        sim.Execute(new StartActivity(new InquireActivity(), 3));
+        sim.Execute(new StartActivity(new AdventureActivity(), 3));
 
         var loaded = SaveSerializer.Decode(SaveSerializer.Encode(sim.State)).State!;
 
@@ -237,12 +250,13 @@ public sealed class RumorTests
         Assert.Equal("rumor.test.grove", Assert.Single(loaded.RumorHistory).RumorId);
     }
 
-    /// <summary>Weekly events off, rumor rolls as configured.</summary>
-    private static ContentDb WithInquiryOnly(ContentDb content)
+    /// <summary>Weekly events off, seeking adventure included; rumor rolls as configured.</summary>
+    private static ContentDb WithAdventureRumorsOnly(ContentDb content)
     {
         var events = content.Get<EventsConfigDef>(EventsConfigDef.EventsId);
         foreach (string context in events.WeekChance.Keys.ToList())
             events.WeekChance[context] = 0;
+        events.AdventureWeekChance = 0;
         return content;
     }
 }

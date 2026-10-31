@@ -17,7 +17,7 @@ public static class RunStatsSystem
         HuntActivity h => h.HuntId,
         ArenaActivity a => a.ArenaId,
         WaitActivity => "wait",
-        InquireActivity => "inquire",
+        AdventureActivity => "adventure",
         TravelActivity => "travel",
         BreakthroughActivity => "breakthrough",
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, null),

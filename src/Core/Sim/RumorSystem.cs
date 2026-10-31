@@ -25,7 +25,7 @@ public static class RumorSystem
     /// <summary>How the week's rumors come, given its event context and the activity it was spent on; null brings none.</summary>
     public static RumorOriginDef? OriginOf(string? context, Activity activity, SimContext ctx) => context switch
     {
-        EventContexts.Settlement => activity is InquireActivity ? ctx.Rumors.Inquiry : ctx.Rumors.Settlement,
+        EventContexts.Settlement => activity is AdventureActivity ? ctx.Rumors.Adventure : ctx.Rumors.Settlement,
         _ => null,
     };
 

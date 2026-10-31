@@ -25,6 +25,8 @@ public static class MeditationSystem
             return RejectReasons.InvalidActivity;
         if (ctx.Content.TryGet<InjuryDef>(direction.Target!, out _))
             return InjurySystem.Value(state.Player, direction.Target!) > 0 ? null : RejectReasons.NothingToHeal;
+        if (ctx.Content.TryGet<ResourceDef>(direction.Target!, out _))
+            return ResourceSystem.Whole(state.Player, ctx, direction.Target!) ? RejectReasons.NothingToRestore : null;
         return ctx.Content.TryGet<CultivationVectorDef>(direction.Target!, out _)
             ? CultivationSystem.CannotAssimilate(state.Player, ctx, direction.Target!)
             : null;
@@ -38,7 +40,7 @@ public static class MeditationSystem
 
         double draw = placeDef.Density;
         bool covered = place.Reserve >= draw;
-        double efficiency = covered ? 1 : Math.Max(ctx.Config.MeditationDepletedFloor, place.Reserve / draw);
+        double efficiency = Efficiency(draw, place.Reserve, ctx.Config);
         place.Reserve = StateNumbers.Round(Math.Max(0, place.Reserve - draw));
 
         double strength = placeDef.Density * efficiency;
@@ -55,6 +57,24 @@ public static class MeditationSystem
         if (covered && place.Reserve < draw)
             events.Add(new PlaceQiLow(meditation.PlaceId));
     }
+
+    /// <summary>
+    /// The recovery meditation the main screen's "meditate" starts (D72): at the known place of the
+    /// zone that gives the most this week, its density times efficiency; null if no place is known here.
+    /// </summary>
+    public static MeditateActivity? Recovery(PlayerView view, ContentDb db)
+    {
+        var config = db.Get<RunConfigDef>(RunConfigDef.RunId);
+        var best = view.Places
+            .OrderByDescending(p => p.Density * Efficiency(p.Density, p.Reserve, config))
+            .ThenBy(p => p.PlaceId, StringComparer.Ordinal)
+            .FirstOrDefault();
+        return best is null ? null : new MeditateActivity(config.RecoveryMeditation, best.PlaceId);
+    }
+
+    /// <summary>Full while the reserve covers the week's draw, else reserve / draw, but never below the floor (D30).</summary>
+    private static double Efficiency(double draw, double reserve, RunConfigDef config) =>
+        reserve >= draw ? 1 : Math.Max(config.MeditationDepletedFloor, reserve / draw);
 
     private static void Apply(PlayerState player, SimContext ctx, string target, double gain, List<SimEvent> events)
     {

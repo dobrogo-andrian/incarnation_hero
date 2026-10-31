@@ -153,7 +153,7 @@ public static class SimText
 
     private static readonly LocKey ReputationLine = new("str.view.reputation");
     private static readonly LocKey RumorLine = new("str.view.rumor");
-    private static readonly LocKey Inquire = new("str.activity.inquire");
+    private static readonly LocKey Adventure = new("str.activity.adventure");
     private static readonly LocKey Heard = new("str.event.rumor_heard");
     private static readonly LocKey Continue = new("str.dialog.continue");
     private static readonly LocKey OptionRequires = new("str.dialog.option_requires");
@@ -733,7 +733,7 @@ public static class SimText
     {
         "wait" => new("str.summary.wait"),
         RunStatsSystem.EventKey => new("str.summary.event"),
-        "inquire" => new("str.summary.inquire"),
+        "adventure" => new("str.summary.adventure"),
         "travel" => new("str.summary.travel"),
         "breakthrough" => new("str.summary.breakthrough_seclusion"),
         _ => Name(key),
@@ -755,7 +755,7 @@ public static class SimText
     private static LocKey ActivityName(Activity activity) => activity switch
     {
         WaitActivity => Wait,
-        InquireActivity => Inquire,
+        AdventureActivity => Adventure,
         TravelActivity t => TravelTo with { Args = [new("zone", Name(t.Destination))] },
         MeditateActivity { SubjectId: { } subject } m => MeditateStudy with
         {

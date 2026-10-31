@@ -95,11 +95,47 @@ public sealed class MeditationTests
     public void ResourceNeverExceedsItsMaximum()
     {
         var sim = NewGame();
+        sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool").Current -= 1;
 
         sim.Execute(Meditate("meditation.recovery", 2));
 
         var pool = sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool");
         Assert.Equal(sim.Rules.Value(sim.State.Player, "resource.qi_pool"), pool.Current);
+    }
+
+    [Fact]
+    public void Recovery_IsRejected_WhenHealthAndQiAreAlreadyFull()
+    {
+        var sim = NewGame();
+
+        Assert.Equal(RejectReasons.NothingToRestore, sim.Execute(Meditate("meditation.recovery", 1)).RejectReason);
+    }
+
+    [Fact]
+    public void Recovery_WithoutALimit_EndsOnItsOwn_OnceHealthAndQiAreFull()
+    {
+        var sim = NewGame();
+        sim.State.Player.Resources.Single(r => r.ResourceId == "resource.qi_pool").Current = 80;
+        sim.State.Player.Resources.Single(r => r.ResourceId == "resource.health").Current = 75;
+
+        var outcome = sim.Execute(new StartActivity(new MeditateActivity("meditation.recovery", "place.hub.test"), null));
+
+        Assert.IsType<ActivityFinished>(outcome.Events[^1]);
+        Assert.Null(sim.State.Activity);
+        Assert.All(sim.State.Player.Resources.Where(r => r.ResourceId is "resource.qi_pool" or "resource.health"),
+            r => Assert.Equal(sim.Rules.Value(sim.State.Player, r.ResourceId), r.Current));
+        Assert.Equal(3, sim.State.Week);   // health 75 → 100 at 10 a week; qi is full sooner
+    }
+
+    [Fact]
+    public void RecoveryHere_PicksThePlaceThatGivesTheMost_AsItsReserveRunsDry()
+    {
+        var sim = NewGame();
+
+        Assert.Equal(new MeditateActivity(TestContent.Config.RecoveryMeditation, "place.hub.test"), MeditationSystem.Recovery(sim.View, sim.Content));
+
+        sim.State.World.Places.Single(p => p.PlaceId == "place.hub.test").Reserve = 0;   // 2 × floor 0.2 < 1 × 1
+        Assert.Equal(new MeditateActivity(TestContent.Config.RecoveryMeditation, "place.hub.quiet_courtyard"), MeditationSystem.Recovery(sim.View, sim.Content));
     }
 
     [Fact]

@@ -369,6 +369,9 @@ public sealed class EventsConfigDef : ContentDef, IValidatedDef
     /// <summary>Context → chance that a week in it brings an event.</summary>
     public Dictionary<string, double> WeekChance { get; set; } = [];
 
+    /// <summary>Chance of an event in a week of seeking adventure, instead of its context's (D72).</summary>
+    public double AdventureWeekChance { get; set; }
+
     /// <summary>An event shown within this many weeks has its weight multiplied by <see cref="RecentWeightFactor"/>.</summary>
     public int RecentWeeks { get; set; }
 
@@ -389,6 +392,8 @@ public sealed class EventsConfigDef : ContentDef, IValidatedDef
     {
         if (WeekChance.Keys.Any(c => !EventContexts.All.Contains(c)) || WeekChance.Values.Any(p => p is < 0 or > 1))
             yield return $"week_chance needs contexts out of {string.Join(", ", EventContexts.All)} with chances from 0 to 1.";
+        if (AdventureWeekChance is < 0 or > 1)
+            yield return "adventure_week_chance must be from 0 to 1.";
         if (ChanceRangeStep <= 0)
             yield return "chance_range_step must be positive.";
     }

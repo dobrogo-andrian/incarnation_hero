@@ -28,7 +28,7 @@ public static class EventSystem
         if (context is null || state.Mode != GameMode.Overworld)
             return;
         var rng = ctx.Rng[RngStream.Events];
-        double chance = ctx.Events.WeekChance.GetValueOrDefault(context);
+        double chance = state.Activity?.Activity is AdventureActivity ? ctx.Events.AdventureWeekChance : ctx.Events.WeekChance.GetValueOrDefault(context);
         if (chance <= 0 || !rng.Chance(chance))
             return;
 

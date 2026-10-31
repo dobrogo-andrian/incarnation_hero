@@ -85,8 +85,8 @@ public sealed class RumorsConfigDef : ContentDef, IValidatedDef
     /// <summary>Any week spent in a settlement.</summary>
     public RumorOriginDef Settlement { get; set; } = new();
 
-    /// <summary>A week of asking around in a settlement, instead of <see cref="Settlement"/>.</summary>
-    public RumorOriginDef Inquiry { get; set; } = new();
+    /// <summary>A week of seeking adventure in a settlement, instead of <see cref="Settlement"/> (D72).</summary>
+    public RumorOriginDef Adventure { get; set; } = new();
 
     /// <summary>A settlement brings no new rumor while this many are being followed.</summary>
     public int MaxActive { get; set; }

@@ -140,6 +140,10 @@ public sealed class RunConfigDef : ContentDef, IValidatedDef
     /// </summary>
     public double MeditationDepletedFloor { get; set; }
 
+    /// <summary>The meditation the main screen's "meditate" starts at the zone's best place (D72).</summary>
+    [ContentRef(typeof(MeditationDirectionDef))]
+    public string RecoveryMeditation { get; set; } = "";
+
     /// <summary>Share of combat insight points that fades each week, travel included (§4.3).</summary>
     public double CombatInsightDecay { get; set; }
 

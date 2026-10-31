@@ -4,7 +4,7 @@ id: config.rumors
 settlement:                     # any week in a settlement
   week_chance: 0.03
   sources: { source.tea_house_gossip: 3, source.travelling_merchant: 1 }
-inquiry:                        # a week of asking around, instead of the line above
+adventure:                      # a week of seeking adventure, instead of the line above (D72)
   week_chance: 0.2
   sources: { source.tea_house_gossip: 1, source.travelling_merchant: 2, source.sect_disciple: 2 }
 max_active: 4                   # a settlement brings no more while this many are followed

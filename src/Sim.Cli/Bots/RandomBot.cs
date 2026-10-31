@@ -41,7 +41,7 @@ public sealed class RandomBot(ContentDb content, Xoshiro256StarStar rng) : IBot
     {
         var commands = new List<Command>();
         commands.Add(Start(new WaitActivity()));
-        commands.Add(Start(new InquireActivity()));
+        commands.Add(Start(new AdventureActivity()));
         var subjects = view.Items.Select(i => i.ItemId)
             .Concat(content.All<KnowledgeDef>().Where(k => k.IsElement).Select(k => k.Id))
             .ToList();

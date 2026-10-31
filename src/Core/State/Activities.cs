@@ -11,7 +11,7 @@ namespace Core.State;
 [JsonDerivedType(typeof(TravelActivity), "travel")]
 [JsonDerivedType(typeof(MeditateActivity), "meditate")]
 [JsonDerivedType(typeof(BreakthroughActivity), "breakthrough")]
-[JsonDerivedType(typeof(InquireActivity), "inquire")]
+[JsonDerivedType(typeof(AdventureActivity), "adventure")]
 [JsonDerivedType(typeof(WorkActivity), "work")]
 [JsonDerivedType(typeof(HuntActivity), "hunt")]
 [JsonDerivedType(typeof(ArenaActivity), "arena")]
@@ -20,8 +20,11 @@ public abstract record Activity;
 /// <summary>Let time pass doing nothing in particular.</summary>
 public sealed record WaitActivity : Activity;
 
-/// <summary>Asking around a settlement for rumors: likelier and from better sources than just being there (D41).</summary>
-public sealed record InquireActivity : Activity;
+/// <summary>
+/// Seeking adventure in a settlement (D72): rumors likelier and from better sources than just being
+/// there (D41), and events likelier too; it goes on until one of them interrupts it.
+/// </summary>
+public sealed record AdventureActivity : Activity;
 
 /// <summary>Hired work at a job of the current settlement (§5, §13.2).</summary>
 public sealed record WorkActivity(string JobId) : Activity;

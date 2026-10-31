@@ -30,6 +30,7 @@ public partial class Main : Control
 
     private readonly StatusBar _status = new();
     private readonly CharacterPreview _preview = new();
+    private readonly QuickActivities _quick = new();
     private readonly SideTabs _tabs = new() { SizeFlagsVertical = SizeFlags.ExpandFill };
     private readonly PointPanel _panel = new();
     private readonly EventDialog _dialog = new();
@@ -157,6 +158,7 @@ public partial class Main : Control
         var left = new VBoxContainer();
         left.AddThemeConstantOverride("separation", 12);
         left.AddChild(_preview);
+        left.AddChild(_quick);
         left.AddChild(_tabs);
         columns.AddChild(left);
         columns.AddChild(center);
@@ -315,6 +317,7 @@ public partial class Main : Control
             _character.SetOpen(view, false);
         _character.Refresh(view);
         _preview.Refresh(_ui, view);
+        _quick.Refresh(_ui, view);
         _tabs.Refresh(_ui, view);
     }
 

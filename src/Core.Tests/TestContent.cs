@@ -48,7 +48,8 @@ internal static class TestContent
             events.WeekChance[context] = 0;
         var rumors = db.Get<RumorsConfigDef>(RumorsConfigDef.RumorsId);
         rumors.Settlement.WeekChance = 0;
-        rumors.Inquiry.WeekChance = 0;
+        rumors.Adventure.WeekChance = 0;
+        events.AdventureWeekChance = 0;
         return db;
     }
 
